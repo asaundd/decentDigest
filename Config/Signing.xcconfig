@@ -1,0 +1,8 @@
+// Signing for the DecentDigest app target.
+//
+// Each developer's own team ID lives in Config/Local.xcconfig, which git ignores,
+// so choosing a team never changes the project file. Create that file with one line:
+//
+//     DEVELOPMENT_TEAM = YOURTEAMID
+
+#include? "Local.xcconfig"

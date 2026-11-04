@@ -38,7 +38,7 @@ Decent Digest is a native iPhone app that shows a calm daily digest: weather, ca
 
 - Open `DecentDigest.xcodeproj` and run the **DecentDigest** scheme.
 - Core tests: `cd Packages/DigestCore && swift test` (Swift Testing).
-- Bundle ID: `com.decentdigest.app`. Signing uses the developer's own team; never commit a `DEVELOPMENT_TEAM` value or anything under `xcuserdata/`.
+- Bundle ID: `com.decentdigest.app`. Signing uses the developer's own team, set in `Config/Local.xcconfig` (git-ignored, included by `Config/Signing.xcconfig`). Never commit a `DEVELOPMENT_TEAM` value or anything under `xcuserdata/`.
 
 ## Data model rules
 
