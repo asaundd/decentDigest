@@ -42,9 +42,8 @@ struct DigestView: View {
             LinearGradient(colors: [Theme.pageTintTop, Theme.pageTintBottom], startPoint: .top, endPoint: .bottom)
                 .ignoresSafeArea()
         )
-        .sheet(item: $panel) { request in
-            ArticlePanel(headline: request.headline, actions: request.actions)
-        }
+        .blur(radius: panel == nil ? 0 : 2)
+        .overlay { ArticlePanelHost(panel: $panel) }
         .refreshable { [refresh] in await refresh(true) }
         .onChange(of: scenePhase, initial: true) { _, phase in
             guard phase == .active else { return }
@@ -95,7 +94,7 @@ struct DigestView: View {
     }
 
     private var footer: some View {
-        Text("› reads here  ·  ↗ opens the web")
+        Text("› full post here  ·  … preview  ·  ↗ opens the site")
             .font(.footnote)
             .foregroundStyle(Theme.secondary)
     }

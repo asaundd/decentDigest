@@ -13,14 +13,28 @@ struct Headline: Identifiable {
     var link: URL?
     var isUnread: Bool
 
-    /// Rows with more than a title expand in place; title-only rows open Safari.
-    var expands: Bool {
-        author != nil || summary != nil || fullText != nil
+    var kind: PostKind {
+        PostKind.classify(summary: summary, fullText: fullText, author: author)
     }
 
-    /// The feed carries the whole post, so it can be read here.
-    var readsHere: Bool {
-        fullText != nil
+    /// Rows with more than a title expand in place; title-only rows open Safari.
+    var expands: Bool { kind != .titleOnly }
+
+    /// The whole post is in the feed, so Read more opens it in the panel.
+    var readsHere: Bool { kind == .fullPost }
+
+    /// › full post to read here, … a preview that expands, ↗ title only, opens the site.
+    var marker: String {
+        switch kind {
+        case .fullPost: "›"
+        case .preview: "…"
+        case .titleOnly: "↗"
+        }
+    }
+
+    /// What the expanded row shows: the summary for full posts, otherwise the longest text the feed sent.
+    var expandedText: String? {
+        readsHere ? summary : PostKind.previewText(summary: summary, fullText: fullText)
     }
 
     var byline: String? {
@@ -38,8 +52,8 @@ struct HeadlineActions {
 }
 
 /// One headline: gray dash, title (semibold while unread, gray once opened), feed name and age.
-/// It ends in › when the feed carries the full post to read here, or ↗ when reading it means going to the web.
-/// A tap expands rows that have a summary or byline; title-only rows open Safari.
+/// It ends in › when the feed carries the full post, … when it carries a preview, and ↗ when it has
+/// only a title. A tap expands the first two; title-only rows open Safari.
 /// Expanded, the row sits on a faint band and shows the whole summary over a ribbon of actions.
 struct HeadlineRow: View {
     static let verticalPadding: CGFloat = 5
@@ -64,7 +78,7 @@ struct HeadlineRow: View {
                             .foregroundStyle(Theme.secondary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    Text(headline.readsHere ? "›" : "↗")
+                    Text(headline.marker)
                         .foregroundStyle(Theme.secondary)
                 }
                 .padding(.vertical, isExpanded ? Self.verticalPadding + 4 : Self.verticalPadding)
@@ -74,7 +88,7 @@ struct HeadlineRow: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("\(headline.title), \(headline.detail)")
             .accessibilityValue(Text(headline.isUnread ? "Unread" : "Read"))
-            .accessibilityHint(Text(headline.expands ? (isExpanded ? "Shows less" : "Shows the summary") : "Opens in Safari"))
+            .accessibilityHint(Text(headline.expands ? (isExpanded ? "Shows less" : (headline.readsHere ? "Shows a summary of the full post" : "Shows a preview")) : "Opens in Safari"))
             .accessibilityAddTraits(.isButton)
             .accessibilityActions {
                 if let save = actions.save {
@@ -96,8 +110,8 @@ struct HeadlineRow: View {
                         .font(.subheadline)
                         .foregroundStyle(Theme.secondary)
                 }
-                if let summary = headline.summary {
-                    Text(summary)
+                if let text = headline.expandedText {
+                    Text(text)
                         .font(.callout)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -115,6 +129,10 @@ struct HeadlineRow: View {
 /// then Save, then ✓ for useful and ✕ for not useful.
 struct ActionRibbon: View {
     var actions: HeadlineActions
+    /// Indent for the first action, so it lines up with the text above it.
+    var leadingInset: CGFloat = DashColumn.width
+    /// In a digest row the ribbon runs past the row's margins to the screen edges.
+    var bleedsToEdges = true
 
     var body: some View {
         ViewThatFits(in: .horizontal) {
@@ -134,17 +152,17 @@ struct ActionRibbon: View {
             }
         }
         .padding(.vertical, 4)
-        .padding(.horizontal, Theme.margin)
+        .padding(.leading, Theme.margin + leadingInset)
+        .padding(.trailing, Theme.margin)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.ribbonFill)
-        // The ribbon runs edge to edge, past the row's margins.
-        .padding(.horizontal, -Theme.margin)
+        .padding(.horizontal, bleedsToEdges ? -Theme.margin : 0)
     }
 
     @ViewBuilder
     private var primary: some View {
         if let readFull = actions.readFull {
-            TextLink("Read full post", action: readFull)
+            TextLink("Read more", action: readFull)
         } else if let openInSafari = actions.openInSafari {
             TextLink("Open in Safari ↗", action: openInSafari)
         }

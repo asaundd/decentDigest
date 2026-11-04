@@ -157,9 +157,12 @@ struct NewsSectionView: View {
             notUseful: { resolve(item, as: .notRelevant) },
             openInSafari: row.link == nil ? nil : { open(item) }
         )
-        if row.fullText != nil {
+        if row.readsHere {
             let panelActions = actions
-            actions.readFull = { panel = PanelRequest(headline: row, actions: panelActions) }
+            actions.readFull = {
+                ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, in: context)
+                panel = PanelRequest(headline: row, actions: panelActions)
+            }
         }
         return actions
     }
@@ -167,11 +170,11 @@ struct NewsSectionView: View {
     // MARK: Actions
 
     private func tap(_ entry: Entry, headline: Headline) {
+        // Expanding keeps the title bold; only reading it (panel or Safari) or acting on it counts.
         if headline.expands {
             withAnimation(.easeInOut(duration: 0.2)) {
                 expandedID = expandedID == entry.item.itemID ? nil : entry.item.itemID
             }
-            ReadingState.markOpened(itemID: entry.item.itemID, sourceID: entry.item.sourceID, in: context)
         } else {
             open(entry.item)
         }

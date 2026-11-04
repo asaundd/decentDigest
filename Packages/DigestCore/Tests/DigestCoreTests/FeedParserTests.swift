@@ -198,3 +198,16 @@ private func data(_ string: String) -> Data { Data(string.utf8) }
     #expect(HeadlineAge.text(for: now.addingTimeInterval(-20 * 3_600), now: now, calendar: calendar) == "Yesterday")
     #expect(HeadlineAge.text(for: now.addingTimeInterval(-3 * 86_400), now: now, calendar: calendar) == "3 days")
 }
+
+@Test func classifiesHowMuchOfAPostTheFeedCarries() {
+    let long = String(repeating: "A full sentence of the post. ", count: 80)
+    #expect(PostKind.classify(summary: "Teaser", fullText: long, author: nil) == .fullPost)
+    #expect(PostKind.classify(summary: "Teaser", fullText: long + "\n\nContinue reading on Example →", author: nil) == .preview)
+    #expect(PostKind.classify(summary: "Teaser", fullText: long + "\n\nThe post Title appeared first on Example.", author: nil) == .preview)
+    #expect(PostKind.classify(summary: "Teaser", fullText: "Two short paragraphs.\n\nThen a cut", author: nil) == .preview)
+    #expect(PostKind.classify(summary: "Teaser", fullText: nil, author: nil) == .preview)
+    #expect(PostKind.classify(summary: nil, fullText: nil, author: "Jane") == .preview)
+    #expect(PostKind.classify(summary: nil, fullText: nil, author: nil) == .titleOnly)
+    #expect(PostKind.previewText(summary: "Short", fullText: "Short plus more") == "Short plus more")
+    #expect(PostKind.previewText(summary: "Short", fullText: nil) == "Short")
+}

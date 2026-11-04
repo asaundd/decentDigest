@@ -63,15 +63,17 @@ struct SavedNewsSectionView: View {
             notUseful: { resolve(item, as: .notRelevant) },
             openInSafari: headline.link == nil ? nil : { open(item) }
         )
-        if headline.fullText != nil {
+        if headline.readsHere {
             let panelActions = actions
-            actions.readFull = { panel = PanelRequest(headline: headline, actions: panelActions) }
+            actions.readFull = {
+                ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, in: context)
+                panel = PanelRequest(headline: headline, actions: panelActions)
+            }
         }
         return actions
     }
 
     private func tap(_ item: SavedItem, headline: Headline) {
-        ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, in: context)
         if headline.expands {
             withAnimation(.easeInOut(duration: 0.2)) {
                 expandedID = expandedID == item.itemID ? nil : item.itemID

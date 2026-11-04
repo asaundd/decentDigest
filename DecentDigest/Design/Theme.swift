@@ -14,6 +14,11 @@ enum Theme {
     // An expanded headline sits on a faint band, with its actions on a slightly darker one.
     static let expandedFill = Color(light: 0xF2F1EC, dark: 0x1B1F1E)
     static let ribbonFill = Color(light: 0xE8E7E1, dark: 0x232827)
+    // The article panel: paper in light mode, a step lighter than the page in dark mode.
+    static let panelFill = Color(light: 0xFAF9F6, dark: 0x202524)
+    static let panelShadow = Color.black.opacity(0.14)
+    /// The faint wash over the digest while the panel is open.
+    static let scrim = Color.black.opacity(0.12)
     // Swipe action fills carry white labels, so they stay dark in both modes.
     static let swipeUseful = Color(light: 0x3C3C4C, dark: 0x3C3C4C)
     static let swipeNotRelevant = Color(light: 0x6F7573, dark: 0x5A605E)
