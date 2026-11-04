@@ -16,11 +16,16 @@ public enum ItemStatus: String, Codable, Sendable, CaseIterable {
     /// Opened, then marked unread again.
     case unread
 
-    /// Whether the item still belongs in the digest list.
+    /// Whether the item still belongs in the digest list. Read items stay until they expire.
     public var isActive: Bool {
         switch self {
-        case .new, .unread: true
-        case .read, .useful, .notRelevant, .ignored: false
+        case .new, .unread, .read: true
+        case .useful, .notRelevant, .ignored: false
         }
+    }
+
+    /// Unread items show their title in bold.
+    public var isUnread: Bool {
+        self == .new || self == .unread
     }
 }

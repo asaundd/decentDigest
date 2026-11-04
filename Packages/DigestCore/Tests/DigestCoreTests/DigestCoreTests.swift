@@ -30,9 +30,21 @@ import Testing
     #expect(!digest.episodes.isEmpty)
 }
 
-@Test func onlyNewAndUnreadStayInTheList() {
+@Test func readItemsStayButResolvedItemsLeave() {
     #expect(ItemStatus.new.isActive)
     #expect(ItemStatus.unread.isActive)
+    #expect(ItemStatus.read.isActive)
     #expect(!ItemStatus.useful.isActive)
     #expect(!ItemStatus.notRelevant.isActive)
+    #expect(!ItemStatus.ignored.isActive)
+    #expect(ItemStatus.new.isUnread)
+    #expect(!ItemStatus.read.isUnread)
+}
+
+@Test func defaultFeedsAreHTTPSAndCoverEveryCategory() throws {
+    let library = try FeedLibrary.bundled()
+    let feeds = library.defaultFeeds()
+    #expect(feeds.count == library.categories.count * NewsRules.starterFeedsPerCategory)
+    #expect(feeds.allSatisfy { $0.feedUrl.hasPrefix("https://") })
+    #expect(Set(feeds.map(\.category)).count == library.categories.count)
 }

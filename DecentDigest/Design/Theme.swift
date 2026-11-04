@@ -11,6 +11,9 @@ enum Theme {
     static let secondary = Color(light: 0x6F7573, dark: 0xA3A8A5)
     static let rule = Color(light: 0xDFE0DC, dark: 0x343937)
     static let accent = Color(light: 0x3C3C4C, dark: 0xCECED5)
+    // Swipe action fills carry white labels, so they stay dark in both modes.
+    static let swipeUseful = Color(light: 0x3C3C4C, dark: 0x3C3C4C)
+    static let swipeNotRelevant = Color(light: 0x6F7573, dark: 0x5A605E)
 
     // Spacing
     static let margin: CGFloat = 24
@@ -21,6 +24,8 @@ enum Theme {
     static let dateFont = Font.custom("Georgia", size: 30, relativeTo: .largeTitle)
     static let sectionTitleFont = Font.custom("Georgia", size: 22, relativeTo: .title2)
     static let wordmarkFont = Font.footnote
+    /// Section actions such as Refresh: slate, semibold, underlined.
+    static let actionFont = Font.subheadline.weight(.semibold)
 }
 
 extension Color {

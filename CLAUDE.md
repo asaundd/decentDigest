@@ -29,6 +29,8 @@ Decent Digest is a native iPhone app that shows a calm daily digest: weather, ca
 - `Packages/DigestCore/` is a local Swift package with models and services and no UI. Put logic here so it can be tested with `swift test`.
   - `Models/` digest models, `ItemStatus`, `ItemID`
   - `FeedLibrary/` loader for `Resources/feed-library.json`
+  - `Feeds/` feed fetching and parsing (RSS 2.0, RSS 1.0, Atom), HTML-to-text, news list rules
+  - `Store/` SwiftData models, container setup, `FeedStore` (the background writer for fetched feeds) and `ReadingState` (item status writes from the UI)
   - `Sample/` sample digest for previews
 - `design/app-icon/` icon source SVGs.
 
@@ -43,6 +45,7 @@ Decent Digest is a native iPhone app that shows a calm daily digest: weather, ca
 - Feed item ids are `ItemID.make(feedURL:guidOrLink:)`, a SHA-256 hash. Synced reading state is keyed by it, so never change the formula.
 - Item status values: `new`, `read`, `useful` (swipe right), `notRelevant` (swipe left), `ignored` (expired untouched), `unread`. Keep them distinct; they form the user's reading history, which stays on device and in the user's iCloud.
 - For CloudKit-synced SwiftData models: every property optional or defaulted, no unique constraints, no required relationships.
+- Two stores: `Source` and `ItemState` sync through iCloud; `FeedItem` and `FetchState` stay on the device. Models link by id strings, not relationships.
 
 ## Design rules
 

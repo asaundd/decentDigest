@@ -22,7 +22,7 @@ Decent Digest is a window onto the apps you already use. It reads from Calendar,
 2. Select the **DecentDigest** target, open **Signing & Capabilities**, and choose your team. If the bundle ID is taken, change it to something unique to you.
 3. Pick an iPhone simulator or a connected iPhone and press **Run** (⌘R).
 
-The app currently shows sample content.
+News comes live from a starter set of RSS feeds. Weather, calendar, to-dos and podcasts still show sample content.
 
 Run the core package tests from the command line:
 
