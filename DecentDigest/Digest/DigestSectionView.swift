@@ -19,39 +19,29 @@ struct DigestSectionView: View {
             Text(title)
                 .font(Theme.sectionTitleFont)
                 .accessibilityAddTraits(.isHeader)
-            VStack(alignment: .leading, spacing: 10) {
+            // A grid keeps the leading column (times, dashes) one width, so titles line up.
+            Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: 8, verticalSpacing: 10) {
                 ForEach(rows) { row in
-                    RowView(row: row)
+                    GridRow {
+                        Text(row.leading ?? "–")
+                            .foregroundStyle(Theme.secondary)
+                            .monospacedDigit()
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(row.title)
+                            if let detail = row.detail {
+                                Text(detail)
+                                    .font(.subheadline)
+                                    .foregroundStyle(Theme.secondary)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        Text(row.trailing ?? "")
+                            .foregroundStyle(Theme.secondary)
+                            .accessibilityHidden(true)
+                    }
                 }
             }
         }
-    }
-}
-
-private struct RowView: View {
-    var row: DigestSectionView.Row
-
-    var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text(row.leading ?? "–")
-                .foregroundStyle(Theme.secondary)
-                .monospacedDigit()
-            VStack(alignment: .leading, spacing: 2) {
-                Text(row.title)
-                if let detail = row.detail {
-                    Text(detail)
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.secondary)
-                }
-            }
-            Spacer(minLength: 8)
-            if let trailing = row.trailing {
-                Text(trailing)
-                    .foregroundStyle(Theme.secondary)
-                    .accessibilityHidden(true)
-            }
-        }
-        .accessibilityElement(children: .combine)
     }
 }
 
@@ -74,12 +64,16 @@ struct WeatherSectionView: View {
                         .foregroundStyle(Theme.secondary)
                 }
             }
-            ForEach(weather.restOfWeek) { day in
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(day.date, format: .dateTime.weekday(.abbreviated))
-                        .foregroundStyle(Theme.secondary)
-                        .frame(width: 40, alignment: .leading)
-                    Text("\(day.high)° / \(day.low)°  \(day.condition)")
+            Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: 12, verticalSpacing: 6) {
+                ForEach(weather.restOfWeek) { day in
+                    GridRow {
+                        Text(day.date, format: .dateTime.weekday(.abbreviated))
+                            .foregroundStyle(Theme.secondary)
+                        Text("\(day.high)° / \(day.low)°")
+                            .monospacedDigit()
+                        Text(day.condition)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
             }
         }
