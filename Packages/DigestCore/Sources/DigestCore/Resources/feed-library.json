@@ -1,0 +1,902 @@
+{
+  "version": 1,
+  "generatedAt": "2026-11-03",
+  "popularitySource": "Feedly public feed API subscriber count (rough proxy; varies by feed URL variant)",
+  "categories": [
+    {
+      "id": "healthtech",
+      "name": "Healthtech & Digital Health"
+    },
+    {
+      "id": "product",
+      "name": "Product & Leadership"
+    },
+    {
+      "id": "ai",
+      "name": "AI"
+    },
+    {
+      "id": "tech",
+      "name": "Tech & Apple"
+    },
+    {
+      "id": "news",
+      "name": "News & Science"
+    }
+  ],
+  "feeds": [
+    {
+      "id": "stat",
+      "title": "STAT",
+      "siteUrl": "https://www.statnews.com",
+      "feedUrl": "https://www.statnews.com/feed/",
+      "category": "healthtech",
+      "tags": [
+        "health",
+        "biotech",
+        "policy"
+      ],
+      "access": "freemium",
+      "feedlySubscribers": 584,
+      "format": "rss",
+      "description": "Health, medicine and life sciences news; STAT+ stories are paywalled.",
+      "lastItemDate": "2026-11-02",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 1
+    },
+    {
+      "id": "fierce-healthcare",
+      "title": "Fierce Healthcare",
+      "siteUrl": "https://www.fiercehealthcare.com",
+      "feedUrl": "https://www.fiercehealthcare.com/rss/xml",
+      "category": "healthtech",
+      "tags": [
+        "health",
+        "industry",
+        "payers"
+      ],
+      "access": "free",
+      "feedlySubscribers": 138,
+      "format": "rss",
+      "description": "Payer, provider and health tech industry news.",
+      "lastItemDate": "2026-11-02",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 3
+    },
+    {
+      "id": "healthcare-dive",
+      "title": "Healthcare Dive",
+      "siteUrl": "https://www.healthcaredive.com",
+      "feedUrl": "https://www.healthcaredive.com/feeds/news/",
+      "category": "healthtech",
+      "tags": [
+        "health",
+        "industry"
+      ],
+      "access": "free",
+      "feedlySubscribers": 184,
+      "format": "rss",
+      "description": "Daily healthcare business and policy news.",
+      "lastItemDate": "2026-11-02",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 2
+    },
+    {
+      "id": "kff-health-news",
+      "title": "KFF Health News",
+      "siteUrl": "https://kffhealthnews.org",
+      "feedUrl": "https://kffhealthnews.org/feed/",
+      "category": "healthtech",
+      "tags": [
+        "health",
+        "policy"
+      ],
+      "access": "free",
+      "feedlySubscribers": 78,
+      "format": "rss",
+      "description": "Nonprofit health policy journalism.",
+      "lastItemDate": "2026-11-03",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 5
+    },
+    {
+      "id": "out-of-pocket",
+      "title": "Out-Of-Pocket",
+      "siteUrl": "https://www.outofpocket.health",
+      "feedUrl": "https://www.outofpocket.health/p/rss.xml",
+      "category": "healthtech",
+      "tags": [
+        "health",
+        "analysis",
+        "newsletter"
+      ],
+      "access": "free",
+      "feedlySubscribers": 92,
+      "format": "rss",
+      "description": "Nikhil Krishnan's irreverent explainers on how US healthcare works.",
+      "lastItemDate": "2026-10-28",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 4
+    },
+    {
+      "id": "health-care-blog",
+      "title": "The Health Care Blog",
+      "siteUrl": "https://thehealthcareblog.com",
+      "feedUrl": "https://thehealthcareblog.com/feed/",
+      "category": "healthtech",
+      "tags": [
+        "health",
+        "opinion"
+      ],
+      "access": "free",
+      "feedlySubscribers": 7,
+      "format": "rss",
+      "description": "Long-running opinion blog on health tech and policy.",
+      "lastItemDate": "2026-10-30",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 6
+    },
+    {
+      "id": "lennys-newsletter",
+      "title": "Lenny's Newsletter",
+      "siteUrl": "https://www.lennysnewsletter.com",
+      "feedUrl": "https://www.lennysnewsletter.com/feed",
+      "category": "product",
+      "tags": [
+        "product",
+        "growth",
+        "newsletter"
+      ],
+      "access": "freemium",
+      "feedlySubscribers": 377,
+      "format": "rss",
+      "description": "Product, growth and career advice; some posts are paid.",
+      "lastItemDate": "2026-11-02",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 5
+    },
+    {
+      "id": "svpg",
+      "title": "Silicon Valley Product Group",
+      "siteUrl": "https://www.svpg.com",
+      "feedUrl": "https://www.svpg.com/feed/",
+      "category": "product",
+      "tags": [
+        "product",
+        "leadership"
+      ],
+      "access": "free",
+      "feedlySubscribers": 28,
+      "format": "rss",
+      "description": "Marty Cagan and team on product leadership.",
+      "lastItemDate": "2026-10-21",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 6
+    },
+    {
+      "id": "product-talk",
+      "title": "Product Talk",
+      "siteUrl": "https://www.producttalk.org",
+      "feedUrl": "https://www.producttalk.org/feed/",
+      "category": "product",
+      "tags": [
+        "product",
+        "discovery"
+      ],
+      "access": "freemium",
+      "feedlySubscribers": 424,
+      "format": "rss",
+      "description": "Teresa Torres on continuous discovery.",
+      "lastItemDate": "2026-11-03",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 4
+    },
+    {
+      "id": "beautiful-mess",
+      "title": "The Beautiful Mess",
+      "siteUrl": "https://cutlefish.substack.com",
+      "feedUrl": "https://cutlefish.substack.com/feed",
+      "category": "product",
+      "tags": [
+        "product",
+        "org-design",
+        "newsletter"
+      ],
+      "access": "free",
+      "feedlySubscribers": null,
+      "format": "rss",
+      "description": "John Cutler on product operating models.",
+      "lastItemDate": "2026-10-25",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 8
+    },
+    {
+      "id": "elena-verna",
+      "title": "Elena's Growth Scoop",
+      "siteUrl": "https://www.elenaverna.com",
+      "feedUrl": "https://www.elenaverna.com/feed",
+      "category": "product",
+      "tags": [
+        "growth",
+        "product",
+        "newsletter"
+      ],
+      "access": "free",
+      "feedlySubscribers": 20,
+      "format": "rss",
+      "description": "Elena Verna on product-led growth.",
+      "lastItemDate": "2026-10-27",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 7
+    },
+    {
+      "id": "pragmatic-engineer",
+      "title": "The Pragmatic Engineer",
+      "siteUrl": "https://newsletter.pragmaticengineer.com",
+      "feedUrl": "https://newsletter.pragmaticengineer.com/feed",
+      "category": "product",
+      "tags": [
+        "engineering",
+        "leadership",
+        "newsletter"
+      ],
+      "access": "freemium",
+      "feedlySubscribers": 3770,
+      "format": "rss",
+      "description": "Gergely Orosz on engineering teams and Big Tech; deep dives are paid.",
+      "lastItemDate": "2026-10-30",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 1
+    },
+    {
+      "id": "farnam-street",
+      "title": "Farnam Street",
+      "siteUrl": "https://fs.blog",
+      "feedUrl": "https://fs.blog/feed/",
+      "category": "product",
+      "tags": [
+        "thinking",
+        "leadership"
+      ],
+      "access": "free",
+      "feedlySubscribers": 3634,
+      "format": "rss",
+      "description": "Mental models and better decision making.",
+      "lastItemDate": "2026-10-29",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 2
+    },
+    {
+      "id": "not-boring",
+      "title": "Not Boring",
+      "siteUrl": "https://www.notboring.co",
+      "feedUrl": "https://www.notboring.co/feed",
+      "category": "product",
+      "tags": [
+        "strategy",
+        "startups",
+        "newsletter"
+      ],
+      "access": "free",
+      "feedlySubscribers": 431,
+      "format": "rss",
+      "description": "Packy McCormick on tech strategy and startups.",
+      "lastItemDate": "2026-10-30",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 3
+    },
+    {
+      "id": "simon-willison",
+      "title": "Simon Willison's Weblog",
+      "siteUrl": "https://simonwillison.net",
+      "feedUrl": "https://simonwillison.net/atom/everything/",
+      "category": "ai",
+      "tags": [
+        "llms",
+        "tools"
+      ],
+      "access": "free",
+      "feedlySubscribers": 4949,
+      "format": "atom",
+      "description": "Hands-on notes about LLMs and tools, posted several times a day.",
+      "lastItemDate": "2026-11-02",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 2
+    },
+    {
+      "id": "import-ai",
+      "title": "Import AI",
+      "siteUrl": "https://importai.substack.com",
+      "feedUrl": "https://importai.substack.com/feed",
+      "category": "ai",
+      "tags": [
+        "research",
+        "policy",
+        "newsletter"
+      ],
+      "access": "free",
+      "feedlySubscribers": 1575,
+      "format": "rss",
+      "description": "Jack Clark's weekly AI research roundup.",
+      "lastItemDate": "2026-11-02",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 6
+    },
+    {
+      "id": "one-useful-thing",
+      "title": "One Useful Thing",
+      "siteUrl": "https://www.oneusefulthing.org",
+      "feedUrl": "https://www.oneusefulthing.org/feed",
+      "category": "ai",
+      "tags": [
+        "work",
+        "education",
+        "newsletter"
+      ],
+      "access": "free",
+      "feedlySubscribers": 965,
+      "format": "rss",
+      "description": "Ethan Mollick on using AI at work and school.",
+      "lastItemDate": "2026-10-20",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 7
+    },
+    {
+      "id": "interconnects",
+      "title": "Interconnects",
+      "siteUrl": "https://www.interconnects.ai",
+      "feedUrl": "https://www.interconnects.ai/feed",
+      "category": "ai",
+      "tags": [
+        "research",
+        "models",
+        "newsletter"
+      ],
+      "access": "freemium",
+      "feedlySubscribers": 377,
+      "format": "rss",
+      "description": "Nathan Lambert on AI models and open research.",
+      "lastItemDate": "2026-10-30",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 9
+    },
+    {
+      "id": "latent-space",
+      "title": "Latent Space",
+      "siteUrl": "https://www.latent.space",
+      "feedUrl": "https://www.latent.space/feed",
+      "category": "ai",
+      "tags": [
+        "engineering",
+        "podcast",
+        "newsletter"
+      ],
+      "access": "free",
+      "feedlySubscribers": 730,
+      "format": "rss",
+      "description": "The AI engineer's newsletter and podcast.",
+      "lastItemDate": "2026-11-02",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 8
+    },
+    {
+      "id": "ahead-of-ai",
+      "title": "Ahead of AI",
+      "siteUrl": "https://magazine.sebastianraschka.com",
+      "feedUrl": "https://magazine.sebastianraschka.com/feed",
+      "category": "ai",
+      "tags": [
+        "research",
+        "ml",
+        "newsletter"
+      ],
+      "access": "freemium",
+      "feedlySubscribers": 1750,
+      "format": "rss",
+      "description": "Sebastian Raschka's ML research explainers.",
+      "lastItemDate": "2026-10-24",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 5
+    },
+    {
+      "id": "mit-tr-ai",
+      "title": "MIT Technology Review: AI",
+      "siteUrl": "https://www.technologyreview.com/topic/artificial-intelligence/",
+      "feedUrl": "https://www.technologyreview.com/topic/artificial-intelligence/feed",
+      "category": "ai",
+      "tags": [
+        "news",
+        "analysis"
+      ],
+      "access": "freemium",
+      "feedlySubscribers": 4201,
+      "format": "rss",
+      "description": "AI news and analysis from MIT Technology Review.",
+      "lastItemDate": "2026-11-03",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 3
+    },
+    {
+      "id": "openai-news",
+      "title": "OpenAI News",
+      "siteUrl": "https://openai.com/news/",
+      "feedUrl": "https://openai.com/news/rss.xml",
+      "category": "ai",
+      "tags": [
+        "company",
+        "announcements"
+      ],
+      "access": "free",
+      "feedlySubscribers": 2032,
+      "format": "rss",
+      "description": "Official OpenAI announcements.",
+      "lastItemDate": "2026-11-02",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 4
+    },
+    {
+      "id": "google-ai",
+      "title": "Google AI Blog",
+      "siteUrl": "https://blog.google/technology/ai/",
+      "feedUrl": "https://blog.google/technology/ai/rss/",
+      "category": "ai",
+      "tags": [
+        "company",
+        "announcements"
+      ],
+      "access": "free",
+      "feedlySubscribers": 282,
+      "format": "rss",
+      "description": "Official Google AI announcements.",
+      "lastItemDate": "2026-11-02",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 10
+    },
+    {
+      "id": "hugging-face",
+      "title": "Hugging Face Blog",
+      "siteUrl": "https://huggingface.co/blog",
+      "feedUrl": "https://huggingface.co/blog/feed.xml",
+      "category": "ai",
+      "tags": [
+        "open-source",
+        "tutorials"
+      ],
+      "access": "free",
+      "feedlySubscribers": 11055,
+      "format": "rss",
+      "description": "Open models, datasets and tutorials.",
+      "lastItemDate": "2026-10-30",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 1
+    },
+    {
+      "id": "techcrunch",
+      "title": "TechCrunch",
+      "siteUrl": "https://techcrunch.com",
+      "feedUrl": "https://techcrunch.com/feed/",
+      "category": "tech",
+      "tags": [
+        "startups",
+        "news"
+      ],
+      "access": "freemium",
+      "feedlySubscribers": 1339072,
+      "format": "rss",
+      "description": "Startup and tech industry news.",
+      "lastItemDate": "2026-11-03",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 1
+    },
+    {
+      "id": "stratechery",
+      "title": "Stratechery",
+      "siteUrl": "https://stratechery.com",
+      "feedUrl": "https://stratechery.com/feed/",
+      "category": "tech",
+      "tags": [
+        "strategy",
+        "analysis"
+      ],
+      "access": "paywalled",
+      "feedlySubscribers": 67886,
+      "format": "rss",
+      "description": "Ben Thompson on tech strategy; most posts are for subscribers.",
+      "lastItemDate": "2026-11-02",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 2
+    },
+    {
+      "id": "hacker-news",
+      "title": "Hacker News: Front Page",
+      "siteUrl": "https://news.ycombinator.com",
+      "feedUrl": "https://hnrss.org/frontpage",
+      "category": "tech",
+      "tags": [
+        "links",
+        "community"
+      ],
+      "access": "free",
+      "feedlySubscribers": 5516,
+      "format": "rss",
+      "description": "Top links from Hacker News (via hnrss.org).",
+      "lastItemDate": "2026-11-03",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 4
+    },
+    {
+      "id": "daring-fireball",
+      "title": "Daring Fireball",
+      "siteUrl": "https://daringfireball.net",
+      "feedUrl": "https://daringfireball.net/feeds/main",
+      "category": "tech",
+      "tags": [
+        "apple",
+        "opinion"
+      ],
+      "access": "free",
+      "feedlySubscribers": 4657,
+      "format": "atom",
+      "description": "John Gruber on Apple and tech.",
+      "lastItemDate": "2026-11-03",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 5
+    },
+    {
+      "id": "9to5mac",
+      "title": "9to5Mac",
+      "siteUrl": "https://9to5mac.com",
+      "feedUrl": "https://9to5mac.com/feed/",
+      "category": "tech",
+      "tags": [
+        "apple",
+        "news"
+      ],
+      "access": "free",
+      "feedlySubscribers": 4639,
+      "format": "rss",
+      "description": "Apple news and rumors.",
+      "lastItemDate": "2026-11-03",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 6
+    },
+    {
+      "id": "macstories",
+      "title": "MacStories",
+      "siteUrl": "https://www.macstories.net",
+      "feedUrl": "https://www.macstories.net/feed/",
+      "category": "tech",
+      "tags": [
+        "apple",
+        "apps"
+      ],
+      "access": "freemium",
+      "feedlySubscribers": 11862,
+      "format": "rss",
+      "description": "Apple apps, iOS and automation; Club posts are paid.",
+      "lastItemDate": "2026-11-02",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 3
+    },
+    {
+      "id": "platformer",
+      "title": "Platformer",
+      "siteUrl": "https://www.platformer.news",
+      "feedUrl": "https://www.platformer.news/rss/",
+      "category": "tech",
+      "tags": [
+        "platforms",
+        "policy",
+        "newsletter"
+      ],
+      "access": "freemium",
+      "feedlySubscribers": 179,
+      "format": "rss",
+      "description": "Casey Newton on big tech and democracy.",
+      "lastItemDate": "2026-10-30",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 8
+    },
+    {
+      "id": "benedict-evans",
+      "title": "Benedict Evans",
+      "siteUrl": "https://www.ben-evans.com",
+      "feedUrl": "https://www.ben-evans.com/benedictevans?format=rss",
+      "category": "tech",
+      "tags": [
+        "strategy",
+        "essays"
+      ],
+      "access": "free",
+      "feedlySubscribers": 612,
+      "format": "rss",
+      "description": "Occasional essays on tech trends (posts every few months).",
+      "lastItemDate": "2026-09-03",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 7
+    },
+    {
+      "id": "npr-news",
+      "title": "NPR News",
+      "siteUrl": "https://www.npr.org",
+      "feedUrl": "https://feeds.npr.org/1001/rss.xml",
+      "category": "news",
+      "tags": [
+        "us",
+        "world"
+      ],
+      "access": "free",
+      "feedlySubscribers": 944,
+      "format": "rss",
+      "description": "Top US and world news from NPR.",
+      "lastItemDate": "2026-11-03",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 4
+    },
+    {
+      "id": "quanta",
+      "title": "Quanta Magazine",
+      "siteUrl": "https://www.quantamagazine.org",
+      "feedUrl": "https://www.quantamagazine.org/feed/",
+      "category": "news",
+      "tags": [
+        "science",
+        "math"
+      ],
+      "access": "free",
+      "feedlySubscribers": 1028,
+      "format": "rss",
+      "description": "Math, physics, biology and computer science stories.",
+      "lastItemDate": "2026-11-02",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 3
+    },
+    {
+      "id": "nature",
+      "title": "Nature",
+      "siteUrl": "https://www.nature.com/nature",
+      "feedUrl": "https://www.nature.com/nature.rss",
+      "category": "news",
+      "tags": [
+        "science",
+        "research"
+      ],
+      "access": "freemium",
+      "feedlySubscribers": 2810,
+      "format": "rss",
+      "description": "Research and news from the journal Nature.",
+      "lastItemDate": "2026-11-03",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 2
+    },
+    {
+      "id": "science-news",
+      "title": "Science News",
+      "siteUrl": "https://www.sciencenews.org",
+      "feedUrl": "https://www.sciencenews.org/feed",
+      "category": "news",
+      "tags": [
+        "science"
+      ],
+      "access": "freemium",
+      "feedlySubscribers": 3155,
+      "format": "rss",
+      "description": "Independent science journalism.",
+      "lastItemDate": "2026-11-03",
+      "verified": true,
+      "verifiedAt": "2026-11-03",
+      "popularityRank": 1
+    },
+    {
+      "id": "the-verge",
+      "title": "The Verge",
+      "siteUrl": "https://www.theverge.com",
+      "feedUrl": "https://www.theverge.com/rss/index.xml",
+      "category": "tech",
+      "tags": [],
+      "access": "freemium",
+      "feedlySubscribers": 1451702,
+      "format": "rss",
+      "description": "",
+      "lastItemDate": null,
+      "verified": false,
+      "verifiedAt": null,
+      "note": "Site blocked our checker; confirm on device before shipping."
+    },
+    {
+      "id": "ars-technica",
+      "title": "Ars Technica",
+      "siteUrl": "https://arstechnica.com",
+      "feedUrl": "https://feeds.arstechnica.com/arstechnica/index",
+      "category": "tech",
+      "tags": [],
+      "access": "free",
+      "feedlySubscribers": 1083,
+      "format": "rss",
+      "description": "",
+      "lastItemDate": null,
+      "verified": false,
+      "verifiedAt": null,
+      "note": "Site blocked our checker; confirm on device before shipping."
+    },
+    {
+      "id": "wired",
+      "title": "Wired",
+      "siteUrl": "https://www.wired.com",
+      "feedUrl": "https://www.wired.com/feed/rss",
+      "category": "tech",
+      "tags": [],
+      "access": "freemium",
+      "feedlySubscribers": 4735,
+      "format": "rss",
+      "description": "",
+      "lastItemDate": null,
+      "verified": false,
+      "verifiedAt": null,
+      "note": "Site blocked our checker; confirm on device before shipping."
+    },
+    {
+      "id": "bbc-news",
+      "title": "BBC News",
+      "siteUrl": "https://www.bbc.co.uk/news",
+      "feedUrl": "https://feeds.bbci.co.uk/news/rss.xml",
+      "category": "news",
+      "tags": [],
+      "access": "free",
+      "feedlySubscribers": 821,
+      "format": "rss",
+      "description": "",
+      "lastItemDate": null,
+      "verified": false,
+      "verifiedAt": null,
+      "note": "Site blocked our checker; confirm on device before shipping."
+    },
+    {
+      "id": "nyt-home",
+      "title": "The New York Times",
+      "siteUrl": "https://www.nytimes.com",
+      "feedUrl": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
+      "category": "news",
+      "tags": [],
+      "access": "paywalled",
+      "feedlySubscribers": 2942,
+      "format": "rss",
+      "description": "",
+      "lastItemDate": null,
+      "verified": false,
+      "verifiedAt": null,
+      "note": "Site blocked our checker; confirm on device before shipping."
+    },
+    {
+      "id": "nyt-health",
+      "title": "NYT Health",
+      "siteUrl": "https://www.nytimes.com/section/health",
+      "feedUrl": "https://rss.nytimes.com/services/xml/rss/nyt/Health.xml",
+      "category": "healthtech",
+      "tags": [],
+      "access": "paywalled",
+      "feedlySubscribers": 176,
+      "format": "rss",
+      "description": "",
+      "lastItemDate": null,
+      "verified": false,
+      "verifiedAt": null,
+      "note": "Site blocked our checker; confirm on device before shipping."
+    },
+    {
+      "id": "guardian-world",
+      "title": "The Guardian: World",
+      "siteUrl": "https://www.theguardian.com/world",
+      "feedUrl": "https://www.theguardian.com/world/rss",
+      "category": "news",
+      "tags": [],
+      "access": "free",
+      "feedlySubscribers": 2804,
+      "format": "rss",
+      "description": "",
+      "lastItemDate": null,
+      "verified": false,
+      "verifiedAt": null,
+      "note": "Site blocked our checker; confirm on device before shipping."
+    },
+    {
+      "id": "the-atlantic",
+      "title": "The Atlantic",
+      "siteUrl": "https://www.theatlantic.com",
+      "feedUrl": "https://www.theatlantic.com/feed/all/",
+      "category": "news",
+      "tags": [],
+      "access": "freemium",
+      "feedlySubscribers": 2990,
+      "format": "rss",
+      "description": "",
+      "lastItemDate": null,
+      "verified": false,
+      "verifiedAt": null,
+      "note": "Site blocked our checker; confirm on device before shipping."
+    },
+    {
+      "id": "economist",
+      "title": "The Economist",
+      "siteUrl": "https://www.economist.com",
+      "feedUrl": "https://www.economist.com/latest/rss.xml",
+      "category": "news",
+      "tags": [],
+      "access": "paywalled",
+      "feedlySubscribers": 283,
+      "format": "rss",
+      "description": "",
+      "lastItemDate": null,
+      "verified": false,
+      "verifiedAt": null,
+      "note": "Site blocked our checker; confirm on device before shipping."
+    },
+    {
+      "id": "hbr",
+      "title": "Harvard Business Review",
+      "siteUrl": "https://hbr.org",
+      "feedUrl": "http://feeds.hbr.org/harvardbusiness",
+      "category": "product",
+      "tags": [],
+      "access": "freemium",
+      "feedlySubscribers": 1055,
+      "format": "rss",
+      "description": "",
+      "lastItemDate": null,
+      "verified": false,
+      "verifiedAt": null,
+      "note": "Site blocked our checker; confirm on device before shipping."
+    },
+    {
+      "id": "axios",
+      "title": "Axios",
+      "siteUrl": "https://www.axios.com",
+      "feedUrl": "https://api.axios.com/feed/",
+      "category": "news",
+      "tags": [],
+      "access": "free",
+      "feedlySubscribers": 348,
+      "format": "rss",
+      "description": "",
+      "lastItemDate": null,
+      "verified": false,
+      "verifiedAt": null,
+      "note": "Site blocked our checker; confirm on device before shipping."
+    }
+  ]
+}
