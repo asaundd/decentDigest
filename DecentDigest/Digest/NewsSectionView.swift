@@ -6,8 +6,8 @@ import SwiftUI
 struct NewsSectionView: View {
     var refresh: @Sendable (Bool) async -> Void
     @Binding var panel: PanelRequest?
-    /// Scrolls an expanded row into view.
-    var reveal: (String) -> Void
+    /// Scrolls an expanded row into view if its bottom (on screen) is past the visible area.
+    var reveal: (String, CGFloat) -> Void
 
     @Environment(\.modelContext) private var context
     @Environment(\.openURL) private var openURL
@@ -19,6 +19,7 @@ struct NewsSectionView: View {
 
     @State private var refreshState = RefreshState.idle
     @State private var expandedID: String?
+    @State private var pendingReveal: String?
     @State private var showsAll = false
 
     private enum RefreshState {
@@ -65,7 +66,12 @@ struct NewsSectionView: View {
             HeadlineRow(
                 headline: row,
                 isExpanded: expandedID == entry.item.itemID,
-                actions: actions(for: entry)
+                actions: actions(for: entry),
+                onExpandedBottom: { bottom in
+                    guard pendingReveal == entry.item.itemID else { return }
+                    pendingReveal = nil
+                    reveal(entry.item.itemID, bottom)
+                }
             ) {
                 tap(entry, headline: row)
             }
@@ -179,12 +185,9 @@ struct NewsSectionView: View {
             markSeen(previous)
         }
         if headline.expands {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                expandedID = previous == id ? nil : id
-            }
-            if previous != id {
-                reveal(id)
-            }
+            // No animation: a List row that animates its height cross-fades and makes the text jump.
+            expandedID = previous == id ? nil : id
+            pendingReveal = expandedID
         } else {
             expandedID = nil
             open(entry.item)

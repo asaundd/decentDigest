@@ -6,8 +6,8 @@ import SwiftUI
 struct SavedNewsSectionView: View {
     var saved: [SavedItem]
     @Binding var panel: PanelRequest?
-    /// Scrolls an expanded row into view.
-    var reveal: (String) -> Void
+    /// Scrolls an expanded row into view if its bottom (on screen) is past the visible area.
+    var reveal: (String, CGFloat) -> Void
 
     @Environment(\.modelContext) private var context
     @Environment(\.openURL) private var openURL
@@ -16,6 +16,7 @@ struct SavedNewsSectionView: View {
     @Query private var states: [ItemState]
 
     @State private var expandedID: String?
+    @State private var pendingReveal: String?
 
     var body: some View {
         Text(DigestSection.savedNews.title)
@@ -27,7 +28,16 @@ struct SavedNewsSectionView: View {
 
         ForEach(saved, id: \.itemID) { item in
             let row = self.headline(for: item)
-            HeadlineRow(headline: row, isExpanded: expandedID == item.itemID, actions: actions(for: item, headline: row)) {
+            HeadlineRow(
+                headline: row,
+                isExpanded: expandedID == item.itemID,
+                actions: actions(for: item, headline: row),
+                onExpandedBottom: { bottom in
+                    guard pendingReveal == item.itemID else { return }
+                    pendingReveal = nil
+                    reveal(item.itemID, bottom)
+                }
+            ) {
                 tap(item, headline: row)
             }
             .digestRow(background: expandedID == item.itemID ? Theme.expandedFill : .clear)
@@ -82,12 +92,9 @@ struct SavedNewsSectionView: View {
             ReadingState.markOpened(itemID: seen.itemID, sourceID: seen.sourceID, in: context)
         }
         if headline.expands {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                expandedID = previous == item.itemID ? nil : item.itemID
-            }
-            if previous != item.itemID {
-                reveal(item.itemID)
-            }
+            // No animation: a List row that animates its height cross-fades and makes the text jump.
+            expandedID = previous == item.itemID ? nil : item.itemID
+            pendingReveal = expandedID
         } else {
             expandedID = nil
             open(item)

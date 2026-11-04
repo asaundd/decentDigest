@@ -12,6 +12,8 @@ struct DigestView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Query(sort: \SavedItem.savedAt, order: .reverse) private var saved: [SavedItem]
     @State private var panel: PanelRequest?
+    /// Where the visible list ends on screen.
+    @State private var listBottom: CGFloat = .infinity
 
     var body: some View {
         // A plain List, styled as a page, so news rows can be swiped.
@@ -25,7 +27,7 @@ struct DigestView: View {
                     if section != .savedNews || !saved.isEmpty {
                         SectionRule()
                             .digestRow()
-                        sectionView(section) { id in reveal(id, with: proxy) }
+                        sectionView(section) { id, bottom in reveal(id, bottom: bottom, with: proxy) }
                     }
                 }
                 SectionRule()
@@ -43,6 +45,11 @@ struct DigestView: View {
                 LinearGradient(colors: [Theme.pageTintTop, Theme.pageTintBottom], startPoint: .top, endPoint: .bottom)
                     .ignoresSafeArea()
             )
+            .onGeometryChange(for: CGFloat.self) { proxy in
+                proxy.frame(in: .global).maxY
+            } action: { bottom in
+                listBottom = bottom
+            }
         }
         .blur(radius: panel == nil ? 0 : 2)
         .overlay { ArticlePanelHost(panel: $panel) }
@@ -65,18 +72,16 @@ struct DigestView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// Scrolls just enough to show an expanded row, once it has finished opening.
-    private func reveal(_ id: String, with proxy: ScrollViewProxy) {
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(250))
-            withAnimation(.easeInOut(duration: 0.25)) {
-                proxy.scrollTo(id)
-            }
+    /// Scrolls an expanded row up only when its bottom is hidden, so rows higher on the screen stay put.
+    private func reveal(_ id: String, bottom: CGFloat, with proxy: ScrollViewProxy) {
+        guard bottom > listBottom - 8 else { return }
+        withAnimation(.easeInOut(duration: 0.25)) {
+            proxy.scrollTo(id, anchor: .bottom)
         }
     }
 
     @ViewBuilder
-    private func sectionView(_ section: DigestSection, reveal: @escaping (String) -> Void) -> some View {
+    private func sectionView(_ section: DigestSection, reveal: @escaping (String, CGFloat) -> Void) -> some View {
         switch section {
         case .weather:
             if let weather = digest.weather {

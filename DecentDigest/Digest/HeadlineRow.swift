@@ -76,6 +76,8 @@ struct HeadlineRow: View {
     var headline: Headline
     var isExpanded: Bool
     var actions: HeadlineActions
+    /// Reports where the expanded row ends on screen, so the list can scroll it into view.
+    var onExpandedBottom: ((CGFloat) -> Void)? = nil
     var onTap: () -> Void
 
     var body: some View {
@@ -113,8 +115,12 @@ struct HeadlineRow: View {
 
             if isExpanded {
                 expandedDetail
-                    .transition(.opacity)
             }
+        }
+        .onGeometryChange(for: CGFloat.self) { proxy in
+            proxy.frame(in: .global).maxY
+        } action: { bottom in
+            if isExpanded { onExpandedBottom?(bottom) }
         }
     }
 
