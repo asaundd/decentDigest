@@ -40,7 +40,7 @@ struct ArticlePanel: View {
                             .font(.subheadline)
                             .foregroundStyle(Theme.secondary)
                     }
-                    if let text = headline.fullText ?? headline.summary {
+                    if let text = headline.panelText {
                         Text(text)
                             .lineSpacing(3)
                             .textSelection(.enabled)

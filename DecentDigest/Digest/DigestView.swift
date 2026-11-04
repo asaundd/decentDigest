@@ -15,33 +15,35 @@ struct DigestView: View {
 
     var body: some View {
         // A plain List, styled as a page, so news rows can be swiped.
-        List {
-            header
-                .padding(.top, Theme.margin)
-                .digestRow()
-            ForEach(digest.sectionOrder) { section in
-                // Saved news appears only once something is saved.
-                if section != .savedNews || !saved.isEmpty {
-                    SectionRule()
-                        .digestRow()
-                    sectionView(section)
+        ScrollViewReader { proxy in
+            List {
+                header
+                    .padding(.top, Theme.margin)
+                    .digestRow()
+                ForEach(digest.sectionOrder) { section in
+                    // Saved news appears only once something is saved.
+                    if section != .savedNews || !saved.isEmpty {
+                        SectionRule()
+                            .digestRow()
+                        sectionView(section) { id in reveal(id, with: proxy) }
+                    }
                 }
+                SectionRule()
+                    .digestRow()
+                footer
+                    .padding(.bottom, Theme.margin)
+                    .digestRow()
             }
-            SectionRule()
-                .digestRow()
-            footer
-                .padding(.bottom, Theme.margin)
-                .digestRow()
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .environment(\.defaultMinListRowHeight, 0)
+            .foregroundStyle(Theme.ink)
+            .tint(Theme.accent)
+            .background(
+                LinearGradient(colors: [Theme.pageTintTop, Theme.pageTintBottom], startPoint: .top, endPoint: .bottom)
+                    .ignoresSafeArea()
+            )
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .environment(\.defaultMinListRowHeight, 0)
-        .foregroundStyle(Theme.ink)
-        .tint(Theme.accent)
-        .background(
-            LinearGradient(colors: [Theme.pageTintTop, Theme.pageTintBottom], startPoint: .top, endPoint: .bottom)
-                .ignoresSafeArea()
-        )
         .blur(radius: panel == nil ? 0 : 2)
         .overlay { ArticlePanelHost(panel: $panel) }
         .refreshable { [refresh] in await refresh(true) }
@@ -63,8 +65,18 @@ struct DigestView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    /// Scrolls just enough to show an expanded row, once it has finished opening.
+    private func reveal(_ id: String, with proxy: ScrollViewProxy) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(250))
+            withAnimation(.easeInOut(duration: 0.25)) {
+                proxy.scrollTo(id)
+            }
+        }
+    }
+
     @ViewBuilder
-    private func sectionView(_ section: DigestSection) -> some View {
+    private func sectionView(_ section: DigestSection, reveal: @escaping (String) -> Void) -> some View {
         switch section {
         case .weather:
             if let weather = digest.weather {
@@ -82,9 +94,9 @@ struct DigestView: View {
             })
             .digestRow()
         case .news:
-            NewsSectionView(refresh: refresh, panel: $panel)
+            NewsSectionView(refresh: refresh, panel: $panel, reveal: reveal)
         case .savedNews:
-            SavedNewsSectionView(saved: saved, panel: $panel)
+            SavedNewsSectionView(saved: saved, panel: $panel, reveal: reveal)
         case .podcasts:
             DigestSectionView(title: section.title, rows: digest.episodes.filter(\.status.isActive).map { item in
                 DigestSectionView.Row(id: item.id, title: item.title, detail: item.sourceName, trailing: item.opensInPanel ? "›" : "↗")

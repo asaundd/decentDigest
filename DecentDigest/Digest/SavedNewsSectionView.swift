@@ -6,6 +6,8 @@ import SwiftUI
 struct SavedNewsSectionView: View {
     var saved: [SavedItem]
     @Binding var panel: PanelRequest?
+    /// Scrolls an expanded row into view.
+    var reveal: (String) -> Void
 
     @Environment(\.modelContext) private var context
     @Environment(\.openURL) private var openURL
@@ -63,7 +65,7 @@ struct SavedNewsSectionView: View {
             notUseful: { resolve(item, as: .notRelevant) },
             openInSafari: headline.link == nil ? nil : { open(item) }
         )
-        if headline.readsHere {
+        if headline.hasMore {
             let panelActions = actions
             actions.readFull = {
                 ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, in: context)
@@ -74,11 +76,20 @@ struct SavedNewsSectionView: View {
     }
 
     private func tap(_ item: SavedItem, headline: Headline) {
+        let previous = expandedID
+        // A row that was expanded and then closed counts as seen, even with no action taken.
+        if let previous, let seen = saved.first(where: { $0.itemID == previous }) {
+            ReadingState.markOpened(itemID: seen.itemID, sourceID: seen.sourceID, in: context)
+        }
         if headline.expands {
             withAnimation(.easeInOut(duration: 0.2)) {
-                expandedID = expandedID == item.itemID ? nil : item.itemID
+                expandedID = previous == item.itemID ? nil : item.itemID
+            }
+            if previous != item.itemID {
+                reveal(item.itemID)
             }
         } else {
+            expandedID = nil
             open(item)
         }
     }

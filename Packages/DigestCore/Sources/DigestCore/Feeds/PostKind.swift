@@ -12,6 +12,16 @@ public enum PostKind: Sendable, Equatable {
 
     /// Text shorter than this is treated as an excerpt, not a full post.
     public static let fullPostMinimum = 1_500
+    /// An expanded row shows at most this many characters; the rest is one tap away in the panel.
+    public static let rowTextLimit = 320
+
+    /// Cuts text for an expanded row at a word boundary, ending in "…". Returns the text unchanged if it fits.
+    public static func clipForRow(_ text: String, limit: Int = rowTextLimit) -> String {
+        guard text.count > limit else { return text }
+        let cut = text.prefix(limit)
+        let end = cut.lastIndex(where: { $0 == " " || $0 == "\n" }) ?? cut.endIndex
+        return cut[..<end].trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters)) + "…"
+    }
 
     public static func classify(summary: String?, fullText: String?, author: String?) -> PostKind {
         if let fullText, isComplete(fullText) { return .fullPost }

@@ -211,3 +211,11 @@ private func data(_ string: String) -> Data { Data(string.utf8) }
     #expect(PostKind.previewText(summary: "Short", fullText: "Short plus more") == "Short plus more")
     #expect(PostKind.previewText(summary: "Short", fullText: nil) == "Short")
 }
+
+@Test func rowTextIsClippedAtAWord() {
+    let text = String(repeating: "word ", count: 200)
+    let clipped = PostKind.clipForRow(text)
+    #expect(clipped.count <= PostKind.rowTextLimit + 1)
+    #expect(clipped.hasSuffix("word…"))
+    #expect(PostKind.clipForRow("Short.") == "Short.")
+}

@@ -6,6 +6,8 @@ import SwiftUI
 struct NewsSectionView: View {
     var refresh: @Sendable (Bool) async -> Void
     @Binding var panel: PanelRequest?
+    /// Scrolls an expanded row into view.
+    var reveal: (String) -> Void
 
     @Environment(\.modelContext) private var context
     @Environment(\.openURL) private var openURL
@@ -157,7 +159,7 @@ struct NewsSectionView: View {
             notUseful: { resolve(item, as: .notRelevant) },
             openInSafari: row.link == nil ? nil : { open(item) }
         )
-        if row.readsHere {
+        if row.hasMore {
             let panelActions = actions
             actions.readFull = {
                 ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, in: context)
@@ -170,14 +172,28 @@ struct NewsSectionView: View {
     // MARK: Actions
 
     private func tap(_ entry: Entry, headline: Headline) {
-        // Expanding keeps the title bold; only reading it (panel or Safari) or acting on it counts.
+        let id = entry.item.itemID
+        let previous = expandedID
+        // A row that was expanded and then closed counts as seen, even with no action taken.
+        if let previous {
+            markSeen(previous)
+        }
         if headline.expands {
             withAnimation(.easeInOut(duration: 0.2)) {
-                expandedID = expandedID == entry.item.itemID ? nil : entry.item.itemID
+                expandedID = previous == id ? nil : id
+            }
+            if previous != id {
+                reveal(id)
             }
         } else {
+            expandedID = nil
             open(entry.item)
         }
+    }
+
+    private func markSeen(_ itemID: String) {
+        guard let item = items.first(where: { $0.itemID == itemID }) else { return }
+        ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, in: context)
     }
 
     private func refreshNow() async {

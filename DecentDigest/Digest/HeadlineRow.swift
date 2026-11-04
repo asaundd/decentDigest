@@ -32,9 +32,24 @@ struct Headline: Identifiable {
         }
     }
 
-    /// What the expanded row shows: the summary for full posts, otherwise the longest text the feed sent.
-    var expandedText: String? {
+    /// The summary for full posts, otherwise the longest text the feed sent.
+    private var previewText: String? {
         readsHere ? summary : PostKind.previewText(summary: summary, fullText: fullText)
+    }
+
+    /// What the expanded row shows, clipped so the action ribbon stays close.
+    var expandedText: String? {
+        previewText.map { PostKind.clipForRow($0) }
+    }
+
+    /// There is more to read in the panel than the row shows.
+    var hasMore: Bool {
+        readsHere || (previewText?.count ?? 0) > PostKind.rowTextLimit
+    }
+
+    /// What the panel shows: the full post, or the whole preview.
+    var panelText: String? {
+        readsHere ? fullText : previewText
     }
 
     var byline: String? {
@@ -81,7 +96,7 @@ struct HeadlineRow: View {
                     Text(headline.marker)
                         .foregroundStyle(Theme.secondary)
                 }
-                .padding(.vertical, isExpanded ? Self.verticalPadding + 4 : Self.verticalPadding)
+                .padding(.vertical, Self.verticalPadding)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -98,6 +113,7 @@ struct HeadlineRow: View {
 
             if isExpanded {
                 expandedDetail
+                    .transition(.opacity)
             }
         }
     }
@@ -111,9 +127,22 @@ struct HeadlineRow: View {
                         .foregroundStyle(Theme.secondary)
                 }
                 if let text = headline.expandedText {
-                    Text(text)
-                        .font(.callout)
-                        .fixedSize(horizontal: false, vertical: true)
+                    if let readFull = actions.readFull {
+                        // Tapping the text opens the rest in the panel.
+                        Button(action: readFull) {
+                            Text(text)
+                                .font(.callout)
+                                .multilineTextAlignment(.leading)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityHint("Opens the rest in a panel")
+                    } else {
+                        Text(text)
+                            .font(.callout)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
             }
             // Line up with the title, past the dash column.
