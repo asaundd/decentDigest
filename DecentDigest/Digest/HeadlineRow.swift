@@ -18,6 +18,11 @@ struct Headline: Identifiable {
         author != nil || summary != nil || fullText != nil
     }
 
+    /// The feed carries the whole post, so it can be read here.
+    var readsHere: Bool {
+        fullText != nil
+    }
+
     var byline: String? {
         author.map { "By \($0)" }
     }
@@ -33,8 +38,9 @@ struct HeadlineActions {
 }
 
 /// One headline: gray dash, title (semibold while unread, gray once opened), feed name and age.
-/// It ends in … when a tap shows more here, or ↗ when a tap opens Safari.
-/// Expanded, it shows the byline, the first lines of the post and text-link actions.
+/// It ends in › when the feed carries the full post to read here, or ↗ when reading it means going to the web.
+/// A tap expands rows that have a summary or byline; title-only rows open Safari.
+/// Expanded, the row sits on a faint band and shows the whole summary over a ribbon of actions.
 struct HeadlineRow: View {
     static let verticalPadding: CGFloat = 5
 
@@ -58,70 +64,123 @@ struct HeadlineRow: View {
                             .foregroundStyle(Theme.secondary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    Text(headline.expands ? "…" : "↗")
+                    Text(headline.readsHere ? "›" : "↗")
                         .foregroundStyle(Theme.secondary)
                 }
-                .padding(.vertical, Self.verticalPadding)
+                .padding(.vertical, isExpanded ? Self.verticalPadding + 4 : Self.verticalPadding)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("\(headline.title), \(headline.detail)")
             .accessibilityValue(Text(headline.isUnread ? "Unread" : "Read"))
-            .accessibilityHint(Text(headline.expands ? (isExpanded ? "Shows less" : "Shows more") : "Opens in Safari"))
+            .accessibilityHint(Text(headline.expands ? (isExpanded ? "Shows less" : "Shows the summary") : "Opens in Safari"))
             .accessibilityAddTraits(.isButton)
             .accessibilityActions {
                 if let save = actions.save {
-                    Button("Save for later", action: save)
+                    Button("Save", action: save)
                 }
             }
 
             if isExpanded {
                 expandedDetail
-                    .padding(.bottom, Self.verticalPadding + 4)
             }
         }
     }
 
     private var expandedDetail: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            if let byline = headline.byline {
-                Text(byline)
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.secondary)
+        VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 6) {
+                if let byline = headline.byline {
+                    Text(byline)
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.secondary)
+                }
+                if let summary = headline.summary {
+                    Text(summary)
+                        .font(.callout)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
-            if let summary = headline.summary {
-                Text(summary)
-                    .font(.callout)
-                    .lineLimit(4)
-            }
-            actionLinks
-                .padding(.top, 2)
-        }
-        // Line up with the title, past the dash column.
-        .padding(.leading, DashColumn.width)
-        .padding(.trailing, DashColumn.width)
-    }
+            // Line up with the title, past the dash column.
+            .padding(.leading, DashColumn.width)
+            .padding(.trailing, DashColumn.width)
 
-    private var actionLinks: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: 16) { links }
-            VStack(alignment: .leading, spacing: 10) { links }
+            ActionRibbon(actions: actions)
         }
+    }
+}
+
+/// The actions under an expanded headline, on one darker band: the way to read it first,
+/// then Save, then ✓ for useful and ✕ for not useful.
+struct ActionRibbon: View {
+    var actions: HeadlineActions
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 20) {
+                primary
+                save
+                Spacer(minLength: 0)
+                judgments
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                primary
+                HStack(spacing: 20) {
+                    save
+                    Spacer(minLength: 0)
+                    judgments
+                }
+            }
+        }
+        .padding(.vertical, 4)
+        .padding(.horizontal, Theme.margin)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.ribbonFill)
+        // The ribbon runs edge to edge, past the row's margins.
+        .padding(.horizontal, -Theme.margin)
     }
 
     @ViewBuilder
-    private var links: some View {
-        if let save = actions.save {
-            TextLink("Save for later", action: save)
-        }
-        TextLink("Useful", action: actions.useful)
-        TextLink("Not useful", action: actions.notUseful)
+    private var primary: some View {
         if let readFull = actions.readFull {
             TextLink("Read full post", action: readFull)
         } else if let openInSafari = actions.openInSafari {
             TextLink("Open in Safari ↗", action: openInSafari)
         }
+    }
+
+    @ViewBuilder
+    private var save: some View {
+        if let save = actions.save {
+            TextLink("Save", action: save)
+        }
+    }
+
+    private var judgments: some View {
+        HStack(spacing: 4) {
+            IconLink(systemImage: "checkmark", label: "Useful", action: actions.useful)
+            IconLink(systemImage: "xmark", label: "Not useful", action: actions.notUseful)
+        }
+    }
+}
+
+/// A small slate symbol button with a full-size tap target and a spoken label.
+struct IconLink: View {
+    var systemImage: String
+    var label: String
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(Theme.actionFont)
+                .foregroundStyle(Theme.accent)
+                .frame(minWidth: 44, minHeight: 36)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.borderless)
+        .accessibilityLabel(label)
     }
 }
 

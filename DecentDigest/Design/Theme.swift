@@ -11,6 +11,9 @@ enum Theme {
     static let secondary = Color(light: 0x6F7573, dark: 0xA3A8A5)
     static let rule = Color(light: 0xDFE0DC, dark: 0x343937)
     static let accent = Color(light: 0x3C3C4C, dark: 0xCECED5)
+    // An expanded headline sits on a faint band, with its actions on a slightly darker one.
+    static let expandedFill = Color(light: 0xF2F1EC, dark: 0x1B1F1E)
+    static let ribbonFill = Color(light: 0xE8E7E1, dark: 0x232827)
     // Swipe action fills carry white labels, so they stay dark in both modes.
     static let swipeUseful = Color(light: 0x3C3C4C, dark: 0x3C3C4C)
     static let swipeNotRelevant = Color(light: 0x6F7573, dark: 0x5A605E)

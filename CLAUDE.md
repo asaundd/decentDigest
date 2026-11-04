@@ -55,9 +55,9 @@ The look is plain text on a paper page.
 - **Type:** Georgia for the date (30pt) and section titles (22pt) only. SF Pro for everything else. Sentence case, never all caps. Support Dynamic Type.
 - **Layout:** 24pt side margins, thin 1pt horizontal rules between sections with 24pt above and below, 6pt from section title to list. Compact, not padded.
 - **No cards, no section colors, no gradients beyond the page tint, no badges, no unread dots, no counts.** The one exception is the quiet gray "N more · Show all" line under News. Unread titles are semibold; opened titles are regular gray and leave the list at the next refresh. Acting on an item (useful, not useful, save) removes it at once.
-- **Minimal icons:** no weather icons, no podcast artwork. Lists use gray dash markers.
+- **Minimal icons:** no weather icons, no podcast artwork. Lists use gray dash markers. The only symbols are ✓ and ✕ in the action ribbon.
 - **Links and actions** use the slate accent, semibold and underlined.
-- **Rows** end in `…` when a tap expands them in place and `↗` when a tap opens another app. An expanded headline shows its byline, its first few lines and text-link actions (Save for later, Useful, Not useful, then Read full post or Open in Safari). Read full post opens the panel, a sheet in the page color, only when the feed carries the full post.
+- **Rows** end in `›` when the feed carries the full post to read here and `↗` when reading it means going to the web. A tap expands any row with a summary or byline; title-only rows open Safari. An expanded headline sits on a faint band (`Theme.expandedFill`) and shows its byline and whole summary over a darker action ribbon (`Theme.ribbonFill`): Read full post or Open in Safari first, then Save, then ✓ (useful) and ✕ (not useful). Read full post opens the panel, a sheet in the page color.
 - **Progressive disclosure:** basics first; one tap opens details; a second tap goes to the source app or site.
 - **Motion:** the only decorative animation is a hand-drawn strike-through when an item is checked off or dismissed. Rules stay straight.
 - **Accessibility:** VoiceOver labels on every control, sufficient contrast, usable at the largest text size.

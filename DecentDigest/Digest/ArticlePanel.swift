@@ -71,7 +71,7 @@ struct ArticlePanel: View {
     @ViewBuilder
     private var links: some View {
         if let save = actions.save {
-            TextLink("Save for later") { dismiss(); save() }
+            TextLink("Save") { dismiss(); save() }
         }
         TextLink("Useful") { dismiss(); actions.useful() }
         TextLink("Not useful") { dismiss(); actions.notUseful() }

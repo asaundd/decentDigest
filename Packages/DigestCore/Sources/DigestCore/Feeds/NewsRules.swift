@@ -71,6 +71,8 @@ public enum NewsRules {
 extension FeedLibrary {
     /// The feeds followed before the reader has chosen any: the most popular starters in each category.
     public func defaultFeeds(perCategory: Int = NewsRules.starterFeedsPerCategory) -> [Feed] {
-        categories.flatMap { starterFeeds(in: $0.id).prefix(perCategory) }
+        categories.flatMap { category in
+            starterFeeds(in: category.id).filter { $0.defaultFollow != false }.prefix(perCategory)
+        }
     }
 }

@@ -28,7 +28,7 @@ struct SavedNewsSectionView: View {
             HeadlineRow(headline: row, isExpanded: expandedID == item.itemID, actions: actions(for: item, headline: row)) {
                 tap(item, headline: row)
             }
-            .digestRow()
+            .digestRow(background: expandedID == item.itemID ? Theme.expandedFill : .clear)
             .swipeActions(edge: .leading, allowsFullSwipe: true) {
                 Button("Useful") { resolve(item, as: .useful) }
                     .tint(Theme.swipeUseful)

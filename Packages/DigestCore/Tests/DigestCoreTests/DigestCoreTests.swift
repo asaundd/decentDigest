@@ -47,4 +47,5 @@ import Testing
     #expect(feeds.count == library.categories.count * NewsRules.starterFeedsPerCategory)
     #expect(feeds.allSatisfy { $0.feedUrl.hasPrefix("https://") })
     #expect(Set(feeds.map(\.category)).count == library.categories.count)
+    #expect(!feeds.contains { $0.id == "nature" })
 }

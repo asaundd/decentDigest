@@ -88,14 +88,14 @@ struct DigestView: View {
             SavedNewsSectionView(saved: saved, panel: $panel)
         case .podcasts:
             DigestSectionView(title: section.title, rows: digest.episodes.filter(\.status.isActive).map { item in
-                DigestSectionView.Row(id: item.id, title: item.title, detail: item.sourceName, trailing: item.opensInPanel ? "…" : "↗")
+                DigestSectionView.Row(id: item.id, title: item.title, detail: item.sourceName, trailing: item.opensInPanel ? "›" : "↗")
             })
             .digestRow()
         }
     }
 
     private var footer: some View {
-        Text("… shows more here  ·  ↗ opens another app")
+        Text("› reads here  ·  ↗ opens the web")
             .font(.footnote)
             .foregroundStyle(Theme.secondary)
     }
@@ -103,10 +103,10 @@ struct DigestView: View {
 
 extension View {
     /// Makes a List row look like part of the page: margins only, no separators or background.
-    func digestRow() -> some View {
+    func digestRow(background: Color = .clear) -> some View {
         listRowInsets(EdgeInsets(top: 0, leading: Theme.margin, bottom: 0, trailing: Theme.margin))
             .listRowSeparator(.hidden)
-            .listRowBackground(Color.clear)
+            .listRowBackground(background)
     }
 }
 
