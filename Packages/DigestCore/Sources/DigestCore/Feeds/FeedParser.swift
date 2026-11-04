@@ -8,15 +8,19 @@ public struct ParsedItem: Sendable, Hashable {
     public var guid: String?
     public var link: String?
     public var title: String
+    /// A short plain-text summary, at most `FeedParser.summaryLimit` characters.
     public var summary: String?
+    /// The whole post, when the feed carries more than the summary shows. Plain text with paragraph breaks.
+    public var fullText: String?
     public var author: String?
     public var published: Date?
 
-    public init(guid: String? = nil, link: String? = nil, title: String, summary: String? = nil, author: String? = nil, published: Date? = nil) {
+    public init(guid: String? = nil, link: String? = nil, title: String, summary: String? = nil, fullText: String? = nil, author: String? = nil, published: Date? = nil) {
         self.guid = guid
         self.link = link
         self.title = title
         self.summary = summary
+        self.fullText = fullText
         self.author = author
         self.published = published
     }
@@ -44,6 +48,8 @@ public enum FeedParserError: Error, Equatable {
 public enum FeedParser {
     /// Summaries keep at most this many characters, as plain text.
     public static let summaryLimit = 600
+    /// Full posts are cut at this many characters.
+    public static let fullTextLimit = 50_000
 
     public static func parse(_ data: Data) throws -> ParsedFeed {
         let delegate = Delegate()
@@ -162,11 +168,16 @@ public enum FeedParser {
             let source = summary ?? content
             let cleanSummary = source.map { HTMLText.plain($0, limit: FeedParser.summaryLimit) }
             guard !cleanTitle.isEmpty || link != nil else { return nil }
+            // The longest body the feed sends counts as the full post if it says more than the summary.
+            let bodies = [content, summary].compactMap { $0 }.map { HTMLText.paragraphs($0) }
+            let longest = bodies.max { $0.count < $1.count }
+            let fullText = longest.flatMap { $0.count > FeedParser.summaryLimit ? $0 : nil }
             return ParsedItem(
                 guid: guid,
                 link: link,
                 title: cleanTitle.isEmpty ? (link ?? "") : cleanTitle,
                 summary: (cleanSummary?.isEmpty ?? true) ? nil : cleanSummary,
+                fullText: fullText,
                 author: author.map { HTMLText.plain($0) },
                 published: published ?? updated
             )

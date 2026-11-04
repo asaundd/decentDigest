@@ -129,9 +129,63 @@ private func data(_ string: String) -> Data { Data(string.utf8) }
     let now = Date(timeIntervalSince1970: 1_800_000_000)
     let candidates = (0..<10).map { NewsRules.Candidate(itemID: "i\($0)", publishedAt: now.addingTimeInterval(Double(-$0) * 3_600)) }
         + [NewsRules.Candidate(itemID: "old", publishedAt: now.addingTimeInterval(-30 * 86_400))]
-    let statuses: [String: ItemStatus] = ["i0": .useful, "i1": .notRelevant, "i2": .read]
-    let shown = NewsRules.visible(candidates, statuses: statuses, now: now)
-    #expect(shown.map(\.itemID) == ["i2", "i3", "i4", "i5", "i6"])
+    let readings: [String: NewsRules.Reading] = [
+        "i0": .init(status: .useful),
+        "i1": .init(status: .notRelevant),
+        "i2": .init(status: .read, openedAt: now),
+        "i3": .init(status: .saved),
+    ]
+    let shown = NewsRules.visible(candidates, readings: readings, now: now)
+    #expect(shown.map(\.itemID) == ["i2", "i4", "i5", "i6", "i7"])
+    #expect(NewsRules.eligible(candidates, readings: readings, listStartedAt: nil, now: now).count == 7)
+}
+
+@Test func openedItemsLeaveAfterTheNextRefresh() {
+    let now = Date(timeIntervalSince1970: 1_800_000_000)
+    let candidates = [
+        NewsRules.Candidate(itemID: "before", publishedAt: now.addingTimeInterval(-600)),
+        NewsRules.Candidate(itemID: "after", publishedAt: now.addingTimeInterval(-500)),
+    ]
+    let readings: [String: NewsRules.Reading] = [
+        "before": .init(status: .read, openedAt: now.addingTimeInterval(-300)),
+        "after": .init(status: .read, openedAt: now.addingTimeInterval(-60)),
+    ]
+    let shown = NewsRules.visible(candidates, readings: readings, listStartedAt: now.addingTimeInterval(-120), now: now)
+    #expect(shown.map(\.itemID) == ["after"])
+}
+
+@Test func firstFetchStartsTodayOrYesterday() {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = TimeZone(identifier: "America/Los_Angeles")!
+    let now = calendar.date(from: DateComponents(year: 2026, month: 11, day: 4, hour: 9))!
+    let today = calendar.startOfDay(for: now)
+    let yesterday = calendar.date(byAdding: .day, value: -1, to: today)!
+    let threeDaysAgo = calendar.date(byAdding: .day, value: -3, to: now)!
+    #expect(NewsRules.backfillCutoff(publishedDates: [now.addingTimeInterval(-3_600), threeDaysAgo], now: now, calendar: calendar) == today)
+    #expect(NewsRules.backfillCutoff(publishedDates: [now.addingTimeInterval(-12 * 3_600), threeDaysAgo], now: now, calendar: calendar) == yesterday)
+    #expect(NewsRules.backfillCutoff(publishedDates: [], now: now, calendar: calendar) == yesterday)
+}
+
+@Test func keepsFullPostWhenTheFeedCarriesOne() throws {
+    let long = (1...20).map { "<p>Paragraph \($0) has enough words to make the post longer than a summary.</p>" }.joined()
+    let xml = """
+    <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>T</title>
+    <item><title>Long</title><link>https://example.com/long</link><description>Short teaser.</description>
+    <content:encoded><![CDATA[\(long)]]></content:encoded></item>
+    <item><title>Short</title><link>https://example.com/short</link><description>Just a line.</description></item>
+    </channel></rss>
+    """
+    let feed = try FeedParser.parse(Data(xml.utf8))
+    let full = try #require(feed.items[0].fullText)
+    #expect(feed.items[0].summary == "Short teaser.")
+    #expect(full.hasPrefix("Paragraph 1 has"))
+    #expect(full.contains("\n\nParagraph 2 has"))
+    #expect(feed.items[1].fullText == nil)
+}
+
+@Test func paragraphsKeepBreaksAndDropTags() {
+    let text = HTMLText.paragraphs("<p>One <b>bold</b></p>\n\n<p>Two<br>lines</p><ul><li>a</li><li>b</li></ul>")
+    #expect(text == "One bold\n\nTwo\nlines\n\n– a\n– b")
 }
 
 @Test func headlineAgeReadsLikeTheMockups() {

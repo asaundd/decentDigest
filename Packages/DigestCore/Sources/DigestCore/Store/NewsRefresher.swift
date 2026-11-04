@@ -23,8 +23,16 @@ public final class NewsRefresher {
         if let library = try? FeedLibrary.bundled() {
             try? await store.addStarterSourcesIfNeeded(library: library)
         }
-        await store.refresh(force: force)
+        let started = Date.now
+        let fetched = await store.refresh(force: force)
+        // Headlines opened before this refresh leave the News list.
+        if fetched > 0 {
+            UserDefaults.standard.set(started.timeIntervalSince1970, forKey: Self.listStartedAtKey)
+        }
     }
+
+    /// When the News list last refreshed, as seconds since 1970 in UserDefaults.
+    nonisolated public static let listStartedAtKey = "newsListStartedAt"
 
     private func feedStore() async -> FeedStore {
         if let store { return store }

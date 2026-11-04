@@ -19,11 +19,37 @@ public enum ReadingState {
         try? context.save()
     }
 
-    /// Swipe right (useful) or left (not relevant): the item leaves the digest.
+    /// Useful (swipe right) or not useful (swipe left): the item leaves News, or Saved news if it was saved.
     public static func resolve(itemID: String, sourceID: String, as status: ItemStatus, in context: ModelContext, now: Date = .now) {
         let state = stateOrNew(itemID: itemID, sourceID: sourceID, in: context, now: now)
         state.status = status
         state.resolvedAt = now
+        let saved = FetchDescriptor<SavedItem>(predicate: #Predicate { $0.itemID == itemID })
+        for item in (try? context.fetch(saved)) ?? [] {
+            context.delete(item)
+        }
+        try? context.save()
+    }
+
+    /// Moves a headline from News to Saved news, where it stays until the reader marks it.
+    public static func save(_ item: FeedItem, sourceTitle: String, in context: ModelContext, now: Date = .now) {
+        let state = stateOrNew(itemID: item.itemID, sourceID: item.sourceID, in: context, now: now)
+        state.status = .saved
+        let itemID = item.itemID
+        let existing = (try? context.fetchCount(FetchDescriptor<SavedItem>(predicate: #Predicate { $0.itemID == itemID }))) ?? 0
+        if existing == 0 {
+            context.insert(SavedItem(
+                itemID: item.itemID,
+                sourceID: item.sourceID,
+                sourceTitle: sourceTitle,
+                title: item.title,
+                link: item.link,
+                summary: item.summary,
+                author: item.author,
+                publishedAt: item.publishedAt,
+                savedAt: now
+            ))
+        }
         try? context.save()
     }
 

@@ -2,7 +2,7 @@ import Foundation
 
 /// The sections of the digest, in their default order.
 public enum DigestSection: String, Codable, Sendable, CaseIterable, Identifiable {
-    case weather, calendar, todos, news, podcasts
+    case weather, calendar, todos, news, savedNews, podcasts
 
     public var id: String { rawValue }
 
@@ -13,6 +13,7 @@ public enum DigestSection: String, Codable, Sendable, CaseIterable, Identifiable
         case .calendar: "Calendar"
         case .todos: "To-dos"
         case .news: "News"
+        case .savedNews: "Saved news"
         case .podcasts: "Podcasts"
         }
     }

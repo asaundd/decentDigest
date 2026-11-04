@@ -4,7 +4,7 @@ import SwiftData
 
 /// Builds the app's SwiftData container: one store that syncs through iCloud and one that stays on the device.
 public enum DigestStore {
-    public static var syncedModels: [any PersistentModel.Type] { [Source.self, ItemState.self] }
+    public static var syncedModels: [any PersistentModel.Type] { [Source.self, ItemState.self, SavedItem.self] }
     public static var localModels: [any PersistentModel.Type] { [FeedItem.self, FetchState.self] }
 
     public static func makeContainer(inMemory: Bool = false) throws -> ModelContainer {
@@ -44,9 +44,10 @@ public enum DigestStore {
                 }
                 context.insert(FeedItem(itemID: entry.id, sourceID: source.id, title: entry.title, link: "https://example.com/\(entry.id)", summary: entry.summary, author: nil, publishedAt: entry.published))
             }
-            if let first = sample.news.last, let source = sources[first.sourceName] {
-                context.insert(ItemState(itemID: first.id, sourceID: source.id, status: .read))
+            if let last = sample.news.last, let source = sources[last.sourceName] {
+                context.insert(ItemState(itemID: last.id, sourceID: source.id, status: .read, firstShownAt: now))
             }
+            context.insert(SavedItem(itemID: "saved-1", sourceID: "", sourceTitle: "Stratechery", title: "The long view on platform shifts", link: "https://example.com/saved-1", summary: "A sample saved headline.", author: "Ben Thompson", publishedAt: now.addingTimeInterval(-3 * 86_400)))
             return container
         } catch {
             fatalError("Preview container failed: \(error)")

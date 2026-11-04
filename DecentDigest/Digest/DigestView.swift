@@ -10,6 +10,8 @@ struct DigestView: View {
     var refresh: @Sendable (Bool) async -> Void = { _ in }
 
     @Environment(\.scenePhase) private var scenePhase
+    @Query(sort: \SavedItem.savedAt, order: .reverse) private var saved: [SavedItem]
+    @State private var panel: PanelRequest?
 
     var body: some View {
         // A plain List, styled as a page, so news rows can be swiped.
@@ -18,9 +20,12 @@ struct DigestView: View {
                 .padding(.top, Theme.margin)
                 .digestRow()
             ForEach(digest.sectionOrder) { section in
-                SectionRule()
-                    .digestRow()
-                sectionView(section)
+                // Saved news appears only once something is saved.
+                if section != .savedNews || !saved.isEmpty {
+                    SectionRule()
+                        .digestRow()
+                    sectionView(section)
+                }
             }
             SectionRule()
                 .digestRow()
@@ -37,6 +42,9 @@ struct DigestView: View {
             LinearGradient(colors: [Theme.pageTintTop, Theme.pageTintBottom], startPoint: .top, endPoint: .bottom)
                 .ignoresSafeArea()
         )
+        .sheet(item: $panel) { request in
+            ArticlePanel(headline: request.headline, actions: request.actions)
+        }
         .refreshable { [refresh] in await refresh(true) }
         .onChange(of: scenePhase, initial: true) { _, phase in
             guard phase == .active else { return }
@@ -75,17 +83,19 @@ struct DigestView: View {
             })
             .digestRow()
         case .news:
-            NewsSectionView(refresh: refresh)
+            NewsSectionView(refresh: refresh, panel: $panel)
+        case .savedNews:
+            SavedNewsSectionView(saved: saved, panel: $panel)
         case .podcasts:
             DigestSectionView(title: section.title, rows: digest.episodes.filter(\.status.isActive).map { item in
-                DigestSectionView.Row(id: item.id, title: item.title, detail: item.sourceName, trailing: item.opensInPanel ? "›" : "↗")
+                DigestSectionView.Row(id: item.id, title: item.title, detail: item.sourceName, trailing: item.opensInPanel ? "…" : "↗")
             })
             .digestRow()
         }
     }
 
     private var footer: some View {
-        Text("› reads here  ·  ↗ opens another app")
+        Text("… shows more here  ·  ↗ opens another app")
             .font(.footnote)
             .foregroundStyle(Theme.secondary)
     }

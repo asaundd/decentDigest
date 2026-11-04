@@ -1,7 +1,31 @@
 import Foundation
 
-/// Turns feed HTML into short plain text. Only headlines and short summaries are kept, never full articles.
+/// Turns feed HTML into plain text.
 public enum HTMLText {
+    /// Plain text that keeps paragraph breaks, for showing a full post the feed carries.
+    public static func paragraphs(_ html: String, limit: Int = FeedParser.fullTextLimit) -> String {
+        var text = html
+        for tag in ["script", "style", "figure", "figcaption"] {
+            text = text.replacingOccurrences(of: "<\(tag)[^>]*>[\\s\\S]*?</\(tag)>", with: " ", options: [.regularExpression, .caseInsensitive])
+        }
+        text = text.replacingOccurrences(of: "<br\\s*/?>", with: "\n", options: [.regularExpression, .caseInsensitive])
+        text = text.replacingOccurrences(of: "</(p|div|h[1-6]|blockquote|pre|ul|ol)>", with: "\n\n", options: [.regularExpression, .caseInsensitive])
+        text = text.replacingOccurrences(of: "<li[^>]*>", with: "\n– ", options: [.regularExpression, .caseInsensitive])
+        text = text.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+        text = decodeEntities(text)
+        let lines = text.components(separatedBy: "\n").map {
+            $0.replacingOccurrences(of: "[ \\t\u{00A0}]+", with: " ", options: .regularExpression)
+                .trimmingCharacters(in: .whitespaces)
+        }
+        text = lines.joined(separator: "\n")
+            .replacingOccurrences(of: "\n{3,}", with: "\n\n", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if text.count > limit {
+            text = String(text.prefix(limit)) + "…"
+        }
+        return text
+    }
+
     public static func plain(_ html: String, limit: Int? = nil) -> String {
         var text = html
         // Drop blocks whose contents are never readable text.

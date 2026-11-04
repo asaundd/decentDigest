@@ -36,6 +36,15 @@ public enum SourceKind: String, Sendable {
     case news, podcast
 }
 
+/// An article's web address; only http and https links are opened.
+public enum WebLink {
+    public static func url(_ link: String?) -> URL? {
+        guard let url = link.flatMap(URL.init(string:)),
+              let scheme = url.scheme?.lowercased(), scheme == "https" || scheme == "http" else { return nil }
+        return url
+    }
+}
+
 /// What the reader did with one item. This is the reading history; it outlives the cached item.
 @Model
 public final class ItemState {
@@ -61,6 +70,35 @@ public final class ItemState {
     }
 }
 
+/// A headline saved for later. Keeps what Saved news needs to show it after the cached item expires;
+/// the full post is not synced.
+@Model
+public final class SavedItem {
+    public var itemID: String = ""
+    public var sourceID: String = ""
+    public var sourceTitle: String = ""
+    public var title: String = ""
+    public var link: String?
+    public var summary: String?
+    public var author: String?
+    public var publishedAt: Date = Date.now
+    public var savedAt: Date = Date.now
+
+    public init(itemID: String, sourceID: String, sourceTitle: String, title: String, link: String?, summary: String?, author: String?, publishedAt: Date, savedAt: Date = .now) {
+        self.itemID = itemID
+        self.sourceID = sourceID
+        self.sourceTitle = sourceTitle
+        self.title = title
+        self.link = link
+        self.summary = summary
+        self.author = author
+        self.publishedAt = publishedAt
+        self.savedAt = savedAt
+    }
+
+    public var linkURL: URL? { WebLink.url(link) }
+}
+
 // MARK: Kept on this device only
 
 /// A fetched headline. Rebuilt from the feeds on each device; holds a short summary, never the article.
@@ -71,27 +109,25 @@ public final class FeedItem {
     public var title: String = ""
     public var link: String?
     public var summary: String?
+    /// The whole post when the feed carries it. Stays on this device and leaves with the item.
+    public var fullText: String?
     public var author: String?
     public var publishedAt: Date = Date.now
     public var fetchedAt: Date = Date.now
 
-    public init(itemID: String, sourceID: String, title: String, link: String?, summary: String?, author: String?, publishedAt: Date, fetchedAt: Date = .now) {
+    public init(itemID: String, sourceID: String, title: String, link: String?, summary: String?, fullText: String? = nil, author: String?, publishedAt: Date, fetchedAt: Date = .now) {
         self.itemID = itemID
         self.sourceID = sourceID
         self.title = title
         self.link = link
         self.summary = summary
+        self.fullText = fullText
         self.author = author
         self.publishedAt = publishedAt
         self.fetchedAt = fetchedAt
     }
 
-    /// The article's web address; only http and https links are opened.
-    public var linkURL: URL? {
-        guard let url = link.flatMap(URL.init(string:)),
-              let scheme = url.scheme?.lowercased(), scheme == "https" || scheme == "http" else { return nil }
-        return url
-    }
+    public var linkURL: URL? { WebLink.url(link) }
 }
 
 /// Validators and errors from the last fetch of one source.
@@ -103,6 +139,9 @@ public final class FetchState {
     public var lastFetchedAt: Date?
     public var lastError: String?
     public var failureCount: Int = 0
+    /// Set on the first successful fetch: items published before it are never added,
+    /// so a new source starts with today's items (or yesterday's) instead of its whole backlog.
+    public var backfillCutoff: Date?
 
     public init(sourceID: String) {
         self.sourceID = sourceID

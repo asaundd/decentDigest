@@ -24,13 +24,16 @@ public actor FeedStore {
 
     /// Fetches every followed news feed that is due, stores new headlines and prunes expired ones.
     /// - Parameter force: fetch every source now, even if it was fetched recently.
-    public func refresh(force: Bool = false, now: Date = .now, fetcher: FeedFetcher = FeedFetcher()) async {
+    /// - Returns: how many feeds were fetched.
+    @discardableResult
+    public func refresh(force: Bool = false, now: Date = .now, fetcher: FeedFetcher = FeedFetcher()) async -> Int {
         let jobs: [Job]
         do {
             jobs = try dueJobs(force: force, now: now)
         } catch {
-            return
+            return 0
         }
+        guard !jobs.isEmpty else { return 0 }
 
         await withTaskGroup(of: (Job, Swift.Result<FeedFetcher.Result, Error>).self) { group in
             var queue = jobs.makeIterator()
@@ -50,6 +53,7 @@ public actor FeedStore {
 
         try? prune(now: now)
         try? modelContext.save()
+        return jobs.count
     }
 
     /// Deletes cached items past the expiry window. Items shown but never touched are recorded as ignored.
@@ -96,7 +100,14 @@ public actor FeedStore {
             if !force, let last = state?.lastFetchedAt, now.timeIntervalSince(last) < NewsRules.refreshInterval {
                 return nil
             }
-            return Job(sourceID: source.id, feedURL: source.feedURL, etag: state?.etag, lastModified: state?.lastModified)
+            // Until a source has a backfill cutoff, fetch it in full so the cutoff can be set.
+            let hasCutoff = state?.backfillCutoff != nil
+            return Job(
+                sourceID: source.id,
+                feedURL: source.feedURL,
+                etag: hasCutoff ? state?.etag : nil,
+                lastModified: hasCutoff ? state?.lastModified : nil
+            )
         }
     }
 
@@ -123,30 +134,57 @@ public actor FeedStore {
             state.lastModified = lastModified
             state.lastError = nil
             state.failureCount = 0
-            insert(feed.items, sourceID: job.sourceID, feedURL: job.feedURL, now: now)
+            let backfillCutoff: Date
+            if let existing = state.backfillCutoff {
+                backfillCutoff = existing
+            } else {
+                backfillCutoff = NewsRules.backfillCutoff(publishedDates: feed.items.map { $0.published ?? now }, now: now)
+                state.backfillCutoff = backfillCutoff
+                removeUntouchedItems(sourceID: job.sourceID, before: backfillCutoff)
+            }
+            insert(feed.items, sourceID: job.sourceID, feedURL: job.feedURL, notBefore: backfillCutoff, now: now)
         }
     }
 
-    private func insert(_ items: [ParsedItem], sourceID: String, feedURL: String, now: Date) {
-        let cutoff = NewsRules.expiryCutoff(now: now)
+    /// Clears cached items from before a new backfill cutoff that the reader never saw.
+    private func removeUntouchedItems(sourceID: String, before cutoff: Date) {
+        let descriptor = FetchDescriptor<FeedItem>(predicate: #Predicate { $0.sourceID == sourceID && $0.publishedAt < cutoff })
+        guard let old = try? modelContext.fetch(descriptor), !old.isEmpty else { return }
+        let stateDescriptor = FetchDescriptor<ItemState>(predicate: #Predicate { $0.sourceID == sourceID })
+        let touched = Set(((try? modelContext.fetch(stateDescriptor)) ?? []).filter { $0.openedAt != nil || $0.resolvedAt != nil }.map(\.itemID))
+        for item in old where !touched.contains(item.itemID) {
+            modelContext.delete(item)
+        }
+    }
+
+    private func insert(_ items: [ParsedItem], sourceID: String, feedURL: String, notBefore backfillCutoff: Date, now: Date) {
+        let cutoff = max(NewsRules.expiryCutoff(now: now), backfillCutoff)
         let descriptor = FetchDescriptor<FeedItem>(predicate: #Predicate { $0.sourceID == sourceID })
-        var known = Set(((try? modelContext.fetch(descriptor)) ?? []).map(\.itemID))
+        var known = Dictionary(((try? modelContext.fetch(descriptor)) ?? []).map { ($0.itemID, $0) }, uniquingKeysWith: { first, _ in first })
         for item in items {
+            let itemID = ItemID.make(feedURL: feedURL, guidOrLink: item.identity)
+            if let existing = known[itemID] {
+                // Fill in text an earlier version of the app didn't keep.
+                if existing.fullText == nil, let fullText = item.fullText { existing.fullText = fullText }
+                if existing.author == nil, let author = item.author { existing.author = author }
+                continue
+            }
             let published = item.published ?? now
             guard published >= cutoff else { continue }
-            let itemID = ItemID.make(feedURL: feedURL, guidOrLink: item.identity)
-            guard known.insert(itemID).inserted else { continue }
-            modelContext.insert(FeedItem(
+            let feedItem = FeedItem(
                 itemID: itemID,
                 sourceID: sourceID,
                 title: item.title,
                 link: item.link,
                 summary: item.summary,
+                fullText: item.fullText,
                 author: item.author,
                 // A future date (bad clock on the server) would pin an item to the top.
                 publishedAt: min(published, now),
                 fetchedAt: now
-            ))
+            )
+            modelContext.insert(feedItem)
+            known[itemID] = feedItem
         }
     }
 }
