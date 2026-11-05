@@ -80,7 +80,7 @@ struct NewsSectionView: View {
             }
             .digestRow()
             .id(entry.item.itemID)
-            // A row that leaves is gone at once; the rows below then slide up. No fade.
+            // A row that leaves is gone at once, with no fade.
             .transition(.identity)
             .judgmentSwipes(useful: { resolve(entry.item, as: .useful) }, notUseful: { resolve(entry.item, as: .notRelevant) })
             .onAppear {
@@ -201,14 +201,12 @@ struct NewsSectionView: View {
     }
 
     private func save(_ item: FeedItem, sourceName: String) {
-        withAnimation {
-            ReadingState.save(item, sourceTitle: sourceName, in: context)
-        }
+        // No animation: the row is gone at once and the rows below close the gap in the same frame.
+        ReadingState.save(item, sourceTitle: sourceName, in: context)
     }
 
     private func resolve(_ item: FeedItem, as status: ItemStatus) {
-        withAnimation {
-            ReadingState.resolve(itemID: item.itemID, sourceID: item.sourceID, as: status, in: context)
-        }
+        // No animation: the row is gone at once and the rows below close the gap in the same frame.
+        ReadingState.resolve(itemID: item.itemID, sourceID: item.sourceID, as: status, in: context)
     }
 }

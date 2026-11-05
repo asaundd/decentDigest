@@ -60,12 +60,13 @@ private struct JudgmentSwipe: ViewModifier {
             // and the label never sits under the row's text.
             VStack(spacing: 3) {
                 Image(systemName: isUseful ? "checkmark" : "xmark")
-                    .font(.body.weight(.light))
+                    .font(.title2.weight(.regular))
                 Text(isUseful ? "Relevant" : "Not relevant")
-                    .font(.caption2)
+                    .font(.subheadline)
             }
             .fixedSize()
-            .foregroundStyle(isArmed ? Theme.ink : Theme.secondary)
+            // Styled like the feed name and age under a title.
+            .foregroundStyle(Theme.secondary)
             .padding(.horizontal, Theme.margin)
             .frame(width: abs(offset), alignment: isUseful ? .leading : .trailing)
             .frame(maxHeight: .infinity)
