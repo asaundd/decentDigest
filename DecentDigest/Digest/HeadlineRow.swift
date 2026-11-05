@@ -35,14 +35,9 @@ struct Headline: Identifiable {
         previewText.map { PostKind.clipForRow($0) }
     }
 
-    /// There is more to read in the panel than the row shows.
-    var hasMore: Bool {
-        readsHere || (previewText?.count ?? 0) > PostKind.rowTextLimit
-    }
-
-    /// What the panel shows: the full post, or the whole preview.
+    /// What the panel shows: the full post. Only full posts open the panel.
     var panelText: String? {
-        readsHere ? fullText : previewText
+        fullText
     }
 
     /// The label for going to the site: an excerpt continues there, anything else opens it.

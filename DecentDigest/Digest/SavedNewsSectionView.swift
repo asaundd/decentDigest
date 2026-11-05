@@ -77,7 +77,7 @@ struct SavedNewsSectionView: View {
             siteLabel: headline.siteLabel,
             readsHere: headline.readsHere
         )
-        if headline.hasMore {
+        if headline.readsHere {
             let panelActions = actions
             actions.readFull = {
                 ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, in: context)

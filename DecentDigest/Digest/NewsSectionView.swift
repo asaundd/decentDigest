@@ -167,7 +167,7 @@ struct NewsSectionView: View {
             siteLabel: row.siteLabel,
             readsHere: row.readsHere
         )
-        if row.hasMore {
+        if row.readsHere {
             let panelActions = actions
             actions.readFull = {
                 ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, in: context)

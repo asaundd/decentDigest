@@ -12,7 +12,7 @@ enum Theme {
     static let rule = Color(light: 0xDFE0DC, dark: 0x343937)
     static let accent = Color(light: 0x3C3C4C, dark: 0xCECED5)
     // An expanded headline sits on a faint band, with its actions on a slightly darker one.
-    static let expandedFill = Color(light: 0xFFFEFC, dark: 0x1F2322)
+    static let expandedFill = Color(light: 0xFFFEFC, dark: 0x202524)
     /// The action ribbon shares the expanded band's color.
     static let ribbonFill = expandedFill
     /// A faint edge and shadow that lift the expanded band off the page.
