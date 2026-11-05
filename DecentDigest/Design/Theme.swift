@@ -20,8 +20,8 @@ enum Theme {
     static let expandedShadow = Color(light: 0x1A1D1E, dark: 0x000000).opacity(0.06)
     /// The small square buttons on the ribbon, a shade darker than the band.
     static let ribbonButtonFill = Color(light: 0xF2F1EC, dark: 0x151817)
-    // The article panel: paper in light mode, a step lighter than the page in dark mode.
-    static let panelFill = Color(light: 0xFAF9F6, dark: 0x202524)
+    /// The panel matches the expanded band, so the post reads the same in both.
+    static let panelFill = expandedFill
     static let panelShadow = Color.black.opacity(0.14)
     /// The faint wash over the digest while the panel is open.
     static let scrim = Color.black.opacity(0.12)

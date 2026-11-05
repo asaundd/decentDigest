@@ -59,7 +59,7 @@ struct ArticlePanel: View {
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(Theme.rule, lineWidth: 0.5)
+                .strokeBorder(Theme.expandedRing, lineWidth: 1)
         )
         .shadow(color: Theme.panelShadow, radius: 24, x: 0, y: 8)
         .offset(x: dragOffset)
