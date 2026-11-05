@@ -41,6 +41,7 @@ struct SavedNewsSectionView: View {
                 tap(item, headline: row)
             }
             .digestRow()
+            .id(item.itemID)
             .judgmentSwipes(useful: { resolve(item, as: .useful) }, notUseful: { resolve(item, as: .notRelevant) })
         }
     }
@@ -85,7 +86,7 @@ struct SavedNewsSectionView: View {
         if let previous, let seen = saved.first(where: { $0.itemID == previous }) {
             ReadingState.markOpened(itemID: seen.itemID, sourceID: seen.sourceID, in: context)
         }
-        // No animation: a List row that animates its height cross-fades and makes the text jump.
+        // No animation, so the title stays put while the details appear under it.
         expandedID = previous == item.itemID ? nil : item.itemID
         pendingReveal = expandedID
     }

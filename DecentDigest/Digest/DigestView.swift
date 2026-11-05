@@ -18,29 +18,28 @@ struct DigestView: View {
     @State private var listBottom: CGFloat = .infinity
 
     var body: some View {
-        // A plain List, styled as a page, so news rows can be swiped.
+        // A plain scrolling page. (A List re-measured expanded rows late, which made titles jump.)
         ScrollViewReader { proxy in
-            List {
-                header
-                    .padding(.top, Theme.margin)
-                    .digestRow()
-                ForEach(digest.sectionOrder) { section in
-                    // Saved news appears only once something is saved.
-                    if section != .savedNews || !saved.isEmpty {
-                        SectionRule()
-                            .digestRow()
-                        sectionView(section) { id, bottom in reveal(id, bottom: bottom, with: proxy) }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    header
+                        .padding(.top, Theme.margin)
+                        .digestRow()
+                    ForEach(digest.sectionOrder) { section in
+                        // Saved news appears only once something is saved.
+                        if section != .savedNews || !saved.isEmpty {
+                            SectionRule()
+                                .digestRow()
+                            sectionView(section) { id, bottom in reveal(id, bottom: bottom, with: proxy) }
+                        }
                     }
+                    SectionRule()
+                        .digestRow()
+                    footer
+                        .padding(.bottom, Theme.margin)
+                        .digestRow()
                 }
-                SectionRule()
-                    .digestRow()
-                footer
-                    .padding(.bottom, Theme.margin)
-                    .digestRow()
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .environment(\.defaultMinListRowHeight, 0)
             .foregroundStyle(Theme.ink)
             .tint(Theme.accent)
             .background(
@@ -128,11 +127,9 @@ struct DigestView: View {
 }
 
 extension View {
-    /// Makes a List row look like part of the page: margins only, no separators or background.
+    /// Sets a row in from the page's side margins.
     func digestRow() -> some View {
-        listRowInsets(EdgeInsets(top: 0, leading: Theme.margin, bottom: 0, trailing: Theme.margin))
-            .listRowSeparator(.hidden)
-            .listRowBackground(Color.clear)
+        padding(.horizontal, Theme.margin)
     }
 }
 

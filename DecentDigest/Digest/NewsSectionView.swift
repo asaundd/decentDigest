@@ -2,7 +2,7 @@ import DigestCore
 import SwiftData
 import SwiftUI
 
-/// Live headlines from the followed feeds. Each headline is its own List row so it can be swiped.
+/// Live headlines from the followed feeds. Each headline can be expanded and swiped.
 struct NewsSectionView: View {
     /// True while feeds are being checked.
     var isRefreshing: Bool
@@ -78,6 +78,7 @@ struct NewsSectionView: View {
                 tap(entry, headline: row)
             }
             .digestRow()
+            .id(entry.item.itemID)
             .judgmentSwipes(useful: { resolve(entry.item, as: .useful) }, notUseful: { resolve(entry.item, as: .notRelevant) })
             .onAppear {
                 ReadingState.markShown(itemID: entry.item.itemID, sourceID: entry.item.sourceID, in: context)
@@ -180,7 +181,7 @@ struct NewsSectionView: View {
         if let previous {
             markSeen(previous)
         }
-        // No animation: a List row that animates its height cross-fades and makes the text jump.
+        // No animation, so the title stays put while the details appear under it.
         expandedID = previous == id ? nil : id
         pendingReveal = expandedID
     }
