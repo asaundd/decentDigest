@@ -314,6 +314,7 @@ struct StillButtonStyle: ButtonStyle {
 }
 
 /// How headlines leave and join the list.
+@MainActor
 enum HeadlineMotion {
     /// The rows below slide up to close the gap a row leaves.
     static let close = Animation.easeOut(duration: 0.2)
