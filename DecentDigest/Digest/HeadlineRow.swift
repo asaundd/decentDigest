@@ -313,6 +313,17 @@ struct StillButtonStyle: ButtonStyle {
     }
 }
 
+/// How headlines leave and join the list.
+enum HeadlineMotion {
+    /// The rows below slide up to close the gap a row leaves.
+    static let close = Animation.easeOut(duration: 0.2)
+    /// Leaving is instant; joining fades in after the slide has finished.
+    static let transition = AnyTransition.asymmetric(
+        insertion: .opacity.animation(.easeOut(duration: 0.15).delay(0.2)),
+        removal: .identity
+    )
+}
+
 /// The width of the gray dash plus its gap, so expanded text lines up with titles.
 enum DashColumn {
     static let width: CGFloat = 16

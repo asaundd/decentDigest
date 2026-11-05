@@ -43,8 +43,9 @@ struct SavedNewsSectionView: View {
             }
             .digestRow()
             .id(item.itemID)
-            // A row that leaves is gone at once, with no fade.
-            .transition(.identity)
+            // A row that leaves is gone at once. One that joins waits for the slide, then fades in,
+            // so it never overlaps the rows still moving.
+            .transition(HeadlineMotion.transition)
             .judgmentSwipes(useful: { resolve(item, as: .useful) }, notUseful: { resolve(item, as: .notRelevant) })
         }
     }
@@ -105,7 +106,9 @@ struct SavedNewsSectionView: View {
     private func resolve(_ item: SavedItem, as status: ItemStatus) {
         let itemID = item.itemID
         let sourceID = item.sourceID
-        // No animation: the row is gone at once and the rows below close the gap in the same frame.
-        ReadingState.resolve(itemID: itemID, sourceID: sourceID, as: status, in: context)
+        // The row is gone at once; the rows below slide up briefly to close the gap.
+        withAnimation(HeadlineMotion.close) {
+            ReadingState.resolve(itemID: itemID, sourceID: sourceID, as: status, in: context)
+        }
     }
 }
