@@ -43,7 +43,7 @@ Decent Digest is a native iPhone app that shows a calm daily digest: weather, ca
 ## Data model rules
 
 - Feed item ids are `ItemID.make(feedURL:guidOrLink:)`, a SHA-256 hash. Synced reading state is keyed by it, so never change the formula.
-- Item status values: `new`, `read`, `useful` (swipe right), `notRelevant` (swipe left, shown as "Not useful"), `ignored` (expired untouched), `unread`, `saved` (in Saved news, never expires). Keep them distinct; they form the user's reading history, which stays on device and in the user's iCloud.
+- Item status values: `new`, `read`, `useful` (swipe right, shown as "Relevant"), `notRelevant` (swipe left, shown as "Not relevant"), `ignored` (expired untouched), `unread`, `saved` (in Saved news, never expires). Keep them distinct; they form the user's reading history, which stays on device and in the user's iCloud.
 - For CloudKit-synced SwiftData models: every property optional or defaulted, no unique constraints, no required relationships.
 - Two stores: `Source`, `ItemState` and `SavedItem` sync through iCloud; `FeedItem` and `FetchState` stay on the device. Models link by id strings, not relationships.
 
