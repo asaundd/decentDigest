@@ -78,9 +78,15 @@ struct HeadlineRow: View {
     var onExpandedBottom: ((CGFloat) -> Void)? = nil
     var onTap: () -> Void
 
+    @Environment(\.swipeGuard) private var swipeGuard
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Button(action: onTap) {
+            // A swipe let go near where it began is ignored, not taken as a tap.
+            Button {
+                guard swipeGuard?.justSwiped != true else { return }
+                onTap()
+            } label: {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text("–")
                         .foregroundStyle(Theme.secondary)
@@ -151,7 +157,10 @@ struct HeadlineRow: View {
                 if let text = headline.expandedText {
                     if let readFull = actions.readFull {
                         // Tapping the text opens the rest in the panel.
-                        Button(action: readFull) {
+                        Button {
+                            guard swipeGuard?.justSwiped != true else { return }
+                            readFull()
+                        } label: {
                             Text(text)
                                 .font(.callout)
                                 .multilineTextAlignment(.leading)

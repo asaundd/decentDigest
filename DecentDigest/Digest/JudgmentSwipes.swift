@@ -11,6 +11,20 @@ extension View {
     }
 }
 
+/// Remembers when a row last moved sideways, so a swipe that is let go near where it began
+/// isn't taken as a tap.
+/// Gestures and taps both run on the main thread.
+final class SwipeGuard: @unchecked Sendable {
+    fileprivate var lastMove = Date.distantPast
+
+    /// True right after a swipe, when the finger lifting would otherwise count as a tap.
+    var justSwiped: Bool { Date.now.timeIntervalSince(lastMove) < 0.4 }
+}
+
+extension EnvironmentValues {
+    @Entry var swipeGuard: SwipeGuard? = nil
+}
+
 private struct JudgmentSwipe: ViewModifier {
     var useful: () -> Void
     var notUseful: () -> Void
@@ -23,6 +37,7 @@ private struct JudgmentSwipe: ViewModifier {
     private var drag = Drag.undecided
     /// Where the row flies off to once it has been acted on.
     @State private var exit: CGFloat?
+    @State private var swipeGuard = SwipeGuard()
 
     private enum Drag: Equatable {
         case undecided, vertical
@@ -48,6 +63,7 @@ private struct JudgmentSwipe: ViewModifier {
             .offset(x: offset)
             .background { band }
             .simultaneousGesture(dragGesture)
+            .environment(\.swipeGuard, swipeGuard)
             .sensoryFeedback(.selection, trigger: isArmed) { _, armed in armed }
     }
 
@@ -77,8 +93,11 @@ private struct JudgmentSwipe: ViewModifier {
 
     private var dragGesture: some Gesture {
         DragGesture(minimumDistance: 16)
-            .updating($drag) { value, state, _ in
+            .updating($drag) { [swipeGuard] value, state, _ in
                 let x = value.translation.width
+                defer {
+                    if case .sideways = state { swipeGuard.lastMove = .now }
+                }
                 switch state {
                 case .vertical:
                     return
