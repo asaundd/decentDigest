@@ -68,7 +68,8 @@ struct HeadlineActions {
 /// and up to 320 characters of text over a ribbon of actions.
 struct HeadlineRow: View {
     static let verticalPadding: CGFloat = 5
-    /// How far the open card reaches past the text on each side.
+    /// How far the open card reaches past the text on the right. On the left it starts under the dash,
+    /// so it reads as indented under its title.
     static let cardInset: CGFloat = 12
 
     var headline: Headline
@@ -109,7 +110,7 @@ struct HeadlineRow: View {
                 .padding(.vertical, Self.verticalPadding)
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(StillButtonStyle())
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("\(headline.title), \(headline.detail)")
             .accessibilityValue(Text(headline.isUnread ? "Unread" : "Read"))
@@ -133,7 +134,7 @@ struct HeadlineRow: View {
                                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                                     .strokeBorder(Theme.expandedRing, lineWidth: 1)
                             )
-                            .padding(.horizontal, -Self.cardInset)
+                            .padding(.trailing, -Self.cardInset)
                     }
                     .padding(.top, 2)
                     .padding(.bottom, 10)
@@ -146,12 +147,22 @@ struct HeadlineRow: View {
         }
     }
 
+    private var noSummary: some View {
+        Text("No summary available.")
+            .font(.callout)
+            .italic()
+            .foregroundStyle(Theme.secondary)
+    }
+
     /// The card: byline with Save, ✓ and ✕ at the top right where the thumb is, then the text,
     /// then the way to read it.
     private var expandedDetail: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .center, spacing: 8) {
-                if let byline = headline.byline {
+                // Link-only rows put their note on this line; others put the byline here.
+                if headline.expandedText == nil {
+                    noSummary
+                } else if let byline = headline.byline {
                     Text(byline)
                         .font(.subheadline)
                         .foregroundStyle(Theme.secondary)
@@ -176,17 +187,16 @@ struct HeadlineRow: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .contentShape(Rectangle())
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(StillButtonStyle())
                         .accessibilityHint("Opens the rest in a panel")
                     } else {
                         Text(text)
                             .font(.callout)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                } else {
-                    Text("No summary available.")
-                        .font(.callout)
-                        .italic()
+                } else if let byline = headline.byline {
+                    Text(byline)
+                        .font(.subheadline)
                         .foregroundStyle(Theme.secondary)
                 }
             }
@@ -293,6 +303,13 @@ struct RibbonButton: View {
         }
         .buttonStyle(.borderless)
         .accessibilityLabel(label)
+    }
+}
+
+/// A button that doesn't dim while pressed, so a headline keeps its color until it is read.
+struct StillButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
     }
 }
 

@@ -80,6 +80,8 @@ struct NewsSectionView: View {
             }
             .digestRow()
             .id(entry.item.itemID)
+            // A row that leaves is gone at once; the rows below then slide up. No fade.
+            .transition(.identity)
             .judgmentSwipes(useful: { resolve(entry.item, as: .useful) }, notUseful: { resolve(entry.item, as: .notRelevant) })
             .onAppear {
                 ReadingState.markShown(itemID: entry.item.itemID, sourceID: entry.item.sourceID, in: context)

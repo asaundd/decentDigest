@@ -1,9 +1,10 @@
 import SwiftUI
+import UIKit
 
 extension View {
     /// Swipe right for useful (✓), left for not useful (✕). The system swipe actions draw buttons,
-    /// so this is drawn by hand: a plain band of color behind the row, with the symbol and a small
-    /// word pinned to the edge the row is leaving. Letting go past the threshold acts on the row.
+    /// so this is drawn by hand: the symbol and a small gray word on the page, pinned to the edge
+    /// the row is leaving. Letting go past the threshold acts on the row.
     func judgmentSwipes(useful: @escaping () -> Void, notUseful: @escaping () -> Void) -> some View {
         modifier(JudgmentSwipe(useful: useful, notUseful: notUseful))
             .accessibilityAction(named: "Useful", useful)
@@ -32,23 +33,13 @@ private struct JudgmentSwipe: ViewModifier {
     /// How far the row must travel before letting go acts on it.
     private static let threshold: CGFloat = 96
 
-    /// The live drag. It springs back on its own if the drag ends short or is cancelled.
-    @GestureState(resetTransaction: Transaction(animation: .easeOut(duration: 0.2)))
-    private var drag = Drag.undecided
+    /// How far the row has been dragged sideways.
+    @State private var dragX: CGFloat = 0
     /// Where the row flies off to once it has been acted on.
     @State private var exit: CGFloat?
     @State private var swipeGuard = SwipeGuard()
 
-    private enum Drag: Equatable {
-        case undecided, vertical
-        case sideways(CGFloat)
-    }
-
-    private var offset: CGFloat {
-        if let exit { return exit }
-        if case .sideways(let x) = drag { return x }
-        return 0
-    }
+    private var offset: CGFloat { exit ?? dragX }
 
     private var isArmed: Bool { abs(offset) >= Self.threshold }
 
@@ -62,7 +53,7 @@ private struct JudgmentSwipe: ViewModifier {
             }
             .offset(x: offset)
             .background { band }
-            .simultaneousGesture(dragGesture)
+            .gesture(HorizontalPan(onChange: dragChanged, onEnd: dragEnded))
             .environment(\.swipeGuard, swipeGuard)
             .sensoryFeedback(.selection, trigger: isArmed) { _, armed in armed }
     }
@@ -76,7 +67,7 @@ private struct JudgmentSwipe: ViewModifier {
                 VStack(spacing: 3) {
                     Image(systemName: isUseful ? "checkmark" : "xmark")
                         .font(.body.weight(.semibold))
-                    Text(isUseful ? "Useful" : "Not useful")
+                    Text(isUseful ? "Relevant" : "Not relevant")
                         .font(.caption2.weight(.semibold))
                 }
                 .foregroundStyle(isArmed ? Theme.ink : Theme.secondary)
@@ -88,37 +79,60 @@ private struct JudgmentSwipe: ViewModifier {
         }
     }
 
-    private var dragGesture: some Gesture {
-        DragGesture(minimumDistance: 16)
-            .updating($drag) { [swipeGuard] value, state, _ in
-                let x = value.translation.width
-                defer {
-                    if case .sideways = state { swipeGuard.lastMove = .now }
-                }
-                switch state {
-                case .vertical:
-                    return
-                case .undecided:
-                    // Decide once which way the drag goes, so scrolling never moves the row.
-                    if abs(x) > abs(value.translation.height) * 1.5 {
-                        state = .sideways(x)
-                    } else if abs(value.translation.height) > 10 {
-                        state = .vertical
-                    }
-                case .sideways:
-                    state = .sideways(x)
-                }
-            }
-            .onEnded { value in
-                let x = value.translation.width
-                guard exit == nil, abs(x) >= Self.threshold, abs(x) > abs(value.translation.height) * 1.5 else { return }
-                let toRight = x > 0
-                withAnimation(.easeOut(duration: 0.18)) {
-                    exit = toRight ? 600 : -600
-                } completion: {
-                    if toRight { useful() } else { notUseful() }
-                    exit = nil
-                }
-            }
+    private func dragChanged(_ x: CGFloat) {
+        guard exit == nil else { return }
+        dragX = x
+        swipeGuard.lastMove = .now
+    }
+
+    private func dragEnded(_ x: CGFloat, cancelled: Bool) {
+        swipeGuard.lastMove = .now
+        guard exit == nil, !cancelled, abs(x) >= Self.threshold else {
+            withAnimation(.easeOut(duration: 0.2)) { dragX = 0 }
+            return
+        }
+        let toRight = x > 0
+        withAnimation(.easeOut(duration: 0.18)) {
+            exit = toRight ? 600 : -600
+        } completion: {
+            if toRight { useful() } else { notUseful() }
+            exit = nil
+            dragX = 0
+        }
+    }
+}
+
+/// A sideways pan that only starts when the finger is moving mostly sideways, so it never
+/// competes with scrolling the page up and down.
+private struct HorizontalPan: UIGestureRecognizerRepresentable {
+    var onChange: (CGFloat) -> Void
+    var onEnd: (CGFloat, _ cancelled: Bool) -> Void
+
+    func makeCoordinator(converter: CoordinateSpaceConverter) -> Coordinator {
+        Coordinator()
+    }
+
+    func makeUIGestureRecognizer(context: Context) -> UIPanGestureRecognizer {
+        let pan = UIPanGestureRecognizer()
+        pan.delegate = context.coordinator
+        return pan
+    }
+
+    func handleUIGestureRecognizerAction(_ recognizer: UIPanGestureRecognizer, context: Context) {
+        let x = recognizer.translation(in: recognizer.view).x
+        switch recognizer.state {
+        case .began, .changed: onChange(x)
+        case .ended: onEnd(x, false)
+        case .cancelled, .failed: onEnd(x, true)
+        default: break
+        }
+    }
+
+    final class Coordinator: NSObject, UIGestureRecognizerDelegate {
+        func gestureRecognizerShouldBegin(_ recognizer: UIGestureRecognizer) -> Bool {
+            guard let pan = recognizer as? UIPanGestureRecognizer else { return true }
+            let velocity = pan.velocity(in: pan.view)
+            return abs(velocity.x) > abs(velocity.y) * 1.5
+        }
     }
 }
