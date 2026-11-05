@@ -7,8 +7,8 @@ extension View {
     /// the row is leaving. Letting go past the threshold acts on the row.
     func judgmentSwipes(useful: @escaping () -> Void, notUseful: @escaping () -> Void) -> some View {
         modifier(JudgmentSwipe(useful: useful, notUseful: notUseful))
-            .accessibilityAction(named: "Useful", useful)
-            .accessibilityAction(named: "Not useful", notUseful)
+            .accessibilityAction(named: "Relevant", useful)
+            .accessibilityAction(named: "Not relevant", notUseful)
     }
 }
 
@@ -45,12 +45,6 @@ private struct JudgmentSwipe: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            // While the row moves, it hides the band behind it.
-            .background {
-                if offset != 0 {
-                    Theme.page
-                }
-            }
             .offset(x: offset)
             .background { band }
             .gesture(HorizontalPan(onChange: dragChanged, onEnd: dragEnded))
@@ -62,19 +56,21 @@ private struct JudgmentSwipe: ViewModifier {
     private var band: some View {
         if offset != 0 {
             let isUseful = offset > 0
-            HStack {
-                if !isUseful { Spacer(minLength: 0) }
-                VStack(spacing: 3) {
-                    Image(systemName: isUseful ? "checkmark" : "xmark")
-                        .font(.body.weight(.semibold))
-                    Text(isUseful ? "Relevant" : "Not relevant")
-                        .font(.caption2.weight(.semibold))
-                }
-                .foregroundStyle(isArmed ? Theme.ink : Theme.secondary)
-                if isUseful { Spacer(minLength: 0) }
+            // Only the strip the row has moved off is drawn, so the page color never changes
+            // and the label never sits under the row's text.
+            VStack(spacing: 3) {
+                Image(systemName: isUseful ? "checkmark" : "xmark")
+                    .font(.body.weight(.light))
+                Text(isUseful ? "Relevant" : "Not relevant")
+                    .font(.caption2)
             }
+            .fixedSize()
+            .foregroundStyle(isArmed ? Theme.ink : Theme.secondary)
             .padding(.horizontal, Theme.margin)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(width: abs(offset), alignment: isUseful ? .leading : .trailing)
+            .frame(maxHeight: .infinity)
+            .clipped()
+            .frame(maxWidth: .infinity, alignment: isUseful ? .leading : .trailing)
             .accessibilityHidden(true)
         }
     }

@@ -272,8 +272,8 @@ struct JudgmentButtons: View {
             if let save = actions.save {
                 RibbonButton(systemImage: "bookmark", label: "Save", action: save)
             }
-            RibbonButton(systemImage: "checkmark", label: "Useful", action: actions.useful)
-            RibbonButton(systemImage: "xmark", label: "Not useful", action: actions.notUseful)
+            RibbonButton(systemImage: "checkmark", label: "Relevant", action: actions.useful)
+            RibbonButton(systemImage: "xmark", label: "Not relevant", action: actions.notUseful)
         }
     }
 }
