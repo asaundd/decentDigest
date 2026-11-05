@@ -687,6 +687,7 @@
     },
     {
       "id": "nature",
+      "defaultFollow": false,
       "title": "Nature",
       "siteUrl": "https://www.nature.com/nature",
       "feedUrl": "https://www.nature.com/nature.rss",

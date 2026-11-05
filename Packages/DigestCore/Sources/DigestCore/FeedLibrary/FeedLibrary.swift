@@ -18,6 +18,8 @@ public struct FeedLibrary: Decodable, Sendable {
         public var description: String?
         public var verified: Bool?
         public var popularityRank: Int?
+        /// False for feeds offered in the library but not followed by default (for example, long academic articles).
+        public var defaultFollow: Bool?
     }
 
     public var version: Int

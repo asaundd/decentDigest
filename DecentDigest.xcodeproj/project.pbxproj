@@ -13,6 +13,7 @@
 /* Begin PBXFileReference section */
 		DD0000000000000000000101 /* DecentDigest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DecentDigest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD0000000000000000000102 /* DigestCore */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = DigestCore; sourceTree = "<group>"; };
+		DD0000000000000000000103 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -39,6 +40,7 @@
 			isa = PBXGroup;
 			children = (
 				DD0000000000000000000201 /* DecentDigest */,
+				DD0000000000000000000604 /* Config */,
 				DD0000000000000000000603 /* Packages */,
 				DD0000000000000000000602 /* Products */,
 			);
@@ -50,6 +52,14 @@
 				DD0000000000000000000101 /* DecentDigest.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		DD0000000000000000000604 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				DD0000000000000000000103 /* Signing.xcconfig */,
+			);
+			path = Config;
 			sourceTree = "<group>";
 		};
 		DD0000000000000000000603 /* Packages */ = {
@@ -194,20 +204,20 @@
 		};
 		DD0000000000000000000C03 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = DD0000000000000000000103 /* Signing.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Decent Digest";
+				INFOPLIST_KEY_CFBundleDisplayName = "Decent digest";
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Decent Digest shows today's events from the calendars you choose. Your events stay on your iPhone.";
 				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Decent Digest shows to-dos from the Reminders lists you choose, and checks them off when you do.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -226,20 +236,20 @@
 		};
 		DD0000000000000000000C04 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = DD0000000000000000000103 /* Signing.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Decent Digest";
+				INFOPLIST_KEY_CFBundleDisplayName = "Decent digest";
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Decent Digest shows today's events from the calendars you choose. Your events stay on your iPhone.";
 				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Decent Digest shows to-dos from the Reminders lists you choose, and checks them off when you do.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
