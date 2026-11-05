@@ -4,7 +4,8 @@ import UIKit
 extension View {
     /// Swipe right for useful (✓), left for not useful (✕). The system swipe actions draw buttons,
     /// so this is drawn by hand: the symbol and a small gray word on the page, pinned to the edge
-    /// the row is leaving. Letting go past the threshold acts on the row.
+    /// the row is leaving, while a strike draws across the title. Letting go past the threshold,
+    /// where the strike is complete, acts on the row.
     func judgmentSwipes(useful: @escaping () -> Void, notUseful: @escaping () -> Void) -> some View {
         modifier(JudgmentSwipe(useful: useful, notUseful: notUseful))
             .accessibilityAction(named: "Relevant", useful)
@@ -24,6 +25,8 @@ final class SwipeGuard: @unchecked Sendable {
 
 extension EnvironmentValues {
     @Entry var swipeGuard: SwipeGuard? = nil
+    /// How far a swipe has gone toward acting on the row, from 0 to 1. Draws the strike on its title.
+    @Entry var swipeProgress: Double = 0
 }
 
 private struct JudgmentSwipe: ViewModifier {
@@ -49,6 +52,7 @@ private struct JudgmentSwipe: ViewModifier {
             .background { band }
             .gesture(HorizontalPan(onChange: dragChanged, onEnd: dragEnded))
             .environment(\.swipeGuard, swipeGuard)
+            .environment(\.swipeProgress, min(abs(offset) / Self.threshold, 1))
             .sensoryFeedback(.selection, trigger: isArmed) { _, armed in armed }
     }
 
@@ -60,13 +64,13 @@ private struct JudgmentSwipe: ViewModifier {
             // and the label never sits under the row's text.
             VStack(spacing: 3) {
                 Image(systemName: isUseful ? "checkmark" : "xmark")
-                    .font(.title2.weight(.regular))
+                    .font(.title3.weight(.light))
                 Text(isUseful ? "Relevant" : "Not relevant")
-                    .font(.subheadline)
+                    .font(.caption.weight(.medium))
             }
             .fixedSize()
-            // Styled like the feed name and age under a title.
-            .foregroundStyle(Theme.secondary)
+            // Gray while dragging; ink once letting go would act on the row.
+            .foregroundStyle(isArmed ? Theme.ink : Theme.secondary)
             .padding(.horizontal, Theme.margin)
             .frame(width: abs(offset), alignment: isUseful ? .leading : .trailing)
             .frame(maxHeight: .infinity)
@@ -130,6 +134,43 @@ private struct HorizontalPan: UIGestureRecognizerRepresentable {
             guard let pan = recognizer as? UIPanGestureRecognizer else { return true }
             let velocity = pan.velocity(in: pan.view)
             return abs(velocity.x) > abs(velocity.y) * 1.5
+        }
+    }
+}
+
+/// A hand-drawn strike across each line of a title, drawn left to right as `progress` goes from 0 to 1.
+struct StrikeRenderer: TextRenderer {
+    var progress: Double
+    var color: Color
+
+    var animatableData: Double {
+        get { progress }
+        set { progress = newValue }
+    }
+
+    func draw(layout: Text.Layout, in context: inout GraphicsContext) {
+        for line in layout {
+            context.draw(line)
+        }
+        guard progress > 0 else { return }
+
+        let lines = Array(layout)
+        let total = lines.reduce(0) { $0 + $1.typographicBounds.width }
+        var remaining = total * min(progress, 1)
+        for (index, line) in lines.enumerated() where remaining > 0 {
+            let bounds = line.typographicBounds
+            let length = min(bounds.width, remaining)
+            remaining -= length
+            // Through the middle of the lowercase letters, with a slight rise and sag so it looks drawn.
+            let y = bounds.rect.minY + bounds.ascent * 0.68
+            let rise: CGFloat = index.isMultiple(of: 2) ? -1.2 : 0.9
+            var path = Path()
+            path.move(to: CGPoint(x: bounds.rect.minX - 1, y: y + 0.6))
+            path.addQuadCurve(
+                to: CGPoint(x: bounds.rect.minX + length, y: y + rise * (length / max(bounds.width, 1))),
+                control: CGPoint(x: bounds.rect.minX + length * 0.5, y: y - 1)
+            )
+            context.stroke(path, with: .color(color), style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
         }
     }
 }

@@ -80,6 +80,7 @@ struct HeadlineRow: View {
     var onTap: () -> Void
 
     @Environment(\.swipeGuard) private var swipeGuard
+    @Environment(\.swipeProgress) private var swipeProgress
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -96,6 +97,9 @@ struct HeadlineRow: View {
                             .fontWeight(headline.isUnread ? .semibold : .regular)
                             // Bold to regular is an instant change, never animated.
                             .animation(nil, value: headline.isUnread)
+                            // A swipe strikes the title through; once far enough to act, it goes gray.
+                            .textRenderer(StrikeRenderer(progress: swipeProgress, color: Theme.ink))
+                            .foregroundStyle(swipeProgress >= 1 ? Theme.secondary : Theme.ink)
                         Text(headline.detail)
                             .font(.subheadline)
                             .foregroundStyle(Theme.secondary)
