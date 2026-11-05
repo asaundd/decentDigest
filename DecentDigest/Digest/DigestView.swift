@@ -62,7 +62,7 @@ struct DigestView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Decent Digest")
+            Text("Decent digest")
                 .font(Theme.wordmarkFont)
                 .foregroundStyle(Theme.secondary)
             Text(digest.date, format: .dateTime.weekday(.wide).month(.wide).day())
