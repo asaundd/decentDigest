@@ -75,7 +75,7 @@ struct NewsSectionView: View {
             ) {
                 tap(entry, headline: row)
             }
-            .digestRow(background: expandedID == entry.item.itemID ? Theme.expandedFill : .clear)
+            .digestRow(isExpanded: expandedID == entry.item.itemID)
             .swipeActions(edge: .leading, allowsFullSwipe: true) {
                 Button("Useful") { resolve(entry.item, as: .useful) }
                     .tint(Theme.swipeUseful)

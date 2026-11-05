@@ -12,10 +12,14 @@ enum Theme {
     static let rule = Color(light: 0xDFE0DC, dark: 0x343937)
     static let accent = Color(light: 0x3C3C4C, dark: 0xCECED5)
     // An expanded headline sits on a faint band, with its actions on a slightly darker one.
-    static let expandedFill = Color(light: 0xF2F1EC, dark: 0x1B1F1E)
-    static let ribbonFill = Color(light: 0xE8E7E1, dark: 0x232827)
-    /// The small square buttons on the ribbon, in the page color.
-    static let ribbonButtonFill = Color(light: 0xFAF9F6, dark: 0x151817)
+    static let expandedFill = Color(light: 0xFFFEFC, dark: 0x1F2322)
+    /// The action ribbon shares the expanded band's color.
+    static let ribbonFill = expandedFill
+    /// A faint edge and shadow that lift the expanded band off the page.
+    static let expandedRing = Color(light: 0x1A1D1E, dark: 0x000000).opacity(0.06)
+    static let expandedShadow = Color(light: 0x1A1D1E, dark: 0x000000).opacity(0.06)
+    /// The small square buttons on the ribbon, a shade darker than the band.
+    static let ribbonButtonFill = Color(light: 0xF2F1EC, dark: 0x151817)
     // The article panel: paper in light mode, a step lighter than the page in dark mode.
     static let panelFill = Color(light: 0xFAF9F6, dark: 0x202524)
     static let panelShadow = Color.black.opacity(0.14)
