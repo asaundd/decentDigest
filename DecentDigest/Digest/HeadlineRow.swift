@@ -93,6 +93,8 @@ struct HeadlineRow: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(headline.title)
                             .fontWeight(headline.isUnread ? .semibold : .regular)
+                            // Bold to regular is an instant change, never animated.
+                            .animation(nil, value: headline.isUnread)
                         Text(headline.detail)
                             .font(.subheadline)
                             .foregroundStyle(Theme.secondary)

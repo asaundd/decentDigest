@@ -57,7 +57,7 @@ private struct JudgmentSwipe: ViewModifier {
             // While the row moves, it hides the band behind it.
             .background {
                 if offset != 0 {
-                    Theme.page.padding(.horizontal, -Theme.margin)
+                    Theme.page
                 }
             }
             .offset(x: offset)
@@ -84,7 +84,6 @@ private struct JudgmentSwipe: ViewModifier {
             }
             .padding(.horizontal, Theme.margin)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(.horizontal, -Theme.margin)
             .accessibilityHidden(true)
         }
     }
