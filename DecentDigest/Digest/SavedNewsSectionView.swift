@@ -15,7 +15,8 @@ struct SavedNewsSectionView: View {
     @Query private var items: [FeedItem]
     @Query private var states: [ItemState]
 
-    @State private var expandedID: String?
+    /// Open rows stay open until the reader closes them.
+    @State private var expandedIDs: Set<String> = []
     @State private var pendingReveal: String?
 
     var body: some View {
@@ -30,7 +31,7 @@ struct SavedNewsSectionView: View {
             let row = self.headline(for: item)
             HeadlineRow(
                 headline: row,
-                isExpanded: expandedID == item.itemID,
+                isExpanded: expandedIDs.contains(item.itemID),
                 actions: actions(for: item, headline: row),
                 onExpandedBottom: { bottom in
                     guard pendingReveal == item.itemID else { return }
@@ -81,14 +82,15 @@ struct SavedNewsSectionView: View {
     }
 
     private func tap(_ item: SavedItem, headline: Headline) {
-        let previous = expandedID
-        // A row that was expanded and then closed counts as seen, even with no action taken.
-        if let previous, let seen = saved.first(where: { $0.itemID == previous }) {
+        // Rows already open count as seen once another row is tapped, but stay open.
+        for seen in saved where expandedIDs.contains(seen.itemID) {
             ReadingState.markOpened(itemID: seen.itemID, sourceID: seen.sourceID, in: context)
         }
         // No animation, so the title stays put while the details appear under it.
-        expandedID = previous == item.itemID ? nil : item.itemID
-        pendingReveal = expandedID
+        if expandedIDs.remove(item.itemID) == nil {
+            expandedIDs.insert(item.itemID)
+            pendingReveal = item.itemID
+        }
     }
 
     private func open(_ item: SavedItem) {

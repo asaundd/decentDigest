@@ -22,7 +22,8 @@ struct NewsSectionView: View {
 
     /// Set once the reader has refreshed, so the link can say the list is current.
     @State private var refreshedByReader = false
-    @State private var expandedID: String?
+    /// Open rows stay open until the reader closes them.
+    @State private var expandedIDs: Set<String> = []
     @State private var pendingReveal: String?
     @State private var showsAll = false
 
@@ -67,7 +68,7 @@ struct NewsSectionView: View {
             let row = self.headline(for: entry)
             HeadlineRow(
                 headline: row,
-                isExpanded: expandedID == entry.item.itemID,
+                isExpanded: expandedIDs.contains(entry.item.itemID),
                 actions: actions(for: entry),
                 onExpandedBottom: { bottom in
                     guard pendingReveal == entry.item.itemID else { return }
@@ -176,14 +177,13 @@ struct NewsSectionView: View {
 
     private func tap(_ entry: Entry, headline: Headline) {
         let id = entry.item.itemID
-        let previous = expandedID
-        // A row that was expanded and then closed counts as seen, even with no action taken.
-        if let previous {
-            markSeen(previous)
-        }
+        // Rows already open count as seen once another row is tapped, but stay open.
+        for other in expandedIDs { markSeen(other) }
         // No animation, so the title stays put while the details appear under it.
-        expandedID = previous == id ? nil : id
-        pendingReveal = expandedID
+        if expandedIDs.remove(id) == nil {
+            expandedIDs.insert(id)
+            pendingReveal = id
+        }
     }
 
     private func markSeen(_ itemID: String) {

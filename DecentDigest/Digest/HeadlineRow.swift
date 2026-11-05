@@ -124,7 +124,7 @@ struct HeadlineRow: View {
             if isExpanded {
                 // Only the details sit on the card, so the title stays where it was.
                 expandedDetail
-                    .padding(.top, 10)
+                    .padding(.top, 4)
                     .background {
                         RoundedRectangle(cornerRadius: 8, style: .continuous)
                             .fill(Theme.expandedFill)
@@ -146,14 +146,23 @@ struct HeadlineRow: View {
         }
     }
 
+    /// The card: byline with Save, ✓ and ✕ at the top right where the thumb is, then the text,
+    /// then the way to read it.
     private var expandedDetail: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .center, spacing: 8) {
                 if let byline = headline.byline {
                     Text(byline)
                         .font(.subheadline)
                         .foregroundStyle(Theme.secondary)
                 }
+                Spacer(minLength: 0)
+                JudgmentButtons(actions: actions)
+            }
+            .padding(.leading, DashColumn.width)
+            .padding(.trailing, -RibbonButton.gap)
+
+            Group {
                 if let text = headline.expandedText {
                     if let readFull = actions.readFull {
                         // Tapping the text opens the rest in the panel.
@@ -182,43 +191,40 @@ struct HeadlineRow: View {
                 }
             }
             // Line up with the title, past the dash column.
-            .padding(.leading, DashColumn.width)
-            .padding(.trailing, DashColumn.width)
+            .padding(.horizontal, DashColumn.width)
 
-            ActionRibbon(
-                actions: actions,
-                leadingPadding: Self.cardInset + DashColumn.width,
-                trailingPadding: Self.cardInset,
-                bleed: Self.cardInset
-            )
+            HStack(spacing: 16) {
+                ActionLinks(actions: actions)
+            }
+            .padding(.leading, DashColumn.width)
+            .padding(.top, 2)
+            .padding(.bottom, 6)
         }
     }
 }
 
-/// The actions under an expanded headline, in the same color as the card: the way to read it first,
-/// lined up with the text above, then small square buttons for Save, ✓ (useful) and ✕ (not useful).
+/// The actions pinned at the bottom of the panel: the way to read it first, then small square
+/// buttons for Save, ✓ (useful) and ✕ (not useful).
 struct ActionRibbon: View {
     var actions: HeadlineActions
-    /// Space before the first action, so it lines up with the text above it.
+    /// Space before the first action.
     var leadingPadding: CGFloat
     /// Space after the last button.
     var trailingPadding: CGFloat
-    /// How far the ribbon runs past its container on each side.
-    var bleed: CGFloat = 0
 
     var body: some View {
         ViewThatFits(in: .horizontal) {
             HStack(spacing: 16) {
-                links
+                ActionLinks(actions: actions)
                 Spacer(minLength: 0)
-                buttons
+                JudgmentButtons(actions: actions)
             }
             // At large text sizes the links sit above the buttons.
             VStack(alignment: .leading, spacing: 0) {
-                HStack(spacing: 16) { links }
+                HStack(spacing: 16) { ActionLinks(actions: actions) }
                 HStack {
                     Spacer(minLength: 0)
-                    buttons
+                    JudgmentButtons(actions: actions)
                 }
             }
         }
@@ -226,12 +232,14 @@ struct ActionRibbon: View {
         .padding(.leading, leadingPadding)
         .padding(.trailing, trailingPadding - RibbonButton.gap)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, -bleed)
     }
+}
 
-    /// Read in the panel first when the post opens there, otherwise go to the site.
-    @ViewBuilder
-    private var links: some View {
+/// The text actions: read in the panel first when the post opens there, otherwise go to the site.
+struct ActionLinks: View {
+    var actions: HeadlineActions
+
+    var body: some View {
         if let readFull = actions.readFull {
             TextLink(actions.readLabel, action: readFull)
             if let openInSafari = actions.openInSafari {
@@ -243,8 +251,13 @@ struct ActionRibbon: View {
                 .accessibilityLabel("Open the site")
         }
     }
+}
 
-    private var buttons: some View {
+/// Small square buttons for Save (when offered), ✓ (useful) and ✕ (not useful).
+struct JudgmentButtons: View {
+    var actions: HeadlineActions
+
+    var body: some View {
         HStack(spacing: 0) {
             if let save = actions.save {
                 RibbonButton(systemImage: "bookmark", label: "Save", action: save)
