@@ -79,13 +79,11 @@ private struct JudgmentSwipe: ViewModifier {
                     Text(isUseful ? "Useful" : "Not useful")
                         .font(.caption2.weight(.semibold))
                 }
-                .foregroundStyle(.white)
-                .opacity(isArmed ? 1 : 0.7)
+                .foregroundStyle(isArmed ? Theme.ink : Theme.secondary)
                 if isUseful { Spacer(minLength: 0) }
             }
             .padding(.horizontal, Theme.margin)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(isUseful ? Theme.swipeUseful : Theme.swipeNotRelevant)
             .padding(.horizontal, -Theme.margin)
             .accessibilityHidden(true)
         }

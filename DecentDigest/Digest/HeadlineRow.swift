@@ -64,8 +64,8 @@ struct HeadlineActions {
 }
 
 /// One headline: gray dash, title (semibold while unread, regular once opened), feed name and age.
-/// Title-only rows end in ↗. A tap expands any row: the byline and up to 320 characters of text
-/// over a ribbon of actions, all on a lighter card.
+/// Title-only rows end in ↗. A tap expands any row: under the title, a lighter card holds the byline
+/// and up to 320 characters of text over a ribbon of actions.
 struct HeadlineRow: View {
     static let verticalPadding: CGFloat = 5
     /// How far the open card reaches past the text on each side.
@@ -120,25 +120,23 @@ struct HeadlineRow: View {
             }
 
             if isExpanded {
+                // Only the details sit on the card, so the title stays where it was.
                 expandedDetail
-            }
-        }
-        // Open, the row sits on a lighter card that reaches a little past the text on each side.
-        .padding(.top, isExpanded ? 10 - Self.verticalPadding : 0)
-        .background {
-            if isExpanded {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(Theme.expandedFill)
-                    .shadow(color: Theme.expandedShadow, radius: 4, x: 0, y: 2)
-                    .overlay(
+                    .padding(.top, 10)
+                    .background {
                         RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .strokeBorder(Theme.expandedRing, lineWidth: 1)
-                    )
-                    .padding(.horizontal, -Self.cardInset)
+                            .fill(Theme.expandedFill)
+                            .shadow(color: Theme.expandedShadow, radius: 4, x: 0, y: 2)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .strokeBorder(Theme.expandedRing, lineWidth: 1)
+                            )
+                            .padding(.horizontal, -Self.cardInset)
+                    }
+                    .padding(.top, 2)
+                    .padding(.bottom, 10)
             }
         }
-        .padding(.top, isExpanded ? 4 : 0)
-        .padding(.bottom, isExpanded ? 10 : 0)
         .onGeometryChange(for: CGFloat.self) { proxy in
             proxy.frame(in: .global).maxY
         } action: { bottom in

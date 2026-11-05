@@ -23,9 +23,6 @@ enum Theme {
     static let panelShadow = Color.black.opacity(0.14)
     /// The faint wash over the digest while the panel is open.
     static let scrim = Color.black.opacity(0.12)
-    // Swipe action fills carry white labels, so they stay dark in both modes.
-    static let swipeUseful = Color(light: 0x3C3C4C, dark: 0x3C3C4C)
-    static let swipeNotRelevant = Color(light: 0x6F7573, dark: 0x5A605E)
 
     // Spacing
     static let margin: CGFloat = 24
