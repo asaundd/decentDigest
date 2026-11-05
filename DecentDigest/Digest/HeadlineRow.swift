@@ -14,22 +14,15 @@ struct Headline: Identifiable {
     var isUnread: Bool
 
     var kind: PostKind {
-        PostKind.classify(summary: summary, fullText: fullText, author: author)
+        PostKind.classify(summary: summary, fullText: fullText)
     }
-
-    /// Rows with more than a title expand in place; title-only rows open Safari.
-    var expands: Bool { kind != .titleOnly }
 
     /// The whole post is in the feed, so Read more opens it in the panel.
     var readsHere: Bool { kind == .fullPost }
 
-    /// › full post to read here, … a preview that expands, ↗ title only, opens the site.
-    var marker: String {
-        switch kind {
-        case .fullPost: "›"
-        case .preview: "…"
-        case .titleOnly: "↗"
-        }
+    /// Only title-only rows carry a marker: ↗ says reading it means going to the site.
+    var marker: String? {
+        kind == .titleOnly ? "↗" : nil
     }
 
     /// The summary for full posts, otherwise the longest text the feed sent.
@@ -52,6 +45,11 @@ struct Headline: Identifiable {
         readsHere ? fullText : previewText
     }
 
+    /// The label for going to the site: an excerpt continues there, anything else opens it.
+    var siteLabel: String {
+        kind == .excerpt ? "Continue reading ↗" : "Open in Safari ↗"
+    }
+
     var byline: String? {
         author.map { "By \($0)" }
     }
@@ -62,14 +60,18 @@ struct HeadlineActions {
     var save: (() -> Void)?
     var useful: () -> Void
     var notUseful: () -> Void
+    /// Opens the panel. For full posts it is the ribbon's first action.
     var readFull: (() -> Void)?
     var openInSafari: (() -> Void)?
+    /// "Open in Safari ↗" or "Continue reading ↗".
+    var siteLabel = "Open in Safari ↗"
+    /// Read more comes first in the ribbon, ahead of going to the site.
+    var readsHere = false
 }
 
 /// One headline: gray dash, title (semibold while unread, gray once opened), feed name and age.
-/// It ends in › when the feed carries the full post, … when it carries a preview, and ↗ when it has
-/// only a title. A tap expands the first two; title-only rows open Safari.
-/// Expanded, the row sits on a faint band and shows the whole summary over a ribbon of actions.
+/// Title-only rows end in ↗. A tap expands any row: a small gray label naming what the feed sent,
+/// the byline and up to 320 characters of text, over a ribbon of actions, all on a faint band.
 struct HeadlineRow: View {
     static let verticalPadding: CGFloat = 5
 
@@ -95,8 +97,11 @@ struct HeadlineRow: View {
                             .foregroundStyle(Theme.secondary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    Text(headline.marker)
-                        .foregroundStyle(Theme.secondary)
+                    if let marker = headline.marker {
+                        Text(marker)
+                            .foregroundStyle(Theme.secondary)
+                            .accessibilityHidden(true)
+                    }
                 }
                 .padding(.vertical, Self.verticalPadding)
                 .contentShape(Rectangle())
@@ -105,7 +110,7 @@ struct HeadlineRow: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("\(headline.title), \(headline.detail)")
             .accessibilityValue(Text(headline.isUnread ? "Unread" : "Read"))
-            .accessibilityHint(Text(headline.expands ? (isExpanded ? "Shows less" : (headline.readsHere ? "Shows a summary of the full post" : "Shows a preview")) : "Opens in Safari"))
+            .accessibilityHint(Text(isExpanded ? "Shows less" : "Shows details and actions"))
             .accessibilityAddTraits(.isButton)
             .accessibilityActions {
                 if let save = actions.save {
@@ -126,7 +131,13 @@ struct HeadlineRow: View {
 
     private var expandedDetail: some View {
         VStack(alignment: .leading, spacing: 10) {
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(headline.kind.label)
+                    .font(Theme.typeLabelFont)
+                    .tracking(0.5)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Theme.secondary)
+                    .accessibilityLabel(headline.kind.label)
                 if let byline = headline.byline {
                     Text(byline)
                         .font(.subheadline)
@@ -149,6 +160,11 @@ struct HeadlineRow: View {
                             .font(.callout)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
+                } else {
+                    Text("No summary available.")
+                        .font(.callout)
+                        .italic()
+                        .foregroundStyle(Theme.secondary)
                 }
             }
             // Line up with the title, past the dash column.
@@ -160,8 +176,8 @@ struct HeadlineRow: View {
     }
 }
 
-/// The actions under an expanded headline, on one darker band: the way to read it first,
-/// then Save, then ✓ for useful and ✕ for not useful.
+/// The actions under an expanded headline, on one darker band: the way to read it first, lined up
+/// with the text above, then small square buttons for Save, ✓ (useful) and ✕ (not useful).
 struct ActionRibbon: View {
     var actions: HeadlineActions
     /// Indent for the first action, so it lines up with the text above it.
@@ -170,25 +186,20 @@ struct ActionRibbon: View {
     var bleedsToEdges = true
 
     var body: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: 20) {
-                primary
-                save
-                Spacer(minLength: 0)
-                judgments
-            }
-            VStack(alignment: .leading, spacing: 4) {
-                primary
-                HStack(spacing: 20) {
-                    save
-                    Spacer(minLength: 0)
-                    judgments
+        HStack(spacing: 6) {
+            primary
+            Spacer(minLength: 0)
+            HStack(spacing: 0) {
+                if let save = actions.save {
+                    RibbonButton(systemImage: "bookmark", label: "Save", action: save)
                 }
+                RibbonButton(systemImage: "checkmark", label: "Useful", action: actions.useful)
+                RibbonButton(systemImage: "xmark", label: "Not useful", action: actions.notUseful)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 1)
         .padding(.leading, Theme.margin + leadingInset)
-        .padding(.trailing, Theme.margin)
+        .padding(.trailing, Theme.margin - RibbonButton.gap)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.ribbonFill)
         .padding(.horizontal, bleedsToEdges ? -Theme.margin : 0)
@@ -196,40 +207,37 @@ struct ActionRibbon: View {
 
     @ViewBuilder
     private var primary: some View {
-        if let readFull = actions.readFull {
+        if actions.readsHere, let readFull = actions.readFull {
             TextLink("Read more", action: readFull)
         } else if let openInSafari = actions.openInSafari {
-            TextLink("Open in Safari ↗", action: openInSafari)
-        }
-    }
-
-    @ViewBuilder
-    private var save: some View {
-        if let save = actions.save {
-            TextLink("Save", action: save)
-        }
-    }
-
-    private var judgments: some View {
-        HStack(spacing: 4) {
-            IconLink(systemImage: "checkmark", label: "Useful", action: actions.useful)
-            IconLink(systemImage: "xmark", label: "Not useful", action: actions.notUseful)
+            TextLink(actions.siteLabel, action: openInSafari)
+        } else if let readFull = actions.readFull {
+            TextLink("Read more", action: readFull)
         }
     }
 }
 
-/// A small slate symbol button with a full-size tap target and a spoken label.
-struct IconLink: View {
+/// A small square symbol button on the ribbon, in the page color, with a larger tap target and a spoken label.
+struct RibbonButton: View {
+    /// Half the space between two squares.
+    static let gap: CGFloat = 3
+
     var systemImage: String
     var label: String
     var action: () -> Void
 
+    @ScaledMetric(relativeTo: .subheadline) private var width: CGFloat = 32
+    @ScaledMetric(relativeTo: .subheadline) private var height: CGFloat = 28
+
     var body: some View {
         Button(action: action) {
             Image(systemName: systemImage)
-                .font(Theme.actionFont)
-                .foregroundStyle(Theme.accent)
-                .frame(minWidth: 44, minHeight: 36)
+                .font(Theme.ribbonIconFont)
+                .foregroundStyle(Theme.ink)
+                .frame(width: width, height: height)
+                .background(Theme.ribbonButtonFill, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .padding(.horizontal, Self.gap)
+                .padding(.vertical, 6)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.borderless)

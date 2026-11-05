@@ -5,10 +5,25 @@ import Foundation
 public enum PostKind: Sendable, Equatable {
     /// The whole post is in the feed and can be read in the app.
     case fullPost
-    /// A summary or excerpt to preview before going to the site.
-    case preview
+    /// A short summary of the post, written to stand on its own.
+    case summary
+    /// The opening of the post, cut off before the end. The rest is on the site.
+    case excerpt
     /// Only a title: reading it means going to the site.
     case titleOnly
+
+    /// The first line of an expanded row, naming what the feed sent.
+    public var label: String {
+        switch self {
+        case .fullPost: "Full post"
+        case .summary: "Summary"
+        case .excerpt: "Excerpt"
+        case .titleOnly: "Link only"
+        }
+    }
+
+    /// The row shows a preview of the post, not the whole of it.
+    public var isPreview: Bool { self == .summary || self == .excerpt }
 
     /// Text shorter than this is treated as an excerpt, not a full post.
     public static let fullPostMinimum = 1_500
@@ -23,10 +38,11 @@ public enum PostKind: Sendable, Equatable {
         return cut[..<end].trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters)) + "…"
     }
 
-    public static func classify(summary: String?, fullText: String?, author: String?) -> PostKind {
+    public static func classify(summary: String?, fullText: String?) -> PostKind {
         if let fullText, isComplete(fullText) { return .fullPost }
-        if fullText != nil || summary != nil || author != nil { return .preview }
-        return .titleOnly
+        guard let text = previewText(summary: summary, fullText: fullText) else { return .titleOnly }
+        // Post text that stops short, or a summary with a "read more" note, is an excerpt.
+        return fullText != nil || endsLikeExcerpt(text) ? .excerpt : .summary
     }
 
     /// The text to show when a preview row is expanded: the longer of the excerpt and the summary.

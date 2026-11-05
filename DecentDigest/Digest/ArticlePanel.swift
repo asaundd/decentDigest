@@ -91,7 +91,8 @@ struct ArticlePanel: View {
             useful: { close(); actions.useful() },
             notUseful: { close(); actions.notUseful() },
             readFull: nil,
-            openInSafari: actions.openInSafari.map { open -> () -> Void in { close(); open() } }
+            openInSafari: actions.openInSafari.map { open -> () -> Void in { close(); open() } },
+            siteLabel: actions.siteLabel
         )
     }
 }

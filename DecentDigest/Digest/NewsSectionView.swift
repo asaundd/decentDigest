@@ -163,7 +163,9 @@ struct NewsSectionView: View {
             save: { save(item, sourceName: entry.sourceName) },
             useful: { resolve(item, as: .useful) },
             notUseful: { resolve(item, as: .notRelevant) },
-            openInSafari: row.link == nil ? nil : { open(item) }
+            openInSafari: row.link == nil ? nil : { open(item) },
+            siteLabel: row.siteLabel,
+            readsHere: row.readsHere
         )
         if row.hasMore {
             let panelActions = actions
@@ -184,14 +186,9 @@ struct NewsSectionView: View {
         if let previous {
             markSeen(previous)
         }
-        if headline.expands {
-            // No animation: a List row that animates its height cross-fades and makes the text jump.
-            expandedID = previous == id ? nil : id
-            pendingReveal = expandedID
-        } else {
-            expandedID = nil
-            open(entry.item)
-        }
+        // No animation: a List row that animates its height cross-fades and makes the text jump.
+        expandedID = previous == id ? nil : id
+        pendingReveal = expandedID
     }
 
     private func markSeen(_ itemID: String) {

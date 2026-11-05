@@ -73,7 +73,9 @@ struct SavedNewsSectionView: View {
         var actions = HeadlineActions(
             useful: { resolve(item, as: .useful) },
             notUseful: { resolve(item, as: .notRelevant) },
-            openInSafari: headline.link == nil ? nil : { open(item) }
+            openInSafari: headline.link == nil ? nil : { open(item) },
+            siteLabel: headline.siteLabel,
+            readsHere: headline.readsHere
         )
         if headline.hasMore {
             let panelActions = actions
@@ -91,14 +93,9 @@ struct SavedNewsSectionView: View {
         if let previous, let seen = saved.first(where: { $0.itemID == previous }) {
             ReadingState.markOpened(itemID: seen.itemID, sourceID: seen.sourceID, in: context)
         }
-        if headline.expands {
-            // No animation: a List row that animates its height cross-fades and makes the text jump.
-            expandedID = previous == item.itemID ? nil : item.itemID
-            pendingReveal = expandedID
-        } else {
-            expandedID = nil
-            open(item)
-        }
+        // No animation: a List row that animates its height cross-fades and makes the text jump.
+        expandedID = previous == item.itemID ? nil : item.itemID
+        pendingReveal = expandedID
     }
 
     private func open(_ item: SavedItem) {

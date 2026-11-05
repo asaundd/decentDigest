@@ -104,14 +104,14 @@ struct DigestView: View {
             SavedNewsSectionView(saved: saved, panel: $panel, reveal: reveal)
         case .podcasts:
             DigestSectionView(title: section.title, rows: digest.episodes.filter(\.status.isActive).map { item in
-                DigestSectionView.Row(id: item.id, title: item.title, detail: item.sourceName, trailing: item.opensInPanel ? "›" : "↗")
+                DigestSectionView.Row(id: item.id, title: item.title, detail: item.sourceName, trailing: item.opensInPanel ? nil : "↗")
             })
             .digestRow()
         }
     }
 
     private var footer: some View {
-        Text("› full post here  ·  … preview  ·  ↗ opens the site")
+        Text("↗ the feed sends only a title; it opens the site")
             .font(.footnote)
             .foregroundStyle(Theme.secondary)
     }
