@@ -19,10 +19,10 @@ Decent Digest is a window onto the apps you already use. It reads from Calendar,
 ## Getting started
 
 1. Open `DecentDigest.xcodeproj` in Xcode.
-2. Select the **DecentDigest** target, open **Signing & Capabilities**, and choose your team. If the bundle ID is taken, change it to something unique to you.
+2. Create `Config/Local.xcconfig` containing one line, `DEVELOPMENT_TEAM = YOURTEAMID`, with your Apple developer team ID. Git ignores this file, so your team stays out of the project. If the bundle ID is taken, change it to something unique to you.
 3. Pick an iPhone simulator or a connected iPhone and press **Run** (⌘R).
 
-The app currently shows sample content.
+News comes live from a starter set of RSS feeds. Weather, calendar, to-dos and podcasts still show sample content.
 
 Run the core package tests from the command line:
 

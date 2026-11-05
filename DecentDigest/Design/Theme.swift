@@ -11,6 +11,18 @@ enum Theme {
     static let secondary = Color(light: 0x6F7573, dark: 0xA3A8A5)
     static let rule = Color(light: 0xDFE0DC, dark: 0x343937)
     static let accent = Color(light: 0x3C3C4C, dark: 0xCECED5)
+    // An expanded headline sits on a card a shade lighter than the page; its actions share that color.
+    static let expandedFill = Color(light: 0xFFFEFC, dark: 0x202524)
+    /// A faint edge and shadow that lift the expanded card off the page.
+    static let expandedRing = Color(light: 0x1A1D1E, dark: 0x000000).opacity(0.06)
+    static let expandedShadow = Color(light: 0x1A1D1E, dark: 0x000000).opacity(0.06)
+    /// The small square buttons on the ribbon, a shade darker than the card.
+    static let ribbonButtonFill = Color(light: 0xF2F1EC, dark: 0x151817)
+    /// The panel matches the expanded card, so the post reads the same in both.
+    static let panelFill = expandedFill
+    static let panelShadow = Color.black.opacity(0.14)
+    /// The faint wash over the digest while the panel is open.
+    static let scrim = Color.black.opacity(0.12)
 
     // Spacing
     static let margin: CGFloat = 24
@@ -21,6 +33,9 @@ enum Theme {
     static let dateFont = Font.custom("Georgia", size: 30, relativeTo: .largeTitle)
     static let sectionTitleFont = Font.custom("Georgia", size: 22, relativeTo: .title2)
     static let wordmarkFont = Font.footnote
+    /// Section actions such as Refresh: slate, semibold, underlined.
+    static let actionFont = Font.subheadline.weight(.semibold)
+    static let ribbonIconFont = Font.subheadline
 }
 
 extension Color {
