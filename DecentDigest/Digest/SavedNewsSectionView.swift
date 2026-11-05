@@ -41,14 +41,7 @@ struct SavedNewsSectionView: View {
                 tap(item, headline: row)
             }
             .digestRow()
-            .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                Button("Useful") { resolve(item, as: .useful) }
-                    .tint(Theme.swipeUseful)
-            }
-            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                Button("Not useful") { resolve(item, as: .notRelevant) }
-                    .tint(Theme.swipeNotRelevant)
-            }
+            .judgmentSwipes(useful: { resolve(item, as: .useful) }, notUseful: { resolve(item, as: .notRelevant) })
         }
     }
 

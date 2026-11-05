@@ -12,6 +12,8 @@ struct DigestView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Query(sort: \SavedItem.savedAt, order: .reverse) private var saved: [SavedItem]
     @State private var panel: PanelRequest?
+    /// True while feeds are being checked, so News can say so.
+    @State private var isRefreshing = false
     /// Where the visible list ends on screen.
     @State private var listBottom: CGFloat = .infinity
 
@@ -53,10 +55,10 @@ struct DigestView: View {
         }
         .blur(radius: panel == nil ? 0 : 2)
         .overlay { ArticlePanelHost(panel: $panel) }
-        .refreshable { [refresh] in await refresh(true) }
+        .refreshable { await runRefresh(force: true) }
         .onChange(of: scenePhase, initial: true) { _, phase in
             guard phase == .active else { return }
-            Task { [refresh] in await refresh(false) }
+            Task { await runRefresh(force: false) }
         }
     }
 
@@ -70,6 +72,14 @@ struct DigestView: View {
                 .accessibilityAddTraits(.isHeader)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Fetches news. The page draws right away; headlines appear as each feed arrives.
+    private func runRefresh(force: Bool) async {
+        guard !isRefreshing else { return }
+        isRefreshing = true
+        await refresh(force)
+        isRefreshing = false
     }
 
     /// Scrolls an expanded row up only when its bottom is hidden, so rows higher on the screen stay put.
@@ -99,7 +109,7 @@ struct DigestView: View {
             })
             .digestRow()
         case .news:
-            NewsSectionView(refresh: refresh, panel: $panel, reveal: reveal)
+            NewsSectionView(isRefreshing: isRefreshing, refresh: { await runRefresh(force: true) }, panel: $panel, reveal: reveal)
         case .savedNews:
             SavedNewsSectionView(saved: saved, panel: $panel, reveal: reveal)
         case .podcasts:
@@ -111,7 +121,7 @@ struct DigestView: View {
     }
 
     private var footer: some View {
-        Text("↗ the feed sends only a title; it opens the site")
+        Text("↗ only a title; opens the site")
             .font(.footnote)
             .foregroundStyle(Theme.secondary)
     }

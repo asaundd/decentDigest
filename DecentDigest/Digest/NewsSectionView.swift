@@ -4,7 +4,10 @@ import SwiftUI
 
 /// Live headlines from the followed feeds. Each headline is its own List row so it can be swiped.
 struct NewsSectionView: View {
-    var refresh: @Sendable (Bool) async -> Void
+    /// True while feeds are being checked.
+    var isRefreshing: Bool
+    /// Checks every feed now.
+    var refresh: () async -> Void
     @Binding var panel: PanelRequest?
     /// Scrolls an expanded row into view if its bottom (on screen) is past the visible area.
     var reveal: (String, CGFloat) -> Void
@@ -17,22 +20,11 @@ struct NewsSectionView: View {
     @Query private var states: [ItemState]
     @AppStorage(NewsRefresher.listStartedAtKey) private var listStartedAt: Double = 0
 
-    @State private var refreshState = RefreshState.idle
+    /// Set once the reader has refreshed, so the link can say the list is current.
+    @State private var refreshedByReader = false
     @State private var expandedID: String?
     @State private var pendingReveal: String?
     @State private var showsAll = false
-
-    private enum RefreshState {
-        case idle, running, done
-
-        var label: String {
-            switch self {
-            case .idle: "Refresh"
-            case .running: "Checking…"
-            case .done: "Up to date"
-            }
-        }
-    }
 
     var body: some View {
         let eligible = eligibleEntries
@@ -44,21 +36,31 @@ struct NewsSectionView: View {
                 .font(Theme.sectionTitleFont)
                 .accessibilityAddTraits(.isHeader)
             Spacer()
-            TextLink(refreshState.label) {
-                Task { await refreshNow() }
+            TextLink(isRefreshing ? "Checking…" : (refreshedByReader ? "Up to date" : "Refresh")) {
+                Task {
+                    await refresh()
+                    refreshedByReader = true
+                }
             }
-            .disabled(refreshState == .running)
+            .disabled(isRefreshing)
             .accessibilityHint("Checks your feeds for new headlines")
         }
         .padding(.bottom, Theme.titleToList - HeadlineRow.verticalPadding)
         .digestRow()
 
         if eligible.isEmpty {
-            Text("No new headlines right now.")
-                .foregroundStyle(Theme.secondary)
-                .padding(.vertical, HeadlineRow.verticalPadding)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .digestRow()
+            // On first launch the list fills in as each feed arrives.
+            HStack(spacing: 8) {
+                if isRefreshing {
+                    ProgressView()
+                        .controlSize(.small)
+                }
+                Text(isRefreshing ? "Checking your feeds…" : "No new headlines right now.")
+            }
+            .foregroundStyle(Theme.secondary)
+            .padding(.vertical, HeadlineRow.verticalPadding)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .digestRow()
         }
 
         ForEach(shown, id: \.item.itemID) { entry in
@@ -76,14 +78,7 @@ struct NewsSectionView: View {
                 tap(entry, headline: row)
             }
             .digestRow()
-            .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                Button("Useful") { resolve(entry.item, as: .useful) }
-                    .tint(Theme.swipeUseful)
-            }
-            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                Button("Not useful") { resolve(entry.item, as: .notRelevant) }
-                    .tint(Theme.swipeNotRelevant)
-            }
+            .judgmentSwipes(useful: { resolve(entry.item, as: .useful) }, notUseful: { resolve(entry.item, as: .notRelevant) })
             .onAppear {
                 ReadingState.markShown(itemID: entry.item.itemID, sourceID: entry.item.sourceID, in: context)
             }
@@ -193,12 +188,6 @@ struct NewsSectionView: View {
     private func markSeen(_ itemID: String) {
         guard let item = items.first(where: { $0.itemID == itemID }) else { return }
         ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, in: context)
-    }
-
-    private func refreshNow() async {
-        refreshState = .running
-        await refresh(true)
-        refreshState = .done
     }
 
     private func open(_ item: FeedItem) {

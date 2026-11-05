@@ -38,8 +38,6 @@ enum Theme {
     static let wordmarkFont = Font.footnote
     /// Section actions such as Refresh: slate, semibold, underlined.
     static let actionFont = Font.subheadline.weight(.semibold)
-    /// The small gray label naming what the feed sent ("Full post", "Excerpt").
-    static let typeLabelFont = Font.caption.weight(.semibold)
     static let ribbonIconFont = Font.subheadline
 }
 

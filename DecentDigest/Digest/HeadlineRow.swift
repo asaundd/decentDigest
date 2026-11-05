@@ -23,8 +23,8 @@ struct Headline: Identifiable {
     /// Full posts and excerpts open in the panel; summaries and link-only rows go to the site.
     var opensPanel: Bool { kind == .fullPost || kind == .excerpt }
 
-    /// The ribbon's label for opening the panel.
-    var readLabel: String { readsHere ? "Read full post" : "Read more" }
+    /// The ribbon's label for opening the panel. It also says what the feed sent.
+    var readLabel: String { readsHere ? "Read full post" : "Read excerpt" }
 
     /// Only title-only rows carry a marker: ↗ says reading it means going to the site.
     var marker: String? {
@@ -59,13 +59,13 @@ struct HeadlineActions {
     /// Opens the panel. When present it is the ribbon's first action.
     var readFull: (() -> Void)?
     var openInSafari: (() -> Void)?
-    /// "Read full post" or "Read more".
-    var readLabel = "Read more"
+    /// "Read full post" or "Read excerpt".
+    var readLabel = "Read full post"
 }
 
-/// One headline: gray dash, title (semibold while unread, gray once opened), feed name and age.
-/// Title-only rows end in ↗. A tap expands any row: a small gray label naming what the feed sent,
-/// the byline and up to 320 characters of text, over a ribbon of actions, all on a lighter card.
+/// One headline: gray dash, title (semibold while unread, regular once opened), feed name and age.
+/// Title-only rows end in ↗. A tap expands any row: the byline and up to 320 characters of text
+/// over a ribbon of actions, all on a lighter card.
 struct HeadlineRow: View {
     static let verticalPadding: CGFloat = 5
     /// How far the open card reaches past the text on each side.
@@ -87,7 +87,6 @@ struct HeadlineRow: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(headline.title)
                             .fontWeight(headline.isUnread ? .semibold : .regular)
-                            .foregroundStyle(headline.isUnread ? Theme.ink : Theme.secondary)
                         Text(headline.detail)
                             .font(.subheadline)
                             .foregroundStyle(Theme.secondary)
@@ -144,12 +143,6 @@ struct HeadlineRow: View {
     private var expandedDetail: some View {
         VStack(alignment: .leading, spacing: 10) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(headline.kind.label)
-                    .font(Theme.typeLabelFont)
-                    .tracking(0.5)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Theme.secondary)
-                    .accessibilityLabel(headline.kind.label)
                 if let byline = headline.byline {
                     Text(byline)
                         .font(.subheadline)
@@ -234,10 +227,11 @@ struct ActionRibbon: View {
             TextLink(actions.readLabel, action: readFull)
             if let openInSafari = actions.openInSafari {
                 TextLink("Open ↗", action: openInSafari)
-                    .accessibilityLabel("Open in Safari")
+                    .accessibilityLabel("Open the site")
             }
         } else if let openInSafari = actions.openInSafari {
-            TextLink("Open in Safari ↗", action: openInSafari)
+            TextLink("Open ↗", action: openInSafari)
+                .accessibilityLabel("Open the site")
         }
     }
 
