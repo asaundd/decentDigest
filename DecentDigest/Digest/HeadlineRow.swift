@@ -17,8 +17,14 @@ struct Headline: Identifiable {
         PostKind.classify(summary: summary, fullText: fullText)
     }
 
-    /// The whole post is in the feed, so Read more opens it in the panel.
+    /// The whole post is in the feed.
     var readsHere: Bool { kind == .fullPost }
+
+    /// Full posts and excerpts open in the panel; summaries and link-only rows go to the site.
+    var opensPanel: Bool { kind == .fullPost || kind == .excerpt }
+
+    /// The ribbon's label for opening the panel.
+    var readLabel: String { readsHere ? "Read full post" : "Read more" }
 
     /// Only title-only rows carry a marker: ↗ says reading it means going to the site.
     var marker: String? {
@@ -35,14 +41,9 @@ struct Headline: Identifiable {
         previewText.map { PostKind.clipForRow($0) }
     }
 
-    /// What the panel shows: the full post. Only full posts open the panel.
+    /// What the panel shows: the full post, or the whole excerpt.
     var panelText: String? {
-        fullText
-    }
-
-    /// The label for going to the site: an excerpt continues there, anything else opens it.
-    var siteLabel: String {
-        kind == .excerpt ? "Continue reading ↗" : "Open in Safari ↗"
+        readsHere ? fullText : previewText
     }
 
     var byline: String? {
@@ -55,20 +56,20 @@ struct HeadlineActions {
     var save: (() -> Void)?
     var useful: () -> Void
     var notUseful: () -> Void
-    /// Opens the panel. For full posts it is the ribbon's first action.
+    /// Opens the panel. When present it is the ribbon's first action.
     var readFull: (() -> Void)?
     var openInSafari: (() -> Void)?
-    /// "Open in Safari ↗" or "Continue reading ↗".
-    var siteLabel = "Open in Safari ↗"
-    /// Read more comes first in the ribbon, ahead of going to the site.
-    var readsHere = false
+    /// "Read full post" or "Read more".
+    var readLabel = "Read more"
 }
 
 /// One headline: gray dash, title (semibold while unread, gray once opened), feed name and age.
 /// Title-only rows end in ↗. A tap expands any row: a small gray label naming what the feed sent,
-/// the byline and up to 320 characters of text, over a ribbon of actions, all on a faint band.
+/// the byline and up to 320 characters of text, over a ribbon of actions, all on a lighter card.
 struct HeadlineRow: View {
     static let verticalPadding: CGFloat = 5
+    /// How far the open card reaches past the text on each side.
+    static let cardInset: CGFloat = 12
 
     var headline: Headline
     var isExpanded: Bool
@@ -117,6 +118,22 @@ struct HeadlineRow: View {
                 expandedDetail
             }
         }
+        // Open, the row sits on a lighter card that reaches a little past the text on each side.
+        .padding(.top, isExpanded ? 10 - Self.verticalPadding : 0)
+        .background {
+            if isExpanded {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(Theme.expandedFill)
+                    .shadow(color: Theme.expandedShadow, radius: 4, x: 0, y: 2)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .strokeBorder(Theme.expandedRing, lineWidth: 1)
+                    )
+                    .padding(.horizontal, -Self.cardInset)
+            }
+        }
+        .padding(.top, isExpanded ? 4 : 0)
+        .padding(.bottom, isExpanded ? 10 : 0)
         .onGeometryChange(for: CGFloat.self) { proxy in
             proxy.frame(in: .global).maxY
         } action: { bottom in
@@ -166,53 +183,76 @@ struct HeadlineRow: View {
             .padding(.leading, DashColumn.width)
             .padding(.trailing, DashColumn.width)
 
-            ActionRibbon(actions: actions)
+            ActionRibbon(
+                actions: actions,
+                leadingPadding: Self.cardInset + DashColumn.width,
+                trailingPadding: Self.cardInset,
+                bleed: Self.cardInset
+            )
         }
     }
 }
 
-/// The actions under an expanded headline, on one darker band: the way to read it first, lined up
-/// with the text above, then small square buttons for Save, ✓ (useful) and ✕ (not useful).
+/// The actions under an expanded headline, in the same color as the card: the way to read it first,
+/// lined up with the text above, then small square buttons for Save, ✓ (useful) and ✕ (not useful).
 struct ActionRibbon: View {
     var actions: HeadlineActions
-    /// Indent for the first action, so it lines up with the text above it.
-    var leadingInset: CGFloat = DashColumn.width
-    /// In a digest row the ribbon runs past the row's margins to the screen edges.
-    var bleedsToEdges = true
+    /// Space before the first action, so it lines up with the text above it.
+    var leadingPadding: CGFloat
+    /// Space after the last button.
+    var trailingPadding: CGFloat
+    /// How far the ribbon runs past its container on each side.
+    var bleed: CGFloat = 0
 
     var body: some View {
-        HStack(spacing: 6) {
-            primary
-            Spacer(minLength: 0)
-            HStack(spacing: 0) {
-                if let save = actions.save {
-                    RibbonButton(systemImage: "bookmark", label: "Save", action: save)
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 16) {
+                links
+                Spacer(minLength: 0)
+                buttons
+            }
+            // At large text sizes the links sit above the buttons.
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: 16) { links }
+                HStack {
+                    Spacer(minLength: 0)
+                    buttons
                 }
-                RibbonButton(systemImage: "checkmark", label: "Useful", action: actions.useful)
-                RibbonButton(systemImage: "xmark", label: "Not useful", action: actions.notUseful)
             }
         }
         .padding(.vertical, 1)
-        .padding(.leading, Theme.margin + leadingInset)
-        .padding(.trailing, Theme.margin - RibbonButton.gap)
+        .padding(.leading, leadingPadding)
+        .padding(.trailing, trailingPadding - RibbonButton.gap)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.ribbonFill)
-        .padding(.horizontal, bleedsToEdges ? -Theme.margin : 0)
+        .padding(.horizontal, -bleed)
     }
 
+    /// Read in the panel first when the post opens there, otherwise go to the site.
     @ViewBuilder
-    private var primary: some View {
-        if actions.readsHere, let readFull = actions.readFull {
-            TextLink("Read more", action: readFull)
+    private var links: some View {
+        if let readFull = actions.readFull {
+            TextLink(actions.readLabel, action: readFull)
+            if let openInSafari = actions.openInSafari {
+                TextLink("Open ↗", action: openInSafari)
+                    .accessibilityLabel("Open in Safari")
+            }
         } else if let openInSafari = actions.openInSafari {
-            TextLink(actions.siteLabel, action: openInSafari)
-        } else if let readFull = actions.readFull {
-            TextLink("Read more", action: readFull)
+            TextLink("Open in Safari ↗", action: openInSafari)
+        }
+    }
+
+    private var buttons: some View {
+        HStack(spacing: 0) {
+            if let save = actions.save {
+                RibbonButton(systemImage: "bookmark", label: "Save", action: save)
+            }
+            RibbonButton(systemImage: "checkmark", label: "Useful", action: actions.useful)
+            RibbonButton(systemImage: "xmark", label: "Not useful", action: actions.notUseful)
         }
     }
 }
 
-/// A small square symbol button on the ribbon, in the page color, with a larger tap target and a spoken label.
+/// A small square symbol button on the ribbon, a shade darker than the card, with a larger tap target and a spoken label.
 struct RibbonButton: View {
     /// Half the space between two squares.
     static let gap: CGFloat = 3

@@ -119,21 +119,10 @@ struct DigestView: View {
 
 extension View {
     /// Makes a List row look like part of the page: margins only, no separators or background.
-    /// An expanded headline sits on a lighter band with a faint edge.
-    func digestRow(isExpanded: Bool = false) -> some View {
+    func digestRow() -> some View {
         listRowInsets(EdgeInsets(top: 0, leading: Theme.margin, bottom: 0, trailing: Theme.margin))
             .listRowSeparator(.hidden)
-            .listRowBackground(isExpanded ? ExpandedBand() : nil)
-    }
-}
-
-/// The lighter band behind an expanded headline.
-private struct ExpandedBand: View {
-    var body: some View {
-        Rectangle()
-            .fill(Theme.expandedFill)
-            .overlay(Rectangle().strokeBorder(Theme.expandedRing, lineWidth: 1))
-            .shadow(color: Theme.expandedShadow, radius: 4, x: 0, y: 2)
+            .listRowBackground(Color.clear)
     }
 }
 

@@ -40,7 +40,7 @@ struct SavedNewsSectionView: View {
             ) {
                 tap(item, headline: row)
             }
-            .digestRow(isExpanded: expandedID == item.itemID)
+            .digestRow()
             .swipeActions(edge: .leading, allowsFullSwipe: true) {
                 Button("Useful") { resolve(item, as: .useful) }
                     .tint(Theme.swipeUseful)
@@ -74,10 +74,9 @@ struct SavedNewsSectionView: View {
             useful: { resolve(item, as: .useful) },
             notUseful: { resolve(item, as: .notRelevant) },
             openInSafari: headline.link == nil ? nil : { open(item) },
-            siteLabel: headline.siteLabel,
-            readsHere: headline.readsHere
+            readLabel: headline.readLabel
         )
-        if headline.readsHere {
+        if headline.opensPanel {
             let panelActions = actions
             actions.readFull = {
                 ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, in: context)

@@ -11,16 +11,14 @@ enum Theme {
     static let secondary = Color(light: 0x6F7573, dark: 0xA3A8A5)
     static let rule = Color(light: 0xDFE0DC, dark: 0x343937)
     static let accent = Color(light: 0x3C3C4C, dark: 0xCECED5)
-    // An expanded headline sits on a faint band, with its actions on a slightly darker one.
+    // An expanded headline sits on a card a shade lighter than the page; its actions share that color.
     static let expandedFill = Color(light: 0xFFFEFC, dark: 0x202524)
-    /// The action ribbon shares the expanded band's color.
-    static let ribbonFill = expandedFill
-    /// A faint edge and shadow that lift the expanded band off the page.
+    /// A faint edge and shadow that lift the expanded card off the page.
     static let expandedRing = Color(light: 0x1A1D1E, dark: 0x000000).opacity(0.06)
     static let expandedShadow = Color(light: 0x1A1D1E, dark: 0x000000).opacity(0.06)
-    /// The small square buttons on the ribbon, a shade darker than the band.
+    /// The small square buttons on the ribbon, a shade darker than the card.
     static let ribbonButtonFill = Color(light: 0xF2F1EC, dark: 0x151817)
-    /// The panel matches the expanded band, so the post reads the same in both.
+    /// The panel matches the expanded card, so the post reads the same in both.
     static let panelFill = expandedFill
     static let panelShadow = Color.black.opacity(0.14)
     /// The faint wash over the digest while the panel is open.

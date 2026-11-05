@@ -52,7 +52,7 @@ struct ArticlePanel: View {
                 .padding(.vertical, 12)
             }
 
-            ActionRibbon(actions: panelActions, leadingInset: 0, bleedsToEdges: false)
+            ActionRibbon(actions: panelActions, leadingPadding: Theme.margin, trailingPadding: Theme.margin)
         }
         .foregroundStyle(Theme.ink)
         .background(Theme.panelFill)
@@ -91,8 +91,7 @@ struct ArticlePanel: View {
             useful: { close(); actions.useful() },
             notUseful: { close(); actions.notUseful() },
             readFull: nil,
-            openInSafari: actions.openInSafari.map { open -> () -> Void in { close(); open() } },
-            siteLabel: actions.siteLabel
+            openInSafari: actions.openInSafari.map { open -> () -> Void in { close(); open() } }
         )
     }
 }

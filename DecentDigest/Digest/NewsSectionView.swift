@@ -75,7 +75,7 @@ struct NewsSectionView: View {
             ) {
                 tap(entry, headline: row)
             }
-            .digestRow(isExpanded: expandedID == entry.item.itemID)
+            .digestRow()
             .swipeActions(edge: .leading, allowsFullSwipe: true) {
                 Button("Useful") { resolve(entry.item, as: .useful) }
                     .tint(Theme.swipeUseful)
@@ -164,10 +164,9 @@ struct NewsSectionView: View {
             useful: { resolve(item, as: .useful) },
             notUseful: { resolve(item, as: .notRelevant) },
             openInSafari: row.link == nil ? nil : { open(item) },
-            siteLabel: row.siteLabel,
-            readsHere: row.readsHere
+            readLabel: row.readLabel
         )
-        if row.readsHere {
+        if row.opensPanel {
             let panelActions = actions
             actions.readFull = {
                 ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, in: context)
