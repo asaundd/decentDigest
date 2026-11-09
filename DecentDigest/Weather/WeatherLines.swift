@@ -87,7 +87,7 @@ struct WeatherLines: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// One bullet per day: the day's name in semibold, then the condition and low to high.
+    /// One bullet per day: the day's name, then the condition and low to high, all regular weight.
     private func week(_ days: [WeatherDay], unit: TemperatureUnit) -> some View {
         Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: 0, verticalSpacing: 4) {
             ForEach(Array(days.prefix(WeatherRules.weekDays))) { day in
@@ -98,7 +98,6 @@ struct WeatherLines: View {
                         .accessibilityHidden(true)
                     // Forecast days start at midnight where the place is; midday keeps the right weekday.
                     Text(day.date.addingTimeInterval(12 * 3_600), format: .dateTime.weekday(.wide))
-                        .fontWeight(.semibold)
                         .padding(.trailing, 12)
                     Text(day.condition)
                         .foregroundStyle(Theme.itemInk)
