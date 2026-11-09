@@ -50,6 +50,7 @@ public struct WeatherSummary: Sendable, Hashable {
     }
 }
 
+/// An event read live from Calendar. Never stored by the app.
 public struct CalendarEntry: Sendable, Identifiable, Hashable {
     public var id: String
     public var title: String
@@ -70,18 +71,28 @@ public struct CalendarEntry: Sendable, Identifiable, Hashable {
     }
 }
 
+/// A to-do read live from Reminders. Never stored by the app.
 public struct TodoEntry: Sendable, Identifiable, Hashable {
+    /// The reminder's `calendarItemIdentifier`.
     public var id: String
     public var title: String
     public var listName: String
     public var due: Date?
+    /// False when the reminder has a due day but no time.
+    public var dueIncludesTime: Bool
+    public var notes: String?
+    /// The list's position in Reminders, used to order to-dos with no due date.
+    public var listOrder: Int
     public var isCompleted: Bool
 
-    public init(id: String, title: String, listName: String, due: Date? = nil, isCompleted: Bool = false) {
+    public init(id: String, title: String, listName: String, due: Date? = nil, dueIncludesTime: Bool = false, notes: String? = nil, listOrder: Int = 0, isCompleted: Bool = false) {
         self.id = id
         self.title = title
         self.listName = listName
         self.due = due
+        self.dueIncludesTime = dueIncludesTime
+        self.notes = notes
+        self.listOrder = listOrder
         self.isCompleted = isCompleted
     }
 }

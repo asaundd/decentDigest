@@ -28,12 +28,15 @@ public enum SampleDigest {
             CalendarEntry(id: "e1", title: "School drop-off", start: at(8, 15), end: at(8, 45), calendarName: "Family"),
             CalendarEntry(id: "e2", title: "Coffee with Priya", start: at(10), end: at(11), calendarName: "Personal", location: "Corner café"),
             CalendarEntry(id: "e3", title: "Soccer practice", start: at(17, 30), end: at(18, 30), calendarName: "Family"),
+            CalendarEntry(id: "e4", title: "Recycling pickup", start: day(1), end: day(2), isAllDay: true, calendarName: "Family"),
+            CalendarEntry(id: "e5", title: "Team planning", start: at(9, 30, dayOffset: 2), end: at(10, 30, dayOffset: 2), calendarName: "Personal", location: "Video call"),
         ]
 
         let todos = [
-            TodoEntry(id: "t1", title: "Renew car registration", listName: "Personal", due: today),
-            TodoEntry(id: "t2", title: "Book dentist appointment", listName: "Personal"),
-            TodoEntry(id: "t3", title: "Order birthday present", listName: "Family", due: day(2)),
+            TodoEntry(id: "t1", title: "Renew car registration", listName: "Personal", due: at(12), dueIncludesTime: true),
+            TodoEntry(id: "t2", title: "Book dentist appointment", listName: "Personal", notes: "Ask about the earliest Saturday slot."),
+            TodoEntry(id: "t3", title: "Order birthday present", listName: "Family", listOrder: 1),
+            TodoEntry(id: "t4", title: "Pick up dry cleaning", listName: "Personal", due: day(2)),
         ]
 
         let news = [
