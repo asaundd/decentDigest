@@ -12,6 +12,7 @@ struct WeatherSettingsView: View {
     @State private var city = ""
     @State private var isLooking = false
     @State private var notFound = false
+    @State private var search = CitySearch()
     @FocusState private var cityFocused: Bool
 
     var body: some View {
@@ -112,15 +113,51 @@ struct WeatherSettingsView: View {
             HStack(alignment: .firstTextBaseline, spacing: 12) {
                 TextField("Type a city", text: $city)
                     .textContentType(.addressCity)
+                    .autocorrectionDisabled()
                     .submitLabel(.search)
                     .focused($cityFocused)
-                    .onSubmit(lookUp)
+                    .onSubmit { lookUp(city) }
+                    // Suggestions follow each letter typed.
+                    .onChange(of: city) { _, text in
+                        notFound = false
+                        search.update(text)
+                    }
                     .padding(.vertical, 6)
                     .overlay(alignment: .bottom) {
                         Rectangle().fill(Theme.rule).frame(height: 1)
                     }
-                TextLink(isLooking ? "Looking…" : "Use this city", action: lookUp)
+                TextLink(isLooking ? "Looking…" : "Use this city") { lookUp(city) }
                     .disabled(isLooking || city.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+            // Pick a suggestion instead of typing the whole name.
+            if !search.suggestions.isEmpty {
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(search.suggestions) { suggestion in
+                        Button {
+                            lookUp(suggestion.query)
+                        } label: {
+                            HStack(alignment: .firstTextBaseline, spacing: 0) {
+                                Text("–")
+                                    .foregroundStyle(Theme.secondary)
+                                    .frame(width: DashColumn.width, alignment: .leading)
+                                    .accessibilityHidden(true)
+                                Text(suggestion.title)
+                                if !suggestion.subtitle.isEmpty {
+                                    Text("  \(suggestion.subtitle)")
+                                        .font(.subheadline)
+                                        .foregroundStyle(Theme.secondary)
+                                }
+                                Spacer(minLength: 0)
+                            }
+                            .padding(.vertical, 6)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(StillButtonStyle())
+                        .accessibilityLabel(suggestion.subtitle.isEmpty ? suggestion.title : "\(suggestion.title), \(suggestion.subtitle)")
+                        .accessibilityHint("Shows the weather for this city")
+                    }
+                }
+                .padding(.top, 2)
             }
             if notFound {
                 Text("No city found by that name.")
@@ -130,16 +167,17 @@ struct WeatherSettingsView: View {
         }
     }
 
-    private func lookUp() {
-        guard !isLooking else { return }
+    private func lookUp(_ text: String) {
+        guard !isLooking, !text.trimmingCharacters(in: .whitespaces).isEmpty else { return }
         isLooking = true
         notFound = false
         Task {
-            let found = await model.setCity(city)
+            let found = await model.setCity(text)
             isLooking = false
             notFound = !found
             if found {
                 city = ""
+                search.clear()
                 cityFocused = false
             }
         }
