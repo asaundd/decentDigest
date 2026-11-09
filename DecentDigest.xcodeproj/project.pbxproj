@@ -213,8 +213,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Decent digest";
-				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Decent Digest shows today's events from the calendars you choose. Your events stay on your iPhone.";
-				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Decent Digest shows to-dos from the Reminders lists you choose, and checks them off when you do.";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Decent Digest shows your events for today and this week. They are read on your iPhone and never copied or sent anywhere.";
+				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Decent Digest shows your to-dos and checks them off in Reminders when you do. They are never copied or sent anywhere.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_FILE = Config/Info.plist;
@@ -245,8 +245,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Decent digest";
-				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Decent Digest shows today's events from the calendars you choose. Your events stay on your iPhone.";
-				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Decent Digest shows to-dos from the Reminders lists you choose, and checks them off when you do.";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Decent Digest shows your events for today and this week. They are read on your iPhone and never copied or sent anywhere.";
+				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Decent Digest shows your to-dos and checks them off in Reminders when you do. They are never copied or sent anywhere.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_FILE = Config/Info.plist;
