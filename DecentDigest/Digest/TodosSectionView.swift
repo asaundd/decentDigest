@@ -216,7 +216,8 @@ struct TodoRow: View {
         var text = Text(todo.title)
         if let note {
             // Once struck, the note goes the same gray as the title.
-            text = text + Text("  \(note)").foregroundStyle(strike >= 1 ? Theme.past : Theme.secondary)
+            let noteText = Text("  \(note)").foregroundStyle(strike >= 1 ? Theme.past : Theme.secondary)
+            text = Text("\(text)\(noteText)")
         }
         return text
             .textRenderer(StrikeRenderer(progress: strike, color: Theme.itemInk))

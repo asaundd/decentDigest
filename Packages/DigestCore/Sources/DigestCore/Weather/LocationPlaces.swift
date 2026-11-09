@@ -1,8 +1,9 @@
 #if os(iOS)
 import CoreLocation
 import Foundation
+import MapKit
 
-/// The device's location through Core Location, and typed cities through the geocoder.
+/// The device's location through Core Location, and city names through MapKit.
 /// Location is optional: without it the reader can type a city instead.
 @MainActor
 public final class LocationPlaces: NSObject, PlaceProvider {
@@ -58,19 +59,20 @@ public final class LocationPlaces: NSObject, PlaceProvider {
         for waiter in waiters { waiter.resume(with: result) }
     }
 
-    // MARK: Geocoding (off the main actor; only plain values come back)
-    // CLGeocoder still works on iOS 26; MapKit's newer geocoding requests can replace it later.
+    // MARK: Geocoding with MapKit (off the main actor; only plain values come back)
 
     nonisolated private static func name(latitude: Double, longitude: Double) async throws -> String? {
-        let marks = try await CLGeocoder().reverseGeocodeLocation(CLLocation(latitude: latitude, longitude: longitude))
-        return marks.first.flatMap(placeName)
+        let request: MKReverseGeocodingRequest? = MKReverseGeocodingRequest(location: CLLocation(latitude: latitude, longitude: longitude))
+        guard let request else { return nil }
+        return try await request.mapItems.first.flatMap(placeName)
     }
 
     nonisolated private static func lookUp(_ text: String) async throws -> WeatherPlace? {
-        let marks = try await CLGeocoder().geocodeAddressString(text)
-        guard let mark = marks.first, let coordinate = mark.location?.coordinate else { return nil }
+        let request: MKGeocodingRequest? = MKGeocodingRequest(addressString: text)
+        guard let request, let item = try await request.mapItems.first else { return nil }
+        let coordinate = item.location.coordinate
         return WeatherPlace(
-            name: placeName(mark) ?? text,
+            name: placeName(item) ?? text,
             latitude: coordinate.latitude,
             longitude: coordinate.longitude,
             isCurrentLocation: false
@@ -78,10 +80,8 @@ public final class LocationPlaces: NSObject, PlaceProvider {
     }
 
     /// "Brooklyn, NY" in the US, "Lyon, France" elsewhere.
-    nonisolated private static func placeName(_ mark: CLPlacemark) -> String? {
-        guard let city = mark.subLocality.flatMap({ mark.locality == "New York" ? $0 : nil }) ?? mark.locality ?? mark.name else { return nil }
-        let region = mark.isoCountryCode == "US" ? mark.administrativeArea : mark.country
-        return [city, region].compactMap { $0 }.joined(separator: ", ")
+    nonisolated private static func placeName(_ item: MKMapItem) -> String? {
+        item.addressRepresentations?.cityWithContext ?? item.name
     }
 
     private static func state(_ status: CLAuthorizationStatus) -> AccessState {
