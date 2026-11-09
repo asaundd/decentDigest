@@ -7,10 +7,28 @@ extension View {
     /// the row is leaving, while a strike draws across the title. Letting go past the threshold,
     /// where the strike is complete, acts on the row.
     func judgmentSwipes(useful: @escaping () -> Void, notUseful: @escaping () -> Void) -> some View {
-        modifier(JudgmentSwipe(useful: useful, notUseful: notUseful))
-            .accessibilityAction(named: "Relevant", useful)
-            .accessibilityAction(named: "Not relevant", notUseful)
+        modifier(JudgmentSwipe(
+            leading: SwipeAction(symbol: "checkmark", label: "Relevant", action: useful),
+            trailing: SwipeAction(symbol: "xmark", label: "Not relevant", action: notUseful)
+        ))
+        .accessibilityAction(named: "Relevant", useful)
+        .accessibilityAction(named: "Not relevant", notUseful)
     }
+
+    /// Swipe right to check a to-do off, drawn the same way as the headline swipes. There is no left swipe.
+    func checkOffSwipe(_ action: @escaping () -> Void) -> some View {
+        modifier(JudgmentSwipe(
+            leading: SwipeAction(symbol: "checkmark", label: "Done", action: action),
+            trailing: nil
+        ))
+    }
+}
+
+/// What a swipe in one direction shows and does.
+struct SwipeAction {
+    var symbol: String
+    var label: String
+    var action: () -> Void
 }
 
 /// Remembers when a row last moved sideways, so a swipe that is let go near where it began
@@ -30,8 +48,10 @@ extension EnvironmentValues {
 }
 
 private struct JudgmentSwipe: ViewModifier {
-    var useful: () -> Void
-    var notUseful: () -> Void
+    /// Swiping right.
+    var leading: SwipeAction?
+    /// Swiping left.
+    var trailing: SwipeAction?
 
     /// How far the row must travel before letting go acts on it.
     private static let threshold: CGFloat = 96
@@ -58,14 +78,14 @@ private struct JudgmentSwipe: ViewModifier {
 
     @ViewBuilder
     private var band: some View {
-        if offset != 0 {
+        if offset != 0, let swipe = offset > 0 ? leading : trailing {
             let isUseful = offset > 0
             // Only the strip the row has moved off is drawn, so the page color never changes
             // and the label never sits under the row's text.
             VStack(spacing: 3) {
-                Image(systemName: isUseful ? "checkmark" : "xmark")
+                Image(systemName: swipe.symbol)
                     .font(.title3.weight(.light))
-                Text(isUseful ? "Relevant" : "Not relevant")
+                Text(swipe.label)
                     .font(.caption.weight(.medium))
             }
             .fixedSize()
@@ -82,13 +102,15 @@ private struct JudgmentSwipe: ViewModifier {
 
     private func dragChanged(_ x: CGFloat) {
         guard exit == nil else { return }
-        dragX = x
+        // A direction with no action doesn't move.
+        dragX = (x > 0 && leading == nil) || (x < 0 && trailing == nil) ? 0 : x
         swipeGuard.lastMove = .now
     }
 
     private func dragEnded(_ x: CGFloat, cancelled: Bool) {
         swipeGuard.lastMove = .now
-        guard exit == nil, !cancelled, abs(x) >= Self.threshold else {
+        let swipe = x > 0 ? leading : trailing
+        guard exit == nil, !cancelled, abs(x) >= Self.threshold, let swipe else {
             withAnimation(.easeOut(duration: 0.2)) { dragX = 0 }
             return
         }
@@ -96,7 +118,7 @@ private struct JudgmentSwipe: ViewModifier {
         withAnimation(.easeOut(duration: 0.18)) {
             exit = toRight ? 600 : -600
         } completion: {
-            if toRight { useful() } else { notUseful() }
+            swipe.action()
             exit = nil
             dragX = 0
         }

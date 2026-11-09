@@ -46,7 +46,7 @@ struct NewsSectionView: View {
             .disabled(isRefreshing)
             .accessibilityHint("Checks your feeds for new headlines")
         }
-        .padding(.bottom, Theme.titleToList - HeadlineRow.verticalPadding)
+        .padding(.bottom, Theme.titleToFirstItem - HeadlineRow.verticalPadding)
         .digestRow()
 
         if eligible.isEmpty {
@@ -100,7 +100,7 @@ struct NewsSectionView: View {
                         .foregroundStyle(Theme.secondary)
                         .accessibilityHidden(true)
                 }
-                TextLink(showsAll ? "Show fewer" : "Show all") {
+                TextLink(showsAll ? "Show less" : "Show all") {
                     withAnimation { showsAll.toggle() }
                 }
             }

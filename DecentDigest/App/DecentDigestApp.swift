@@ -6,6 +6,7 @@ import SwiftUI
 struct DecentDigestApp: App {
     private let container: ModelContainer
     private let refresher: NewsRefresher
+    private let agenda: AgendaModel
 
     init() {
         let container: ModelContainer
@@ -17,11 +18,12 @@ struct DecentDigestApp: App {
         }
         self.container = container
         self.refresher = NewsRefresher(container: container)
+        self.agenda = AgendaModel(source: EventKitSource())
     }
 
     var body: some Scene {
         WindowGroup {
-            DigestView(refresh: { [refresher] force in await refresher.refresh(force: force) })
+            DigestView(agenda: agenda, refresh: { [refresher] force in await refresher.refresh(force: force) })
         }
         .modelContainer(container)
     }

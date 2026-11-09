@@ -213,8 +213,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Decent digest";
-				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Decent Digest shows today's events from the calendars you choose. Your events stay on your iPhone.";
-				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Decent Digest shows to-dos from the Reminders lists you choose, and checks them off when you do.";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Full access lets Decent Digest show your events. They are read only on your device, never changed by the app, and never shared with the developer or anyone else.";
+				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Full access lets Decent Digest show your to-dos and check them off when you tap. They are managed only on your device and never shared with the developer or anyone else.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_FILE = Config/Info.plist;
@@ -245,8 +245,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Decent digest";
-				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Decent Digest shows today's events from the calendars you choose. Your events stay on your iPhone.";
-				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Decent Digest shows to-dos from the Reminders lists you choose, and checks them off when you do.";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Full access lets Decent Digest show your events. They are read only on your device, never changed by the app, and never shared with the developer or anyone else.";
+				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Full access lets Decent Digest show your to-dos and check them off when you tap. They are managed only on your device and never shared with the developer or anyone else.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_FILE = Config/Info.plist;

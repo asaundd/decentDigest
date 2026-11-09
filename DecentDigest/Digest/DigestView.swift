@@ -1,11 +1,16 @@
+import Combine
 import DigestCore
+import EventKit
 import SwiftData
 import SwiftUI
+import UIKit
 
 /// The main screen: one calm page with every section the user set up.
 struct DigestView: View {
-    /// Weather, calendar, to-dos and podcasts still come from sample data.
+    /// Weather and podcasts still come from sample data.
     var digest: Digest = SampleDigest.make()
+    /// Calendar and Reminders, read live.
+    var agenda: AgendaModel
     /// Fetches news. `true` means the reader pulled to refresh.
     var refresh: @Sendable (Bool) async -> Void = { _ in }
 
@@ -26,8 +31,7 @@ struct DigestView: View {
                         .padding(.top, Theme.margin)
                         .digestRow()
                     ForEach(digest.sectionOrder) { section in
-                        // Saved news appears only once something is saved.
-                        if section != .savedNews || !saved.isEmpty {
+                        if isShown(section) {
                             SectionRule()
                                 .digestRow()
                             sectionView(section) { id, bottom in reveal(id, bottom: bottom, with: proxy) }
@@ -54,10 +58,24 @@ struct DigestView: View {
         }
         .blur(radius: panel == nil ? 0 : 2)
         .overlay { ArticlePanelHost(panel: $panel) }
-        .refreshable { await runRefresh(force: true) }
+        .refreshable {
+            await agenda.reload()
+            await runRefresh(force: true)
+        }
         .onChange(of: scenePhase, initial: true) { _, phase in
+            // Checked-off to-dos still showing leave when the app goes away.
+            if phase == .background { agenda.finishAllChecked() }
             guard phase == .active else { return }
+            Task { await agenda.reload() }
             Task { await runRefresh(force: false) }
+        }
+        // Edits made in Calendar or Reminders, or checking off here, show within moments.
+        .onReceive(NotificationCenter.default.publisher(for: .EKEventStoreChanged).receive(on: RunLoop.main)) { _ in
+            Task { await agenda.reload() }
+        }
+        // A new day, or a time zone change.
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification).receive(on: RunLoop.main)) { _ in
+            Task { await agenda.reload() }
         }
     }
 
@@ -71,6 +89,17 @@ struct DigestView: View {
                 .accessibilityAddTraits(.isHeader)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func isShown(_ section: DigestSection) -> Bool {
+        switch section {
+        // Saved news appears only once something is saved.
+        case .savedNews: !saved.isEmpty
+        // A section whose access was declined isn't shown at all. It comes back once access is on.
+        case .calendar: agenda.calendarAccess != .denied
+        case .todos: agenda.remindersAccess != .denied
+        default: true
+        }
     }
 
     /// Fetches news. The page draws right away; headlines appear as each feed arrives.
@@ -98,15 +127,11 @@ struct DigestView: View {
                     .digestRow()
             }
         case .calendar:
-            DigestSectionView(title: section.title, rows: digest.events.map { event in
-                DigestSectionView.Row(id: event.id, leading: event.start.formatted(date: .omitted, time: .shortened), title: event.title, detail: event.calendarName)
-            })
-            .digestRow()
+            CalendarSectionView(model: agenda)
+                .digestRow()
         case .todos:
-            DigestSectionView(title: section.title, rows: digest.todos.map { todo in
-                DigestSectionView.Row(id: todo.id, title: todo.title, detail: todo.listName)
-            })
-            .digestRow()
+            // Rows set their own margins, so swipes can reach the page's edge.
+            TodosSectionView(model: agenda)
         case .news:
             NewsSectionView(isRefreshing: isRefreshing, refresh: { await runRefresh(force: true) }, panel: $panel, reveal: reveal)
         case .savedNews:
@@ -134,12 +159,17 @@ extension View {
 }
 
 #Preview("Light") {
-    DigestView()
+    DigestView(agenda: AgendaModel(source: SampleAgendaSource()))
         .modelContainer(DigestStore.previewContainer())
 }
 
 #Preview("Dark") {
-    DigestView()
+    DigestView(agenda: AgendaModel(source: SampleAgendaSource()))
         .modelContainer(DigestStore.previewContainer())
         .preferredColorScheme(.dark)
+}
+
+#Preview("Access declined") {
+    DigestView(agenda: AgendaModel(source: SampleAgendaSource(access: .denied)))
+        .modelContainer(DigestStore.previewContainer())
 }

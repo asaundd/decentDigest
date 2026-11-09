@@ -11,7 +11,7 @@ public enum DigestSection: String, Codable, Sendable, CaseIterable, Identifiable
         switch self {
         case .weather: "Weather"
         case .calendar: "Calendar"
-        case .todos: "To-dos"
+        case .todos: "To do"
         case .news: "News"
         case .savedNews: "Saved news"
         case .podcasts: "Podcasts"
@@ -50,6 +50,18 @@ public struct WeatherSummary: Sendable, Hashable {
     }
 }
 
+/// A point on the map, for directions to an event's place.
+public struct MapPoint: Sendable, Hashable {
+    public var latitude: Double
+    public var longitude: Double
+
+    public init(latitude: Double, longitude: Double) {
+        self.latitude = latitude
+        self.longitude = longitude
+    }
+}
+
+/// An event read live from Calendar. Never stored by the app.
 public struct CalendarEntry: Sendable, Identifiable, Hashable {
     public var id: String
     public var title: String
@@ -58,8 +70,13 @@ public struct CalendarEntry: Sendable, Identifiable, Hashable {
     public var isAllDay: Bool
     public var calendarName: String
     public var location: String?
+    /// Set when the place is an address Maps can route to.
+    public var mapPoint: MapPoint?
+    /// Invitees' names, leaving out the person using the app.
+    public var attendees: [String]
+    public var notes: String?
 
-    public init(id: String, title: String, start: Date, end: Date, isAllDay: Bool = false, calendarName: String, location: String? = nil) {
+    public init(id: String, title: String, start: Date, end: Date, isAllDay: Bool = false, calendarName: String, location: String? = nil, mapPoint: MapPoint? = nil, attendees: [String] = [], notes: String? = nil) {
         self.id = id
         self.title = title
         self.start = start
@@ -67,21 +84,34 @@ public struct CalendarEntry: Sendable, Identifiable, Hashable {
         self.isAllDay = isAllDay
         self.calendarName = calendarName
         self.location = location
+        self.mapPoint = mapPoint
+        self.attendees = attendees
+        self.notes = notes
     }
 }
 
+/// A to-do read live from Reminders. Never stored by the app.
 public struct TodoEntry: Sendable, Identifiable, Hashable {
+    /// The reminder's `calendarItemIdentifier`.
     public var id: String
     public var title: String
     public var listName: String
     public var due: Date?
+    /// False when the reminder has a due day but no time.
+    public var dueIncludesTime: Bool
+    public var notes: String?
+    /// The list's position in Reminders, used to order to-dos with no due date.
+    public var listOrder: Int
     public var isCompleted: Bool
 
-    public init(id: String, title: String, listName: String, due: Date? = nil, isCompleted: Bool = false) {
+    public init(id: String, title: String, listName: String, due: Date? = nil, dueIncludesTime: Bool = false, notes: String? = nil, listOrder: Int = 0, isCompleted: Bool = false) {
         self.id = id
         self.title = title
         self.listName = listName
         self.due = due
+        self.dueIncludesTime = dueIncludesTime
+        self.notes = notes
+        self.listOrder = listOrder
         self.isCompleted = isCompleted
     }
 }
