@@ -72,7 +72,7 @@ struct WeatherLines: View {
 
             // At the bottom, like Show all under News and the agenda.
             if !report.days.isEmpty {
-                TextLink(showsWeek ? "Show less" : "Show week") {
+                TextLink(showsWeek ? "Show less" : "Show week", still: true) {
                     // A clean swap: the label and the week change at once, with no fade or slide.
                     var instant = Transaction()
                     instant.disablesAnimations = true
@@ -80,6 +80,9 @@ struct WeatherLines: View {
                 }
                 .contentTransition(.identity)
                 .animation(nil, value: showsWeek)
+                // A fresh link each time, so nothing from the tap carries over to the new label.
+                .id(showsWeek)
+                .transition(.identity)
                 .accessibilityHint(showsWeek ? "Hides the week" : "Lists the rest of the week")
                 .padding(.top, 4)
             }

@@ -355,10 +355,14 @@ enum DashColumn {
 /// An action shown as a plain link: slate, semibold, underlined. No outline or fill.
 struct TextLink: View {
     var title: String
+    /// True for a link whose label changes when tapped (Show week / Show less): it skips the
+    /// pressed dimming, which otherwise fades back in on the new label.
+    var still = false
     var action: () -> Void
 
-    init(_ title: String, action: @escaping () -> Void) {
+    init(_ title: String, still: Bool = false, action: @escaping () -> Void) {
         self.title = title
+        self.still = still
         self.action = action
     }
 
@@ -372,6 +376,21 @@ struct TextLink: View {
                 .padding(.vertical, 4)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.borderless)
+        .buttonStyle(LinkButtonStyle(still: still))
+    }
+}
+
+/// The borderless look, optionally without the pressed dimming.
+private struct LinkButtonStyle: PrimitiveButtonStyle {
+    var still: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        if still {
+            Button(role: configuration.role, action: configuration.trigger) { configuration.label }
+                .buttonStyle(StillButtonStyle())
+        } else {
+            Button(role: configuration.role, action: configuration.trigger) { configuration.label }
+                .buttonStyle(.borderless)
+        }
     }
 }
