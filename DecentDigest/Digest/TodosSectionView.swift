@@ -20,7 +20,7 @@ struct TodosSectionView: View {
                         .accessibilityLabel("Open Reminders")
                 }
             }
-            .padding(.bottom, Theme.titleToList - 5)
+            .padding(.bottom, Theme.titleToList)
             .digestRow()
 
             if model.remindersAccess == .granted {
@@ -45,7 +45,7 @@ struct TodosSectionView: View {
                     .digestRow()
             }
             ForEach(days) { group in
-                DayHeader(title: AgendaFormat.dayName(group.day, now: now))
+                DayHeader(title: AgendaFormat.dayName(group.day, now: now), isFirst: group.id == days.first?.id)
                     .digestRow()
                 ForEach(group.items) { todo in
                     row(todo, now: now)
@@ -58,7 +58,7 @@ struct TodosSectionView: View {
                 }
             }
             if !plan.anytime.isEmpty {
-                DayHeader(title: "Anytime")
+                DayHeader(title: "Anytime", isFirst: days.isEmpty)
                     .digestRow()
                 ForEach(plan.anytime) { todo in
                     row(todo, now: now)
@@ -70,18 +70,21 @@ struct TodosSectionView: View {
                     .digestRow()
                 }
             }
-            AgendaFooter(
-                hidden: plan.hiddenCount,
-                phrase: { $0 == 1 ? "more item" : "more items" },
-                showsAll: showsAll
-            ) {
-                showsAll.toggle()
-                if !showsAll {
-                    expandedDays = []
-                    anytimeExpanded = false
+            if model.hasLoaded && !(days.isEmpty && plan.anytime.isEmpty) {
+                AgendaFooter(
+                    hidden: plan.hiddenCount,
+                    phrase: { $0 == 1 ? "more item" : "more items" },
+                    empty: "No other items this week",
+                    showsAll: showsAll
+                ) {
+                    showsAll.toggle()
+                    if !showsAll {
+                        expandedDays = []
+                        anytimeExpanded = false
+                    }
                 }
+                .digestRow()
             }
-            .digestRow()
             if let problem = model.problem {
                 Text(problem)
                     .font(.subheadline)
@@ -160,8 +163,9 @@ struct TodosSectionView: View {
     }
 }
 
-/// A to-do: its title, with when an earlier one was due (or today's time) in gray after it.
+/// A to-do: its title, with "Past due" (or today's time) in gray after it.
 /// A tap makes the title semibold and opens a card: due day and list, notes, ✓ at the top right, Open ↗.
+/// A tap on the title or the card closes it.
 struct TodoRow: View {
     var todo: TodoEntry
     var note: String?
@@ -185,6 +189,8 @@ struct TodoRow: View {
             } label: {
                 title
                     .font(AgendaMetrics.itemFont.weight(isOpen ? .semibold : .regular))
+                    // Regular to semibold is an instant change, never animated.
+                    .animation(nil, value: isOpen)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 2)
                     .contentShape(Rectangle())
@@ -212,8 +218,8 @@ struct TodoRow: View {
             text = text + Text("  \(note)").foregroundStyle(Theme.secondary)
         }
         return text
-            .textRenderer(StrikeRenderer(progress: strike, color: Theme.ink))
-            .foregroundStyle(strike >= 1 ? Theme.past : Theme.ink)
+            .textRenderer(StrikeRenderer(progress: strike, color: Theme.itemInk))
+            .foregroundStyle(strike >= 1 ? Theme.past : Theme.itemInk)
             // Checking from the card draws the strike left to right; undoing clears it at once.
             .animation(isChecked && !reduceMotion ? .easeOut(duration: 0.35) : nil, value: isChecked)
     }
@@ -247,6 +253,12 @@ struct TodoRow: View {
         }
         .font(AgendaMetrics.itemFont)
         .agendaCard()
+        // A tap on the card, away from its buttons, closes it like a tap on the title.
+        .contentShape(Rectangle())
+        .onTapGesture {
+            guard swipeGuard?.justSwiped != true else { return }
+            onTap()
+        }
     }
 }
 

@@ -79,12 +79,13 @@ public enum TodoRules {
         return TodoPlan(days: groups, anytime: Array(anytime.prefix(take)), anytimeHidden: anytime.count - take)
     }
 
-    /// The gray note after a to-do's title in the list: when an earlier one was due, or today's time.
+    /// The gray note after a to-do's title in the list: "Past due" for one from an earlier day,
+    /// or today's time. The card says which day it was due.
     public static func note(for todo: TodoEntry, now: Date, calendar: Calendar = .current, locale: Locale = .current) -> String? {
         guard let due = todo.due else { return nil }
         let today = calendar.startOfDay(for: now)
         if calendar.startOfDay(for: due) < today {
-            return AgendaFormat.earlierDue(due, now: now, calendar: calendar, locale: locale)
+            return "Past due"
         }
         return todo.dueIncludesTime ? AgendaFormat.shortTime(due, calendar: calendar, locale: locale) : nil
     }

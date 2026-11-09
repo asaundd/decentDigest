@@ -33,8 +33,10 @@ enum AgendaMetrics {
 }
 
 /// A day in the Calendar or To do list: a gray dash, then the day's name in semibold.
+/// Days after the first sit a little further from the one above.
 struct DayHeader: View {
     var title: String
+    var isFirst = false
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 0) {
@@ -46,7 +48,7 @@ struct DayHeader: View {
                 .fontWeight(.semibold)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.top, 5)
+        .padding(.top, isFirst ? 5 : 10)
         .padding(.bottom, 1)
         .accessibilityAddTraits(.isHeader)
     }
@@ -77,27 +79,33 @@ struct MoreLine: View {
 }
 
 /// The footer under Calendar and To do, like News: "N more events this week" then Show all,
-/// or Show less once everything is showing.
+/// Show less once everything is showing, or "No other events this week" when nothing waits.
 struct AgendaFooter: View {
     var hidden: Int
     /// e.g. "more events this week".
     var phrase: (Int) -> String
+    /// e.g. "No other events this week".
+    var empty: String
     var showsAll: Bool
     var toggle: () -> Void
 
     var body: some View {
-        if hidden > 0 || showsAll {
-            HStack(spacing: 10) {
-                if hidden > 0 {
-                    Text("\(hidden) \(phrase(hidden))")
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.secondary)
-                }
-                TextLink(showsAll && hidden == 0 ? "Show less" : "Show all", action: toggle)
+        HStack(spacing: 10) {
+            if hidden > 0 {
+                Text("\(hidden) \(phrase(hidden))")
+                    .foregroundStyle(Theme.secondary)
+                TextLink("Show all", action: toggle)
+            } else if showsAll {
+                TextLink("Show less", action: toggle)
+            } else {
+                Text(empty)
+                    .foregroundStyle(Theme.secondary)
+                    .padding(.vertical, 4)
             }
-            .padding(.top, 4)
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .font(.subheadline)
+        .padding(.top, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

@@ -13,12 +13,14 @@ public struct DayGroup<Item: Sendable>: Sendable, Identifiable {
 
 /// How the Calendar and To do sections fit a week into a short list.
 ///
-/// Today shows in full. The next day that has anything always shows at least its first item.
-/// Later days fill in until `limit` items show in all. A day cut short ends with "N more", and the
-/// rest of the week is counted in the footer.
+/// At most three days show: today, then the next two days that have anything. Today shows in full.
+/// The next day always shows at least its first item, and the one after fills in until `limit` items
+/// show in all. A day cut short ends with "N more", and the rest of the week is counted in the footer.
 public enum DayPlanner {
     /// The most items the list shows before "N more".
     public static let limit = 10
+    /// The most days the list shows before Show all, today included even when it is empty.
+    public static let maxDays = 3
 
     /// - Parameters:
     ///   - days: each day's items in order, today first. Days with nothing are skipped.
@@ -31,16 +33,20 @@ public enum DayPlanner {
         showAll: Bool = false
     ) -> [DayGroup<Item>] {
         var shown = 0
-        var reachedNextDay = false
+        // Today takes a place whether or not it has anything.
+        var daysUsed = 1
         var groups: [DayGroup<Item>] = []
         for (index, day) in days.enumerated() where !day.items.isEmpty {
             var take: Int
             if index == 0 {
                 take = day.items.count
-            } else if !reachedNextDay {
-                reachedNextDay = true
+            } else if daysUsed >= maxDays {
+                take = 0
+            } else if daysUsed == 1 {
+                daysUsed += 1
                 take = max(1, limit - shown)
             } else {
+                daysUsed += 1
                 take = max(0, limit - shown)
             }
             take = min(take, day.items.count)

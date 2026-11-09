@@ -65,7 +65,7 @@ private func event(_ id: String, _ start: Date, _ end: Date, allDay: Bool = fals
     #expect(timing["holiday"] == .upcoming)
 }
 
-@Test func weekShowsAllOfTodayThenFillsToTen() {
+@Test func defaultShowsTodayAndTheNextTwoDaysWithEvents() {
     // Today 4 (two already over), Tuesday 2, Wednesday 2, Thursday 3, Friday 1.
     var events = [
         event("t1", at(7), at(8)), event("t2", at(9), at(10)), event("t3", at(13), at(14)), event("t4", at(18), at(19)),
@@ -76,10 +76,25 @@ private func event(_ id: String, _ start: Date, _ end: Date, allDay: Bool = fals
     events.append(event("fri1", at(9, day: 4), at(10, day: 4)))
     let plan = CalendarAgenda.plan(events, now: at(12), calendar: utc)
     let shown = plan.filter { !$0.items.isEmpty }
-    #expect(shown.map(\.items.count) == [4, 2, 2, 2])
-    #expect(shown.last?.hiddenCount == 1)
-    // Thursday's third plus all of Friday.
-    #expect(DayPlanner.hiddenCount(plan) == 2)
+    #expect(shown.map(\.items.count) == [4, 2, 2])
+    // All of Thursday and Friday wait for Show all.
+    #expect(DayPlanner.hiddenCount(plan) == 4)
+}
+
+@Test func anEmptyTodayStillTakesOneOfTheThreeDays() {
+    let plan = DayPlanner.plan(
+        [(day: at(0), items: [Int]()), (day: at(0, day: 1), items: [1]), (day: at(0, day: 2), items: [1]), (day: at(0, day: 3), items: [1])]
+    )
+    #expect(plan.map(\.items.count) == [1, 1, 0])
+    #expect(DayPlanner.hiddenCount(plan) == 1)
+}
+
+@Test func theThreeDaysStillStopAtTen() {
+    let plan = DayPlanner.plan(
+        [(day: at(0), items: Array(1...6)), (day: at(0, day: 1), items: Array(1...3)), (day: at(0, day: 2), items: Array(1...3))]
+    )
+    #expect(plan.map(\.items.count) == [6, 3, 1])
+    #expect(plan.last?.hiddenCount == 2)
 }
 
 @Test func busyTodayStillShowsTheNextDaysFirstEvent() {
@@ -185,9 +200,10 @@ private func todo(_ id: String, due: Date? = nil, timed: Bool = false, order: In
     #expect(plan.hiddenCount == 0)
 }
 
-@Test func todoNotesShowWhenEarlierOnesWereDue() {
+@Test func todoNotesSayPastDueForEarlierOnes() {
     let us = Locale(identifier: "en_US")
-    #expect(TodoRules.note(for: todo("a", due: at(9, day: -1)), now: at(8), calendar: utc, locale: us) == "Yesterday")
+    #expect(TodoRules.note(for: todo("a", due: at(9, day: -1)), now: at(8), calendar: utc, locale: us) == "Past due")
+    #expect(TodoRules.note(for: todo("a2", due: at(9, day: -9)), now: at(8), calendar: utc, locale: us) == "Past due")
     #expect(TodoRules.note(for: todo("b", due: at(17), timed: true), now: at(8), calendar: utc, locale: us) == "5:00p")
     #expect(TodoRules.note(for: todo("c", due: at(0)), now: at(8), calendar: utc, locale: us) == nil)
 }

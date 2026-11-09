@@ -13,7 +13,7 @@ struct CalendarSectionView: View {
     @State private var openIDs: Set<String> = []
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.titleToList - 5) {
+        VStack(alignment: .leading, spacing: Theme.titleToList) {
             SectionHeader(title: DigestSection.calendar.title) {
                 if model.calendarAccess == .granted {
                     TextLink("Calendar ↗") { openURL(AgendaLinks.calendar(at: .now)) }
@@ -43,7 +43,7 @@ struct CalendarSectionView: View {
         let todayStart = Calendar.current.startOfDay(for: now)
         VStack(alignment: .leading, spacing: 0) {
             if shown.first?.day != todayStart {
-                DayHeader(title: "Today")
+                DayHeader(title: "Today", isFirst: true)
                 if model.hasLoaded {
                     Text("Nothing on the calendar today.")
                         .font(AgendaMetrics.itemFont)
@@ -52,7 +52,10 @@ struct CalendarSectionView: View {
                 }
             }
             ForEach(shown) { group in
-                DayHeader(title: AgendaFormat.dayName(group.day, now: now))
+                DayHeader(
+                    title: AgendaFormat.dayName(group.day, now: now),
+                    isFirst: group.day == todayStart
+                )
                 ForEach(group.items) { event in
                     EventRow(
                         event: event,
@@ -71,13 +74,16 @@ struct CalendarSectionView: View {
                     }
                 }
             }
-            AgendaFooter(
-                hidden: DayPlanner.hiddenCount(groups),
-                phrase: { $0 == 1 ? "more event this week" : "more events this week" },
-                showsAll: showsAll
-            ) {
-                showsAll.toggle()
-                if !showsAll { expandedDays = [] }
+            if model.hasLoaded {
+                AgendaFooter(
+                    hidden: DayPlanner.hiddenCount(groups),
+                    phrase: { $0 == 1 ? "more event this week" : "more events this week" },
+                    empty: "No other events this week",
+                    showsAll: showsAll
+                ) {
+                    showsAll.toggle()
+                    if !showsAll { expandedDays = [] }
+                }
             }
         }
     }
@@ -95,7 +101,8 @@ struct CalendarSectionView: View {
 }
 
 /// An event: time in a 60pt gray column, then its name. Past events are gray and struck; one happening
-/// now has a thin slate line at its left. A tap makes the row semibold and opens a card with the details.
+/// now has a thin slate line at its left. A tap makes the row semibold and opens a card with the details;
+/// a tap on the row or the card closes it.
 struct EventRow: View {
     static let timeWidth: CGFloat = 60
 
@@ -125,13 +132,15 @@ struct EventRow: View {
                 layout {
                     Text(AgendaFormat.timeColumn(event.label))
                         .monospacedDigit()
-                        .foregroundStyle(isPast ? Theme.past : (isOpen ? Theme.ink : Theme.secondary))
+                        .foregroundStyle(isPast ? Theme.past : (isOpen ? Theme.itemInk : Theme.secondary))
                         .frame(width: stacks ? nil : timeWidth, alignment: .leading)
                     Text(event.entry.title)
-                        .foregroundStyle(isPast ? Theme.past : Theme.ink)
+                        .foregroundStyle(isPast ? Theme.past : Theme.itemInk)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .font(AgendaMetrics.itemFont.weight(isOpen ? .semibold : .regular))
+                // Regular to semibold is an instant change, never animated.
+                .animation(nil, value: isOpen)
                 .strikethrough(isPast, color: Theme.past)
                 .padding(.vertical, 2)
                 .contentShape(Rectangle())
@@ -192,6 +201,9 @@ struct EventRow: View {
         }
         .font(AgendaMetrics.itemFont)
         .agendaCard()
+        // A tap on the card, away from its links, closes it.
+        .contentShape(Rectangle())
+        .onTapGesture(perform: onTap)
     }
 
     private var hasMore: Bool {
