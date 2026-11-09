@@ -54,8 +54,15 @@ struct WeatherLines: View {
                     .foregroundStyle(Theme.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 if !report.days.isEmpty {
-                    TextLink(showsWeek ? "Show less" : "Show week") { showsWeek.toggle() }
-                        .accessibilityHint(showsWeek ? "Hides the week" : "Lists the rest of the week")
+                    TextLink(showsWeek ? "Show less" : "Show week") {
+                        // A clean swap: the label and the week change at once, with no fade or slide.
+                        var instant = Transaction()
+                        instant.disablesAnimations = true
+                        withTransaction(instant) { showsWeek.toggle() }
+                    }
+                    .contentTransition(.identity)
+                    .animation(nil, value: showsWeek)
+                    .accessibilityHint(showsWeek ? "Hides the week" : "Lists the rest of the week")
                 }
             }
             .padding(.top, 8)
