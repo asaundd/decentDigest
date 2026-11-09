@@ -70,6 +70,44 @@ private func line(_ report: WeatherReport, unit: TemperatureUnit = .fahrenheit) 
     #expect(line(r) == nil)
 }
 
+// MARK: The rest of the week
+
+private func week(_ today: WeatherDay, _ days: [(Double, Sky)]) -> String? {
+    let forecast = days.enumerated().map { day($0.offset + 1, $0.element.0, $0.element.0 - 14, $0.element.1) }
+    return WeatherRules.weekLine(report(today, forecast), unit: .fahrenheit, calendar: utc, locale: us)
+}
+
+@Test func weekLineNamesAStormDay() {
+    let line = week(day(0, 60, 46, .cloudy), [(60, .cloudy), (60, .cloudy), (60, .cloudy), (60, .storm), (60, .cloudy), (60, .cloudy)])
+    #expect(line == "Storms likely Friday.")
+}
+
+@Test func weekLineSumsUpTheWeekend() {
+    let line = week(day(0, 60, 46, .cloudy), [(60, .cloudy), (60, .cloudy), (58, .cloudy), (55, .cloudy), (48, .clear), (47, .clear)])
+    #expect(line == "Cold and sunny this weekend.")
+}
+
+@Test func weekLineSaysWhenRainStartsLater() {
+    let line = week(day(0, 60, 46, .clear), [(60, .clear), (60, .clear), (60, .rain), (60, .rain), (60, .cloudy), (60, .cloudy)])
+    #expect(line == "Rain Thursday and Friday.")
+}
+
+@Test func weekLineLeavesRainTheChangeLineCovers() {
+    // Rain from Wednesday is already in the two-day line.
+    let line = week(day(0, 60, 46, .clear), [(60, .clear), (60, .rain), (60, .rain), (60, .rain), (60, .cloudy), (60, .cloudy)])
+    #expect(line == nil)
+}
+
+@Test func weekLineNamesATurnInTemperature() {
+    let line = week(day(0, 60, 46, .cloudy), [(61, .cloudy), (62, .cloudy), (70, .cloudy), (70, .cloudy), (62, .cloudy), (62, .cloudy)])
+    #expect(line == "Warmer from Thursday.")
+}
+
+@Test func quietWeekHasNoWeekLine() {
+    let line = week(day(0, 60, 46, .cloudy), [(60, .cloudy), (61, .cloudy), (59, .cloudy), (60, .cloudy), (62, .cloudy), (58, .cloudy)])
+    #expect(line == nil)
+}
+
 // MARK: Today
 
 @Test func todaySaysWhenRainStarts() {

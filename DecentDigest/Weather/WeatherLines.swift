@@ -2,9 +2,9 @@ import DigestCore
 import SwiftUI
 import UIKit
 
-/// The weather under the date, in words: the temperature now with today in a few words, then one
-/// gray line on what changes over the next two days. Show week lists the rest of the week, then
-/// the place (which opens Weather settings) and Weather ↗.
+/// The weather under the date, in words: the temperature now with today in a few words, then a
+/// gray line on what changes over the next two days and anything notable later in the week.
+/// Show week lists the rest of the week, then the place (which opens Weather settings) and Weather ↗.
 struct WeatherLines: View {
     var model: WeatherModel
     /// Opens Settings › Weather.
@@ -48,7 +48,8 @@ struct WeatherLines: View {
             .accessibilityElement(children: .combine)
 
             HStack(alignment: .firstTextBaseline, spacing: 12) {
-                Text(WeatherRules.changeLine(report, unit: unit) ?? "")
+                // The next two days, then anything notable later in the week.
+                Text([WeatherRules.changeLine(report, unit: unit), WeatherRules.weekLine(report, unit: unit)].compactMap { $0 }.joined(separator: " "))
                     .font(.subheadline)
                     .foregroundStyle(Theme.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
