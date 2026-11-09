@@ -100,7 +100,7 @@ struct NewsSectionView: View {
                         .foregroundStyle(Theme.secondary)
                         .accessibilityHidden(true)
                 }
-                TextLink(showsAll ? "Show fewer" : "Show all") {
+                TextLink(showsAll ? "Show less" : "Show all") {
                     withAnimation { showsAll.toggle() }
                 }
             }
