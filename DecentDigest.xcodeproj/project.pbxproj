@@ -213,8 +213,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Decent digest";
-				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Decent Digest can show your events for today and this week. iOS calls this full access, but the app only reads your calendar: it never adds, changes or deletes events, and never copies or sends them anywhere.";
-				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Decent Digest can show your to-dos for today. The only change it makes is checking off a to-do when you tap it. It never copies or sends your reminders anywhere.";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Full access lets Decent Digest show your events. They are read only on your device, never changed by the app, and never shared with the developer or anyone else.";
+				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Full access lets Decent Digest show your to-dos and check them off when you tap. They are read only on your device and never shared with the developer or anyone else.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_FILE = Config/Info.plist;
@@ -245,8 +245,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Decent digest";
-				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Decent Digest can show your events for today and this week. iOS calls this full access, but the app only reads your calendar: it never adds, changes or deletes events, and never copies or sends them anywhere.";
-				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Decent Digest can show your to-dos for today. The only change it makes is checking off a to-do when you tap it. It never copies or sends your reminders anywhere.";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Full access lets Decent Digest show your events. They are read only on your device, never changed by the app, and never shared with the developer or anyone else.";
+				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Full access lets Decent Digest show your to-dos and check them off when you tap. They are read only on your device and never shared with the developer or anyone else.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_FILE = Config/Info.plist;
