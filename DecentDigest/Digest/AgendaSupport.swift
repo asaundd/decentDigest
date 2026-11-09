@@ -90,10 +90,14 @@ struct AgendaFooter: View {
     var toggle: () -> Void
 
     var body: some View {
-        HStack(spacing: 10) {
+        // Spaced and dotted the same as the line under News.
+        HStack(spacing: 6) {
             if hidden > 0 {
                 Text("\(hidden) \(phrase(hidden))")
                     .foregroundStyle(Theme.secondary)
+                Text("·")
+                    .foregroundStyle(Theme.secondary)
+                    .accessibilityHidden(true)
                 TextLink("Show all", action: toggle)
             } else if showsAll {
                 TextLink("Show less", action: toggle)
