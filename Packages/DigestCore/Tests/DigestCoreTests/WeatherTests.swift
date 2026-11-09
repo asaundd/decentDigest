@@ -92,6 +92,21 @@ private func week(_ today: WeatherDay, _ days: [(Double, Sky)]) -> String? {
     #expect(line == "Rain Thursday and Friday.")
 }
 
+@Test func weekLineNamesRainBeforeTheWeekend() {
+    let line = week(day(0, 60, 46, .cloudy), [(60, .cloudy), (60, .cloudy), (60, .rain), (60, .cloudy), (60, .clear), (60, .clear)])
+    #expect(line == "Rain Thursday.")
+}
+
+@Test func weekLineNamesTemperatureBeforeTheWeekend() {
+    let line = week(day(0, 60, 46, .cloudy), [(60, .cloudy), (60, .cloudy), (70, .cloudy), (70, .cloudy), (70, .clear), (70, .clear)])
+    #expect(line == "Warmer from Thursday.")
+}
+
+@Test func stormsShareTheLineWithOneMore() {
+    let line = week(day(0, 60, 46, .cloudy), [(60, .cloudy), (60, .cloudy), (60, .storm), (60, .cloudy), (48, .clear), (47, .clear)])
+    #expect(line == "Storms likely Thursday. Cold and sunny this weekend.")
+}
+
 @Test func weekLineLeavesRainTheChangeLineCovers() {
     // Rain from Wednesday is already in the two-day line.
     let line = week(day(0, 60, 46, .clear), [(60, .clear), (60, .rain), (60, .rain), (60, .rain), (60, .cloudy), (60, .cloudy)])

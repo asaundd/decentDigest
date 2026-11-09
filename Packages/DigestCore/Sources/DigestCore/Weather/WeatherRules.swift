@@ -79,8 +79,9 @@ public enum WeatherRules {
     // MARK: The rest of the week
 
     /// One short sentence (two at most) on anything notable later in the week, after the two days
-    /// the change line covers: storms, the weekend ("Cold and sunny this weekend."), rain or snow
-    /// starting, heat or a freeze, or a turn warmer or colder. Nil when nothing stands out.
+    /// the change line covers. In order: storms, rain or snow starting, heat, a freeze or a turn
+    /// warmer or colder, then the weekend ("Cold and sunny this weekend."). Storms can share the
+    /// line with one other sentence. Nil when nothing stands out.
     public static func weekLine(_ report: WeatherReport, unit: TemperatureUnit, calendar: Calendar = .current, locale: Locale = .current) -> String? {
         let days = Array(report.days.prefix(weekDays))
         guard days.count > 2 else { return nil }
@@ -90,38 +91,40 @@ public enum WeatherRules {
             AgendaFormat.dayName(midday(day), now: today.date, calendar: calendar, locale: locale)
         }
 
-        var sentences: [String] = []
-
         // Storms come first.
         let stormDays = later.filter { $0.sky == .storm }
-        if !stormDays.isEmpty {
-            sentences.append("Storms likely \(daysPhrase(stormDays.map(name))).")
-        }
+        let storms = stormDays.isEmpty ? nil : "Storms likely \(daysPhrase(stormDays.map(name)))."
 
-        // The weekend, when both days are later in the week and storms aren't already named there.
-        let weekend = later.filter { calendar.isDateInWeekend(midday($0)) }
-        if weekend.count == 2, !weekend.contains(where: { $0.sky == .storm }),
-           let words = weekendWords(weekend, today: today) {
-            sentences.append(capitalized(words) + " this weekend.")
-        }
-
-        if sentences.isEmpty {
-            if let wet = later.firstIndex(where: { $0.sky.isWet }) {
-                // Only rain or snow that starts later in the week; the change line covers anything sooner.
-                let before = wet == 0 ? days[1] : later[wet - 1]
-                if !before.sky.isWet {
-                    let kind = later[wet].sky == .snow ? "Snow" : "Rain"
-                    let run = later[wet...].prefix { $0.sky.isWet }
-                    sentences.append("\(kind) \(daysPhrase(run.map(name))).")
-                }
+        // Then rain or snow that starts later in the week; the change line covers anything sooner.
+        var precipitation: String?
+        if let wet = later.firstIndex(where: { $0.sky.isWet && $0.sky != .storm }) {
+            let before = wet == 0 ? days[1] : later[wet - 1]
+            if !before.sky.isWet {
+                let kind = later[wet].sky == .snow ? "Snow" : "Rain"
+                let run = later[wet...].prefix { $0.sky.isWet && $0.sky != .storm }
+                precipitation = "\(kind) \(daysPhrase(run.map(name)))."
             }
         }
 
-        if sentences.isEmpty, let line = temperatureTurn(later, before: days[1], today: today, unit: unit, name: name) {
-            sentences.append(line)
+        // Then heat, a freeze or a turn warmer or colder, then the weekend. A turn that starts on
+        // the weekend is left to the weekend sentence, which says it better ("Cold and sunny this weekend.").
+        let weekend = later.filter { calendar.isDateInWeekend(midday($0)) }
+        var weekendLine: String?
+        if weekend.count == 2, !weekend.contains(where: { $0.sky == .storm }),
+           let words = weekendWords(weekend, today: today) {
+            weekendLine = capitalized(words) + " this weekend."
+        }
+        var temperature: String?
+        if let turn = temperatureTurn(later, before: days[1], today: today, unit: unit) {
+            if !(weekendLine != nil && calendar.isDateInWeekend(midday(turn.day))) {
+                temperature = turn.text(name(turn.day))
+            }
         }
 
-        return sentences.isEmpty ? nil : sentences.prefix(2).joined(separator: " ")
+        // Storms, plus the first of the rest: one sentence, two at most.
+        let rest = precipitation ?? temperature ?? weekendLine
+        let sentences = [storms, rest].compactMap { $0 }
+        return sentences.isEmpty ? nil : sentences.joined(separator: " ")
     }
 
     /// "cold and sunny", "rainy", "warm": what stands out about the weekend, or nil.
@@ -153,21 +156,23 @@ public enum WeatherRules {
         }
     }
 
-    /// Heat, a freeze, or highs turning 8° or more from today's, starting later in the week.
-    private static func temperatureTurn(_ later: [WeatherDay], before: WeatherDay, today: WeatherDay, unit: TemperatureUnit, name: (WeatherDay) -> String) -> String? {
+    /// Heat, a freeze, or highs turning 8° or more from today's, starting later in the week:
+    /// the day it starts, and the words for it once the day is named.
+    private static func temperatureTurn(_ later: [WeatherDay], before: WeatherDay, today: WeatherDay, unit: TemperatureUnit) -> (day: WeatherDay, text: (String) -> String)? {
         if before.high < heat, today.high < heat, let hot = later.first(where: { $0.high >= heat }) {
-            return "Hot \(name(hot)), highs near \(unit.degrees(hot.high))."
+            let high = unit.degrees(hot.high)
+            return (hot, { "Hot \($0), highs near \(high)." })
         }
         if before.low > freeze, today.low > freeze, let cold = later.first(where: { $0.low <= freeze }) {
-            return "A freeze \(name(cold)), lows near \(unit.degrees(cold.low))."
+            let low = unit.degrees(cold.low)
+            return (cold, { "A freeze \($0), lows near \(low)." })
         }
-        let soonDiff = before.high - today.high
-        guard abs(soonDiff) < notableHighChange else { return nil }
+        guard abs(before.high - today.high) < notableHighChange else { return nil }
         if let warmer = later.first(where: { $0.high - today.high >= notableHighChange }) {
-            return "Warmer from \(name(warmer))."
+            return (warmer, { "Warmer from \($0)." })
         }
         if let colder = later.first(where: { today.high - $0.high >= notableHighChange }) {
-            return "Colder from \(name(colder))."
+            return (colder, { "Colder from \($0)." })
         }
         return nil
     }
