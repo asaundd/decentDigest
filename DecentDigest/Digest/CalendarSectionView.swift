@@ -5,7 +5,6 @@ import SwiftUI
 /// Events that have ended leave the list; nothing here is stored.
 struct CalendarSectionView: View {
     var model: AgendaModel
-    var hide: () -> Void
 
     @Environment(\.openURL) private var openURL
     @State private var showsWeek = false
@@ -29,11 +28,9 @@ struct CalendarSectionView: View {
                 }
             } else {
                 AccessNote(
-                    access: model.calendarAccess,
                     appName: "Calendar",
                     shows: "today's events",
-                    request: { await model.requestCalendarAccess() },
-                    hide: hide
+                    request: { await model.requestCalendarAccess() }
                 )
             }
         }
@@ -190,7 +187,7 @@ struct EventRow: View {
 #Preview {
     @Previewable @State var model = AgendaModel(source: SampleAgendaSource())
     ScrollView {
-        CalendarSectionView(model: model, hide: {})
+        CalendarSectionView(model: model)
             .padding(Theme.margin)
     }
     .task { await model.reload() }

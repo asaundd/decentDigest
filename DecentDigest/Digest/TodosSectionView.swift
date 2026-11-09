@@ -6,7 +6,6 @@ import SwiftUI
 /// seconds so a second tap can undo, then leaves the list.
 struct TodosSectionView: View {
     var model: AgendaModel
-    var hide: () -> Void
 
     @Environment(\.openURL) private var openURL
     @State private var expandedIDs: Set<String> = []
@@ -24,11 +23,9 @@ struct TodosSectionView: View {
                 list
             } else {
                 AccessNote(
-                    access: model.remindersAccess,
                     appName: "Reminders",
                     shows: "your to-dos",
-                    request: { await model.requestRemindersAccess() },
-                    hide: hide
+                    request: { await model.requestRemindersAccess() }
                 )
             }
         }
@@ -188,7 +185,7 @@ struct TodoRow: View {
 #Preview {
     @Previewable @State var model = AgendaModel(source: SampleAgendaSource())
     ScrollView {
-        TodosSectionView(model: model, hide: {})
+        TodosSectionView(model: model)
             .padding(Theme.margin)
     }
     .task { await model.reload() }

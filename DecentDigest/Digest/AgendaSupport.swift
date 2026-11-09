@@ -1,8 +1,7 @@
 import DigestCore
 import SwiftUI
-import UIKit
 
-/// Links that hand off to Calendar, Reminders and Settings.
+/// Links that hand off to Calendar and Reminders.
 enum AgendaLinks {
     /// Opens Calendar at the event's day and time.
     static func calendar(at date: Date) -> URL {
@@ -18,9 +17,6 @@ enum AgendaLinks {
         guard let escaped = id.addingPercentEncoding(withAllowedCharacters: allowed) else { return nil }
         return URL(string: "x-apple-reminderkit://REMCDReminder/\(escaped)")
     }
-
-    /// This app's page in Settings, where Calendar and Reminders access can be turned on.
-    static let settings = URL(string: UIApplication.openSettingsURLString)!
 }
 
 /// A section title with an optional action at the right end of the row.
@@ -55,38 +51,21 @@ struct QuietLine: View {
     }
 }
 
-/// What a section shows when it can't read Calendar or Reminders: a plain explanation and the way forward.
-/// A hidden section comes back by itself once access is turned on.
+/// Shown in a section until the app has asked for access. Once onboarding asks, this is only a fallback.
+/// A section whose access was declined isn't shown at all; it is added back from Settings.
 struct AccessNote: View {
-    var access: AccessState
     /// e.g. "Calendar".
     var appName: String
     /// What the section shows once allowed, e.g. "today's events".
     var shows: String
     var request: @MainActor () async -> Void
-    var hide: () -> Void
-
-    @Environment(\.openURL) private var openURL
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            switch access {
-            case .notAsked:
-                Text("See \(shows) from \(appName) here. They stay in \(appName); nothing is copied.")
-                    .foregroundStyle(Theme.secondary)
-                TextLink("Allow access") { Task { await request() } }
-                    .accessibilityHint("Asks for access to \(appName)")
-            case .denied:
-                Text("\(appName) access is off, so \(shows) can't show here.")
-                    .foregroundStyle(Theme.secondary)
-                HStack(spacing: 16) {
-                    TextLink("Turn on in Settings ↗") { openURL(AgendaLinks.settings) }
-                        .accessibilityLabel("Turn on in Settings")
-                    TextLink("Hide this section", action: hide)
-                }
-            case .granted:
-                EmptyView()
-            }
+            Text("See \(shows) from \(appName) here. They stay in \(appName); nothing is copied.")
+                .foregroundStyle(Theme.secondary)
+            TextLink("Allow access") { Task { await request() } }
+                .accessibilityHint("Asks for access to \(appName)")
         }
         .padding(.vertical, 5)
         .frame(maxWidth: .infinity, alignment: .leading)

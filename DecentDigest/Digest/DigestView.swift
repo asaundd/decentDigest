@@ -21,8 +21,6 @@ struct DigestView: View {
     @State private var isRefreshing = false
     /// Where the visible list ends on screen.
     @State private var listBottom: CGFloat = .infinity
-    /// Sections the reader hid because they declined access, as comma-separated `DigestSection` values.
-    @AppStorage("hiddenSections") private var hiddenSections = ""
 
     var body: some View {
         // A plain scrolling page. (A List re-measured expanded rows late, which made titles jump.)
@@ -92,22 +90,14 @@ struct DigestView: View {
     }
 
     private func isShown(_ section: DigestSection) -> Bool {
-        let hidden = hiddenSections.split(separator: ",").contains { $0 == section.rawValue }
         switch section {
         // Saved news appears only once something is saved.
-        case .savedNews: return !saved.isEmpty
-        // A hidden section comes back once access is turned on.
-        case .calendar: return !hidden || agenda.calendarAccess == .granted
-        case .todos: return !hidden || agenda.remindersAccess == .granted
-        default: return !hidden
+        case .savedNews: !saved.isEmpty
+        // A section whose access was declined isn't shown at all. It comes back once access is on.
+        case .calendar: agenda.calendarAccess != .denied
+        case .todos: agenda.remindersAccess != .denied
+        default: true
         }
-    }
-
-    private func hide(_ section: DigestSection) {
-        var hidden = hiddenSections.split(separator: ",").map(String.init)
-        guard !hidden.contains(section.rawValue) else { return }
-        hidden.append(section.rawValue)
-        hiddenSections = hidden.joined(separator: ",")
     }
 
     /// Fetches news. The page draws right away; headlines appear as each feed arrives.
@@ -135,10 +125,10 @@ struct DigestView: View {
                     .digestRow()
             }
         case .calendar:
-            CalendarSectionView(model: agenda, hide: { hide(.calendar) })
+            CalendarSectionView(model: agenda)
                 .digestRow()
         case .todos:
-            TodosSectionView(model: agenda, hide: { hide(.todos) })
+            TodosSectionView(model: agenda)
                 .digestRow()
         case .news:
             NewsSectionView(isRefreshing: isRefreshing, refresh: { await runRefresh(force: true) }, panel: $panel, reveal: reveal)
