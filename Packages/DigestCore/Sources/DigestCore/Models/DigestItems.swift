@@ -1,52 +1,21 @@
 import Foundation
 
-/// The sections of the digest, in their default order.
+/// The titled sections of the digest, in their default order. Weather isn't one: it is the
+/// page's opening lines under the date.
 public enum DigestSection: String, Codable, Sendable, CaseIterable, Identifiable {
-    case weather, calendar, todos, news, savedNews, podcasts
+    case calendar, todos, news, podcasts, saved
 
     public var id: String { rawValue }
 
     /// Sentence-case title shown above the section.
     public var title: String {
         switch self {
-        case .weather: "Weather"
         case .calendar: "Calendar"
         case .todos: "To do"
         case .news: "News"
-        case .savedNews: "Saved news"
         case .podcasts: "Podcasts"
+        case .saved: "Saved"
         }
-    }
-}
-
-public struct WeatherDay: Sendable, Identifiable, Hashable {
-    public var id: Date { date }
-    public var date: Date
-    public var high: Int
-    public var low: Int
-    public var condition: String
-
-    public init(date: Date, high: Int, low: Int, condition: String) {
-        self.date = date
-        self.high = high
-        self.low = low
-        self.condition = condition
-    }
-}
-
-public struct WeatherSummary: Sendable, Hashable {
-    public var place: String
-    public var temperature: Int
-    public var condition: String
-    public var today: WeatherDay
-    public var restOfWeek: [WeatherDay]
-
-    public init(place: String, temperature: Int, condition: String, today: WeatherDay, restOfWeek: [WeatherDay]) {
-        self.place = place
-        self.temperature = temperature
-        self.condition = condition
-        self.today = today
-        self.restOfWeek = restOfWeek
     }
 }
 
@@ -147,16 +116,18 @@ public struct FeedEntry: Sendable, Identifiable, Hashable {
 public struct Digest: Sendable {
     public var date: Date
     public var sectionOrder: [DigestSection]
-    public var weather: WeatherSummary?
+    public var weather: WeatherReport?
+    public var weatherPlace: WeatherPlace?
     public var events: [CalendarEntry]
     public var todos: [TodoEntry]
     public var news: [FeedEntry]
     public var episodes: [FeedEntry]
 
-    public init(date: Date, sectionOrder: [DigestSection] = DigestSection.allCases, weather: WeatherSummary? = nil, events: [CalendarEntry] = [], todos: [TodoEntry] = [], news: [FeedEntry] = [], episodes: [FeedEntry] = []) {
+    public init(date: Date, sectionOrder: [DigestSection] = DigestSection.allCases, weather: WeatherReport? = nil, weatherPlace: WeatherPlace? = nil, events: [CalendarEntry] = [], todos: [TodoEntry] = [], news: [FeedEntry] = [], episodes: [FeedEntry] = []) {
         self.date = date
         self.sectionOrder = sectionOrder
         self.weather = weather
+        self.weatherPlace = weatherPlace
         self.events = events
         self.todos = todos
         self.news = news

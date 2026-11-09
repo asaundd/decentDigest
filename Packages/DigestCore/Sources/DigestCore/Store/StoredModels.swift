@@ -21,9 +21,12 @@ public final class Source {
     public var addedAt: Date = Date.now
     public var isMuted: Bool = false
     public var sortOrder: Int = 0
+    /// A podcast's Apple Podcasts id, so Open ↗ can open its episodes in the Podcasts app.
+    public var appleID: String?
 
-    public init(kind: SourceKind = .news, feedURL: String, siteURL: String? = nil, title: String, category: String? = nil, sortOrder: Int = 0) {
+    public init(kind: SourceKind = .news, feedURL: String, siteURL: String? = nil, title: String, category: String? = nil, sortOrder: Int = 0, appleID: String? = nil) {
         self.kind = kind.rawValue
+        self.appleID = appleID
         self.feedURL = feedURL
         self.siteURL = siteURL
         self.title = title
@@ -70,8 +73,8 @@ public final class ItemState {
     }
 }
 
-/// A headline saved for later. Keeps what Saved news needs to show it after the cached item expires;
-/// the full post is not synced.
+/// A headline or episode saved for later. Keeps what Saved needs to show it after the cached item
+/// expires; the full post is not synced.
 @Model
 public final class SavedItem {
     public var itemID: String = ""
@@ -83,8 +86,17 @@ public final class SavedItem {
     public var author: String?
     public var publishedAt: Date = Date.now
     public var savedAt: Date = Date.now
+    /// "news" or "podcast".
+    public var kind: String = SourceKind.news.rawValue
+    /// An episode's length.
+    public var durationSeconds: Int?
+    /// An episode's guid from its feed, to find it in Apple Podcasts.
+    public var guid: String?
 
-    public init(itemID: String, sourceID: String, sourceTitle: String, title: String, link: String?, summary: String?, author: String?, publishedAt: Date, savedAt: Date = .now) {
+    public init(itemID: String, sourceID: String, sourceTitle: String, title: String, link: String?, summary: String?, author: String?, publishedAt: Date, savedAt: Date = .now, kind: SourceKind = .news, durationSeconds: Int? = nil, guid: String? = nil) {
+        self.kind = kind.rawValue
+        self.durationSeconds = durationSeconds
+        self.guid = guid
         self.itemID = itemID
         self.sourceID = sourceID
         self.sourceTitle = sourceTitle
@@ -97,11 +109,12 @@ public final class SavedItem {
     }
 
     public var linkURL: URL? { WebLink.url(link) }
+    public var isEpisode: Bool { kind == SourceKind.podcast.rawValue }
 }
 
 // MARK: Kept on this device only
 
-/// A fetched headline. Rebuilt from the feeds on each device; holds a short summary, never the article.
+/// A fetched headline or episode. Rebuilt from the feeds on each device; holds a short summary, never the article.
 @Model
 public final class FeedItem {
     public var itemID: String = ""
@@ -114,8 +127,14 @@ public final class FeedItem {
     public var author: String?
     public var publishedAt: Date = Date.now
     public var fetchedAt: Date = Date.now
+    /// An episode's length.
+    public var durationSeconds: Int?
+    /// The item's guid from its feed, to find an episode in Apple Podcasts.
+    public var guid: String?
 
-    public init(itemID: String, sourceID: String, title: String, link: String?, summary: String?, fullText: String? = nil, author: String?, publishedAt: Date, fetchedAt: Date = .now) {
+    public init(itemID: String, sourceID: String, title: String, link: String?, summary: String?, fullText: String? = nil, author: String?, publishedAt: Date, fetchedAt: Date = .now, durationSeconds: Int? = nil, guid: String? = nil) {
+        self.durationSeconds = durationSeconds
+        self.guid = guid
         self.itemID = itemID
         self.sourceID = sourceID
         self.title = title

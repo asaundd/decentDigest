@@ -24,6 +24,7 @@ import Testing
 @Test func sampleDigestHasEverySection() {
     let digest = SampleDigest.make()
     #expect(digest.weather != nil)
+    #expect(digest.weatherPlace != nil)
     #expect(!digest.events.isEmpty)
     #expect(!digest.todos.isEmpty)
     #expect(!digest.news.isEmpty)

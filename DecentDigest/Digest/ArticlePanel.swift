@@ -1,14 +1,14 @@
 import DigestCore
 import SwiftUI
 
-/// A request to show the article panel, shared by News and Saved news.
+/// A request to show the article panel, shared by News, Podcasts and Saved.
 struct PanelRequest: Identifiable {
     var headline: Headline
     var actions: HeadlineActions
     var id: String { headline.id }
 }
 
-/// The full post a feed carries, on a floating panel that slides in from the right over the digest.
+/// The full post a feed carries, or an episode's show notes, on a floating panel that slides in from the right over the digest.
 /// Its actions stay pinned at the bottom while the post scrolls.
 struct ArticlePanel: View {
     var headline: Headline
@@ -91,7 +91,8 @@ struct ArticlePanel: View {
             useful: { close(); actions.useful() },
             notUseful: { close(); actions.notUseful() },
             readFull: nil,
-            openInSafari: actions.openInSafari.map { open -> () -> Void in { close(); open() } }
+            open: actions.open.map { open -> () -> Void in { close(); open() } },
+            openLabel: actions.openLabel
         )
     }
 }

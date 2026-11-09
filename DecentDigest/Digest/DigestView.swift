@@ -7,16 +7,18 @@ import UIKit
 
 /// The main screen: one calm page with every section the user set up.
 struct DigestView: View {
-    /// Weather and podcasts still come from sample data.
-    var digest: Digest = SampleDigest.make()
     /// Calendar and Reminders, read live.
     var agenda: AgendaModel
-    /// Fetches news. `true` means the reader pulled to refresh.
+    /// The weather lines under the date.
+    var weather: WeatherModel
+    /// Fetches news and podcasts. `true` means the reader pulled to refresh.
     var refresh: @Sendable (Bool) async -> Void = { _ in }
+    var sectionOrder: [DigestSection] = DigestSection.allCases
 
     @Environment(\.scenePhase) private var scenePhase
     @Query(sort: \SavedItem.savedAt, order: .reverse) private var saved: [SavedItem]
     @State private var panel: PanelRequest?
+    @State private var showsWeatherSettings = false
     /// True while feeds are being checked, so News can say so.
     @State private var isRefreshing = false
     /// Where the visible list ends on screen.
@@ -30,7 +32,7 @@ struct DigestView: View {
                     header
                         .padding(.top, Theme.margin)
                         .digestRow()
-                    ForEach(digest.sectionOrder) { section in
+                    ForEach(sectionOrder) { section in
                         if isShown(section) {
                             SectionRule()
                                 .digestRow()
@@ -58,8 +60,12 @@ struct DigestView: View {
         }
         .blur(radius: panel == nil ? 0 : 2)
         .overlay { ArticlePanelHost(panel: $panel) }
+        .sheet(isPresented: $showsWeatherSettings) {
+            WeatherSettingsView(model: weather)
+        }
         .refreshable {
             await agenda.reload()
+            await weather.reload(force: true)
             await runRefresh(force: true)
         }
         .onChange(of: scenePhase, initial: true) { _, phase in
@@ -67,6 +73,7 @@ struct DigestView: View {
             if phase == .background { agenda.finishAllChecked() }
             guard phase == .active else { return }
             Task { await agenda.reload() }
+            Task { await weather.reload() }
             Task { await runRefresh(force: false) }
         }
         // Edits made in Calendar or Reminders, or checking off here, show within moments.
@@ -84,17 +91,19 @@ struct DigestView: View {
             Text("Decent digest")
                 .font(Theme.wordmarkFont)
                 .foregroundStyle(Theme.secondary)
-            Text(digest.date, format: .dateTime.weekday(.wide).month(.wide).day())
+            Text(Date.now, format: .dateTime.weekday(.wide).month(.wide).day())
                 .font(Theme.dateFont)
                 .accessibilityAddTraits(.isHeader)
+            // Weather is the page's opening lines, not a titled section.
+            WeatherLines(model: weather) { showsWeatherSettings = true }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func isShown(_ section: DigestSection) -> Bool {
         switch section {
-        // Saved news appears only once something is saved.
-        case .savedNews: !saved.isEmpty
+        // Saved appears only once something is saved.
+        case .saved: !saved.isEmpty
         // A section whose access was declined isn't shown at all. It comes back once access is on.
         case .calendar: agenda.calendarAccess != .denied
         case .todos: agenda.remindersAccess != .denied
@@ -121,11 +130,6 @@ struct DigestView: View {
     @ViewBuilder
     private func sectionView(_ section: DigestSection, reveal: @escaping (String, CGFloat) -> Void) -> some View {
         switch section {
-        case .weather:
-            if let weather = digest.weather {
-                WeatherSectionView(weather: weather)
-                    .digestRow()
-            }
         case .calendar:
             CalendarSectionView(model: agenda)
                 .digestRow()
@@ -133,21 +137,25 @@ struct DigestView: View {
             // Rows set their own margins, so swipes can reach the page's edge.
             TodosSectionView(model: agenda)
         case .news:
-            NewsSectionView(isRefreshing: isRefreshing, refresh: { await runRefresh(force: true) }, panel: $panel, reveal: reveal)
-        case .savedNews:
-            SavedNewsSectionView(saved: saved, panel: $panel, reveal: reveal)
+            FeedListSection(kind: .news, isRefreshing: isRefreshing, refresh: { await runRefresh(force: true) }, panel: $panel, reveal: reveal)
         case .podcasts:
-            DigestSectionView(title: section.title, rows: digest.episodes.filter(\.status.isActive).map { item in
-                DigestSectionView.Row(id: item.id, title: item.title, detail: item.sourceName, trailing: item.opensInPanel ? nil : "↗")
-            })
-            .digestRow()
+            FeedListSection(kind: .podcast, isRefreshing: isRefreshing, refresh: { await runRefresh(force: true) }, panel: $panel, reveal: reveal)
+        case .saved:
+            SavedSectionView(saved: saved, panel: $panel, reveal: reveal)
         }
     }
 
     private var footer: some View {
-        Text("↗ only a title; opens the site")
-            .font(.footnote)
-            .foregroundStyle(Theme.secondary)
+        VStack(alignment: .leading, spacing: 8) {
+            Text("↗ only a title; opens the site")
+                .font(.footnote)
+                .foregroundStyle(Theme.secondary)
+            // WeatherKit asks for the Apple Weather mark and a link to its legal page.
+            if let credit = weather.credit, weather.report != nil {
+                WeatherCreditLine(credit: credit)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -158,18 +166,23 @@ extension View {
     }
 }
 
+@MainActor
+private func sampleWeather(access: AccessState = .granted) -> WeatherModel {
+    WeatherModel(provider: SampleWeatherProvider(), places: SamplePlaces(access: access), defaults: UserDefaults(suiteName: "preview")!)
+}
+
 #Preview("Light") {
-    DigestView(agenda: AgendaModel(source: SampleAgendaSource()))
+    DigestView(agenda: AgendaModel(source: SampleAgendaSource()), weather: sampleWeather())
         .modelContainer(DigestStore.previewContainer())
 }
 
 #Preview("Dark") {
-    DigestView(agenda: AgendaModel(source: SampleAgendaSource()))
+    DigestView(agenda: AgendaModel(source: SampleAgendaSource()), weather: sampleWeather())
         .modelContainer(DigestStore.previewContainer())
         .preferredColorScheme(.dark)
 }
 
 #Preview("Access declined") {
-    DigestView(agenda: AgendaModel(source: SampleAgendaSource(access: .denied)))
+    DigestView(agenda: AgendaModel(source: SampleAgendaSource(access: .denied)), weather: sampleWeather(access: .denied))
         .modelContainer(DigestStore.previewContainer())
 }

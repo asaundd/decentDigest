@@ -2,8 +2,8 @@ import DigestCore
 import SwiftData
 import SwiftUI
 
-/// Headlines saved for later. Works like News but nothing here expires.
-struct SavedNewsSectionView: View {
+/// Headlines and episodes saved for later. Works like News and Podcasts, but nothing here expires.
+struct SavedSectionView: View {
     var saved: [SavedItem]
     @Binding var panel: PanelRequest?
     /// Scrolls an expanded row into view if its bottom (on screen) is past the visible area.
@@ -14,13 +14,14 @@ struct SavedNewsSectionView: View {
 
     @Query private var items: [FeedItem]
     @Query private var states: [ItemState]
+    @Query private var sources: [Source]
 
     /// Open rows stay open until the reader closes them.
     @State private var expandedIDs: Set<String> = []
     @State private var pendingReveal: String?
 
     var body: some View {
-        Text(DigestSection.savedNews.title)
+        Text(DigestSection.saved.title)
             .font(Theme.sectionTitleFont)
             .accessibilityAddTraits(.isHeader)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -51,10 +52,23 @@ struct SavedNewsSectionView: View {
     }
 
     private func headline(for item: SavedItem) -> Headline {
-        let age = HeadlineAge.text(for: item.publishedAt)
         // The full post is only on this device while the feed still lists it.
         let cached = items.first { $0.itemID == item.itemID }
         let opened = states.first { $0.itemID == item.itemID }?.openedAt != nil
+        if item.isEpisode {
+            return Headline(
+                id: item.itemID,
+                title: item.title,
+                detail: item.sourceTitle,
+                summary: item.summary,
+                fullText: cached?.fullText,
+                link: item.linkURL,
+                isUnread: !opened,
+                isEpisode: true,
+                episodeLength: item.durationSeconds.map { PodcastRules.length(seconds: $0) }
+            )
+        }
+        let age = HeadlineAge.text(for: item.publishedAt)
         return Headline(
             id: item.itemID,
             title: item.title,
@@ -68,11 +82,20 @@ struct SavedNewsSectionView: View {
     }
 
     private func actions(for item: SavedItem, headline: Headline) -> HeadlineActions {
+        let openAction: (() -> Void)?
+        if item.isEpisode {
+            openAction = { openEpisode(item) }
+        } else if headline.link != nil {
+            openAction = { open(item) }
+        } else {
+            openAction = nil
+        }
         var actions = HeadlineActions(
             useful: { resolve(item, as: .useful) },
             notUseful: { resolve(item, as: .notRelevant) },
-            openInSafari: headline.link == nil ? nil : { open(item) },
-            readLabel: headline.readLabel
+            open: openAction,
+            readLabel: headline.readLabel,
+            openLabel: item.isEpisode ? "Open in Podcasts" : "Open the site"
         )
         if headline.opensPanel {
             let panelActions = actions
@@ -101,6 +124,12 @@ struct SavedNewsSectionView: View {
         if let url = item.linkURL {
             openURL(url)
         }
+    }
+
+    private func openEpisode(_ item: SavedItem) {
+        ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, in: context)
+        let showID = sources.first { $0.id == item.sourceID }?.appleID
+        EpisodeLink.open(showID: showID, guid: item.guid, title: item.title, fallback: item.linkURL, with: openURL)
     }
 
     private func resolve(_ item: SavedItem, as status: ItemStatus) {
