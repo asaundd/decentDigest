@@ -35,6 +35,8 @@ enum AgendaMetrics {
 /// A day in the Calendar or To do list: a gray dash, then the day's name in semibold.
 /// Days after the first sit a little further from the one above.
 struct DayHeader: View {
+    static let firstTopPadding: CGFloat = 5
+
     var title: String
     var isFirst = false
 
@@ -48,7 +50,7 @@ struct DayHeader: View {
                 .fontWeight(.semibold)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.top, isFirst ? 5 : 10)
+        .padding(.top, isFirst ? Self.firstTopPadding : 10)
         .padding(.bottom, 1)
         .accessibilityAddTraits(.isHeader)
     }

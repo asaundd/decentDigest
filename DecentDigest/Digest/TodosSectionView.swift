@@ -20,7 +20,7 @@ struct TodosSectionView: View {
                         .accessibilityLabel("Open Reminders")
                 }
             }
-            .padding(.bottom, Theme.titleToList)
+            .padding(.bottom, Theme.titleToFirstItem - DayHeader.firstTopPadding)
             .digestRow()
 
             if model.remindersAccess == .granted {

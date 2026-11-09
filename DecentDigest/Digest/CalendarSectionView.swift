@@ -13,7 +13,7 @@ struct CalendarSectionView: View {
     @State private var openIDs: Set<String> = []
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.titleToList) {
+        VStack(alignment: .leading, spacing: Theme.titleToFirstItem - DayHeader.firstTopPadding) {
             SectionHeader(title: DigestSection.calendar.title) {
                 if model.calendarAccess == .granted {
                     TextLink("Calendar ↗") { openURL(AgendaLinks.calendar(at: .now)) }

@@ -24,7 +24,7 @@ struct SavedNewsSectionView: View {
             .font(Theme.sectionTitleFont)
             .accessibilityAddTraits(.isHeader)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.bottom, Theme.titleToList - HeadlineRow.verticalPadding)
+            .padding(.bottom, Theme.titleToFirstItem - HeadlineRow.verticalPadding)
             .digestRow()
 
         ForEach(saved, id: \.itemID) { item in

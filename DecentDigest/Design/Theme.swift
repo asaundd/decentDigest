@@ -32,6 +32,8 @@ enum Theme {
     static let margin: CGFloat = 24
     static let ruleSpacing: CGFloat = 24
     static let titleToList: CGFloat = 6
+    /// From a section title to the first line of News, Saved news, Calendar or To do.
+    static let titleToFirstItem: CGFloat = 11
 
     // Type: Georgia for the date and section titles only; SF Pro everywhere else.
     static let dateFont = Font.custom("Georgia", size: 30, relativeTo: .largeTitle)
