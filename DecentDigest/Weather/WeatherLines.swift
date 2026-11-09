@@ -4,7 +4,8 @@ import UIKit
 
 /// The weather under the date, in words: the temperature now with today in a few words, then a
 /// gray line on what changes over the next two days and anything notable later in the week.
-/// Show week lists the rest of the week, then the place (which opens Weather settings) and Weather ↗.
+/// Show week, at the bottom, lists the rest of the week, then the place (which opens Weather
+/// settings) and Weather ↗.
 struct WeatherLines: View {
     var model: WeatherModel
     /// Opens Settings › Weather.
@@ -47,25 +48,12 @@ struct WeatherLines: View {
             .padding(.top, 14)
             .accessibilityElement(children: .combine)
 
-            HStack(alignment: .firstTextBaseline, spacing: 12) {
-                // The next two days, then anything notable later in the week.
-                Text([WeatherRules.changeLine(report, unit: unit), WeatherRules.weekLine(report, unit: unit)].compactMap { $0 }.joined(separator: " "))
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                if !report.days.isEmpty {
-                    TextLink(showsWeek ? "Show less" : "Show week") {
-                        // A clean swap: the label and the week change at once, with no fade or slide.
-                        var instant = Transaction()
-                        instant.disablesAnimations = true
-                        withTransaction(instant) { showsWeek.toggle() }
-                    }
-                    .contentTransition(.identity)
-                    .animation(nil, value: showsWeek)
-                    .accessibilityHint(showsWeek ? "Hides the week" : "Lists the rest of the week")
-                }
-            }
-            .padding(.top, 8)
+            // The next two days, then anything notable later in the week.
+            Text([WeatherRules.changeLine(report, unit: unit), WeatherRules.weekLine(report, unit: unit)].compactMap { $0 }.joined(separator: " "))
+                .font(.subheadline)
+                .foregroundStyle(Theme.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, 8)
 
             if model.isSample {
                 // Debug builds only, until WeatherKit is turned on for the app.
@@ -80,6 +68,20 @@ struct WeatherLines: View {
                     .padding(.top, 6)
                 placeLine(place)
                     .padding(.top, 8)
+            }
+
+            // At the bottom, like Show all under News and the agenda.
+            if !report.days.isEmpty {
+                TextLink(showsWeek ? "Show less" : "Show week") {
+                    // A clean swap: the label and the week change at once, with no fade or slide.
+                    var instant = Transaction()
+                    instant.disablesAnimations = true
+                    withTransaction(instant) { showsWeek.toggle() }
+                }
+                .contentTransition(.identity)
+                .animation(nil, value: showsWeek)
+                .accessibilityHint(showsWeek ? "Hides the week" : "Lists the rest of the week")
+                .padding(.top, 4)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
