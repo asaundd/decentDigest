@@ -118,7 +118,7 @@ public enum FeedDate {
         }
     }()
 
-    nonisolated(unsafe) private static let rfc822Formatters: [DateFormatter] = [
+    private static let rfc822Formatters: [DateFormatter] = [
         "EEE, d MMM yyyy HH:mm:ss zzz",
         "EEE, d MMM yyyy HH:mm:ss Z",
         "EEE, d MMM yyyy HH:mm zzz",

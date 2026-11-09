@@ -103,13 +103,12 @@ public enum TemperatureUnit: Sendable, Equatable {
 
     /// The unit the device shows temperatures in.
     public static func current(locale: Locale = .current) -> TemperatureUnit {
-        // A formatter converts to the reader's preferred unit, so a known value tells which one it is.
-        let formatter = MeasurementFormatter()
-        formatter.locale = locale
-        formatter.unitOptions = .temperatureWithoutUnit
-        formatter.numberFormatter.maximumFractionDigits = 0
-        let text = formatter.string(from: Measurement(value: 100, unit: UnitTemperature.celsius))
-        return text.contains("212") ? .fahrenheit : .celsius
+        // Formatting for weather converts to the reader's preferred unit, so a known value tells which one it is.
+        let boiling = Measurement(value: 100, unit: UnitTemperature.celsius)
+        let text = boiling.formatted(.measurement(width: .narrow, usage: .weather).locale(locale))
+        if text.contains("212") { return .fahrenheit }
+        if text.contains("100") { return .celsius }
+        return locale.measurementSystem == .us ? .fahrenheit : .celsius
     }
 
     /// A °F value in this unit, rounded.
