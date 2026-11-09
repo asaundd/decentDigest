@@ -147,11 +147,8 @@ struct DigestView: View {
 
     private var footer: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("↗ only a title; opens the site")
-                .font(.footnote)
-                .foregroundStyle(Theme.secondary)
             // WeatherKit asks for the Apple Weather mark and a link to its legal page.
-            if let credit = weather.credit, weather.report != nil {
+            if let credit = weather.credit, weather.report != nil, !weather.isSample {
                 WeatherCreditLine(credit: credit)
             }
         }

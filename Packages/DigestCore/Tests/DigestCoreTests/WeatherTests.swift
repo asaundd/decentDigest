@@ -208,3 +208,28 @@ private func model(access: AccessState = .granted) -> (WeatherModel, SamplePlace
     await weather.clearCity()
     #expect(weather.report == nil)
 }
+
+private struct CreditedWeather: WeatherProvider {
+    func report(latitude: Double, longitude: Double, now: Date) async throws -> WeatherReport {
+        SampleDigest.weather(now: now)
+    }
+
+    func credit() async -> WeatherCredit? {
+        let url = URL(string: "https://example.com")!
+        return WeatherCredit(markLight: url, markDark: url, legalPage: url)
+    }
+}
+
+@MainActor
+@Test func cachedForecastStillGetsTheCredit() async {
+    let defaults = UserDefaults(suiteName: "weather-tests-\(UUID().uuidString)")!
+    let places = SamplePlaces()
+    let first = WeatherModel(provider: CreditedWeather(), places: places, defaults: defaults)
+    await first.reload()
+    #expect(first.credit != nil)
+    // A new launch opens with the cached forecast and doesn't fetch again, but shows the credit.
+    let next = WeatherModel(provider: CreditedWeather(), places: places, defaults: defaults)
+    #expect(next.report != nil)
+    await next.reload()
+    #expect(next.credit != nil)
+}

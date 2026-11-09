@@ -75,6 +75,8 @@ public final class WeatherModel {
         let date = now()
         if !force, !isSample, let report, place == target,
            date.timeIntervalSince(report.fetchedAt) < WeatherRules.refreshInterval {
+            // The page opened with a cached forecast; it still needs the Apple Weather credit.
+            if credit == nil { credit = await provider.credit() }
             return
         }
         place = target
