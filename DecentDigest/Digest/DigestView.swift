@@ -63,6 +63,8 @@ struct DigestView: View {
             await runRefresh(force: true)
         }
         .onChange(of: scenePhase, initial: true) { _, phase in
+            // Checked-off to-dos still showing leave when the app goes away.
+            if phase == .background { agenda.finishAllChecked() }
             guard phase == .active else { return }
             Task { await agenda.reload() }
             Task { await runRefresh(force: false) }
@@ -128,8 +130,8 @@ struct DigestView: View {
             CalendarSectionView(model: agenda)
                 .digestRow()
         case .todos:
+            // Rows set their own margins, so swipes can reach the page's edge.
             TodosSectionView(model: agenda)
-                .digestRow()
         case .news:
             NewsSectionView(isRefreshing: isRefreshing, refresh: { await runRefresh(force: true) }, panel: $panel, reveal: reveal)
         case .savedNews:

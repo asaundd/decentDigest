@@ -11,6 +11,8 @@ enum Theme {
     static let secondary = Color(light: 0x6F7573, dark: 0xA3A8A5)
     static let rule = Color(light: 0xDFE0DC, dark: 0x343937)
     static let accent = Color(light: 0x3C3C4C, dark: 0xCECED5)
+    /// Events that are over and to-dos just checked off: lighter than secondary, struck through.
+    static let past = Color(light: 0xA7ABA9, dark: 0x6C726F)
     // An expanded headline sits on a card a shade lighter than the page; its actions share that color.
     static let expandedFill = Color(light: 0xFFFEFC, dark: 0x202524)
     /// A faint edge and shadow that lift the expanded card off the page.

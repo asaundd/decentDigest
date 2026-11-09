@@ -17,6 +17,111 @@ enum AgendaLinks {
         guard let escaped = id.addingPercentEncoding(withAllowedCharacters: allowed) else { return nil }
         return URL(string: "x-apple-reminderkit://REMCDReminder/\(escaped)")
     }
+
+    /// Directions in Maps to an event's place.
+    static func directions(to point: MapPoint) -> URL? {
+        URL(string: "https://maps.apple.com/?daddr=\(point.latitude),\(point.longitude)")
+    }
+}
+
+/// Sizes shared by the Calendar and To do lists.
+enum AgendaMetrics {
+    /// Events and to-dos sit a size below day names.
+    static let itemFont = Font.subheadline
+    /// The open card reaches this far past the text on each side, so its text lines up with the list.
+    static let cardInset: CGFloat = 12
+}
+
+/// A day in the Calendar or To do list: a gray dash, then the day's name in semibold.
+struct DayHeader: View {
+    var title: String
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 0) {
+            Text("–")
+                .foregroundStyle(Theme.secondary)
+                .frame(width: DashColumn.width, alignment: .leading)
+                .accessibilityHidden(true)
+            Text(title)
+                .fontWeight(.semibold)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.top, 5)
+        .padding(.bottom, 1)
+        .accessibilityAddTraits(.isHeader)
+    }
+}
+
+/// "N more events" at the end of a cut-off day: plain gray, no underline. A tap fills in the rest.
+struct MoreLine: View {
+    var count: Int
+    /// "event" or "item".
+    var noun: String
+    /// Indent, to line up with the titles above.
+    var leading: CGFloat = 0
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text("\(count) more \(count == 1 ? noun : noun + "s")")
+                .font(AgendaMetrics.itemFont)
+                .foregroundStyle(Theme.secondary)
+                .padding(.leading, leading)
+                .padding(.vertical, 2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(StillButtonStyle())
+        .accessibilityHint("Shows the rest")
+    }
+}
+
+/// The footer under Calendar and To do, like News: "N more events this week" then Show all,
+/// or Show less once everything is showing.
+struct AgendaFooter: View {
+    var hidden: Int
+    /// e.g. "more events this week".
+    var phrase: (Int) -> String
+    var showsAll: Bool
+    var toggle: () -> Void
+
+    var body: some View {
+        if hidden > 0 || showsAll {
+            HStack(spacing: 10) {
+                if hidden > 0 {
+                    Text("\(hidden) \(phrase(hidden))")
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.secondary)
+                }
+                TextLink(showsAll && hidden == 0 ? "Show less" : "Show all", action: toggle)
+            }
+            .padding(.top, 4)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+}
+
+extension View {
+    /// The lighter card an open event or to-do sits on, a shade above the page like an open headline.
+    /// Its text lines up with the list; the card reaches a little past it on both sides.
+    func agendaCard() -> some View {
+        padding(.horizontal, AgendaMetrics.cardInset)
+            .padding(.top, 10)
+            .padding(.bottom, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(Theme.expandedFill)
+                    .shadow(color: Theme.expandedShadow, radius: 4, x: 0, y: 2)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .strokeBorder(Theme.expandedRing, lineWidth: 1)
+                    )
+            }
+            .padding(.horizontal, -AgendaMetrics.cardInset)
+            .padding(.top, 4)
+            .padding(.bottom, 6)
+    }
 }
 
 /// A section title with an optional action at the right end of the row.

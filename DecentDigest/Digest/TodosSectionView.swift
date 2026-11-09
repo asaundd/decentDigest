@@ -1,63 +1,93 @@
 import DigestCore
 import SwiftUI
 
-/// Open reminders due today or earlier, then ones with no date, read live from Reminders.
-/// Tapping the dash checks a to-do off in Reminders with a hand-drawn strike; it stays a few
-/// seconds so a second tap can undo, then leaves the list.
+/// Open reminders, read live, grouped by day like Calendar, then Anytime for those with no date.
+/// A to-do is checked off with the ✓ on its card or by swiping its row right; either writes back to Reminders.
 struct TodosSectionView: View {
     var model: AgendaModel
 
     @Environment(\.openURL) private var openURL
-    @State private var expandedIDs: Set<String> = []
+    @State private var expandedDays: Set<Date> = []
+    @State private var anytimeExpanded = false
+    @State private var showsAll = false
+    @State private var openIDs: Set<String> = []
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.titleToList - TodoRow.verticalPadding) {
+        VStack(alignment: .leading, spacing: 0) {
             SectionHeader(title: DigestSection.todos.title) {
                 if model.remindersAccess == .granted {
                     TextLink("Reminders ↗") { openURL(AgendaLinks.reminders) }
                         .accessibilityLabel("Open Reminders")
                 }
             }
+            .padding(.bottom, Theme.titleToList - 5)
+            .digestRow()
 
             if model.remindersAccess == .granted {
-                list
+                list(now: .now)
             } else {
                 AccessNote(
                     appName: "Reminders",
                     shows: "your to-dos",
                     request: { await model.requestRemindersAccess() }
                 )
+                .digestRow()
             }
         }
     }
 
-    private var list: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            if model.todos.isEmpty && model.hasLoaded {
-                QuietLine("Nothing to do today.")
+    private func list(now: Date) -> some View {
+        let plan = TodoRules.plan(model.todos, now: now, expanded: expandedDays, anytimeExpanded: anytimeExpanded, showAll: showsAll)
+        let days = plan.days.filter { !$0.items.isEmpty }
+        return VStack(alignment: .leading, spacing: 0) {
+            if days.isEmpty && plan.anytime.isEmpty && model.hasLoaded {
+                QuietLine("Nothing to do.")
+                    .digestRow()
             }
-            ForEach(model.todos) { todo in
-                TodoRow(
-                    todo: todo,
-                    detail: TodoRules.detail(for: todo, now: .now),
-                    isChecked: model.checkedIDs.contains(todo.id),
-                    isExpanded: expandedIDs.contains(todo.id),
-                    toggle: { model.toggle(todo) },
-                    onTap: {
-                        if expandedIDs.remove(todo.id) == nil {
-                            expandedIDs.insert(todo.id)
-                        }
-                    },
-                    open: { open(todo) }
-                )
-                // A to-do that leaves is gone at once; one that joins fades in after the slide.
-                .transition(HeadlineMotion.transition)
+            ForEach(days) { group in
+                DayHeader(title: AgendaFormat.dayName(group.day, now: now))
+                    .digestRow()
+                ForEach(group.items) { todo in
+                    row(todo, now: now)
+                }
+                if group.hiddenCount > 0 {
+                    MoreLine(count: group.hiddenCount, noun: "item", leading: DashColumn.width) {
+                        expandedDays.insert(group.day)
+                    }
+                    .digestRow()
+                }
             }
+            if !plan.anytime.isEmpty {
+                DayHeader(title: "Anytime")
+                    .digestRow()
+                ForEach(plan.anytime) { todo in
+                    row(todo, now: now)
+                }
+                if plan.anytimeHidden > 0 {
+                    MoreLine(count: plan.anytimeHidden, noun: "item", leading: DashColumn.width) {
+                        anytimeExpanded = true
+                    }
+                    .digestRow()
+                }
+            }
+            AgendaFooter(
+                hidden: plan.hiddenCount,
+                phrase: { $0 == 1 ? "more item" : "more items" },
+                showsAll: showsAll
+            ) {
+                showsAll.toggle()
+                if !showsAll {
+                    expandedDays = []
+                    anytimeExpanded = false
+                }
+            }
+            .digestRow()
             if let problem = model.problem {
                 Text(problem)
                     .font(.subheadline)
                     .foregroundStyle(Theme.secondary)
                     .padding(.top, 4)
+                    .digestRow()
             }
         }
         // The rows below slide up briefly to close the gap a checked-off to-do leaves.
@@ -65,6 +95,57 @@ struct TodosSectionView: View {
         // The app's one haptic: a light tap when a to-do is checked off.
         .sensoryFeedback(.impact(weight: .light), trigger: model.checkedIDs) { old, new in
             new.count > old.count
+        }
+    }
+
+    private func row(_ todo: TodoEntry, now: Date) -> some View {
+        TodoRow(
+            todo: todo,
+            note: TodoRules.note(for: todo, now: now),
+            dueLine: AgendaFormat.dueLine(for: todo, now: now),
+            isChecked: model.checkedIDs.contains(todo.id),
+            isOpen: openIDs.contains(todo.id),
+            onTap: { tap(todo) },
+            toggleCheck: { toggleCheck(todo) },
+            open: { open(todo) }
+        )
+        // Rows are full width so a swipe can draw its label at the page's edge.
+        .padding(.leading, Theme.margin + DashColumn.width)
+        .padding(.trailing, Theme.margin)
+        .id(todo.id)
+        // A to-do that leaves is gone at once; one that joins fades in after the slide.
+        .transition(HeadlineMotion.transition)
+        .checkOffSwipe { swipeCheck(todo) }
+    }
+
+    // MARK: Actions
+
+    /// Opens or closes a to-do's card. A checked-off to-do leaves when its card closes.
+    private func tap(_ todo: TodoEntry) {
+        if openIDs.remove(todo.id) == nil {
+            openIDs.insert(todo.id)
+        } else if model.checkedIDs.contains(todo.id) {
+            withAnimation(HeadlineMotion.close) {
+                model.finishChecking(todo.id)
+            }
+        }
+    }
+
+    /// The ✓ on the card checks off; once checked it is the undo arrow.
+    private func toggleCheck(_ todo: TodoEntry) {
+        if model.checkedIDs.contains(todo.id) {
+            model.uncheck(todo)
+        } else {
+            model.check(todo)
+        }
+    }
+
+    /// A swipe checks the to-do off and it leaves at once.
+    private func swipeCheck(_ todo: TodoEntry) {
+        guard model.check(todo) else { return }
+        openIDs.remove(todo.id)
+        withAnimation(HeadlineMotion.close) {
+            model.finishChecking(todo.id)
         }
     }
 
@@ -79,106 +160,93 @@ struct TodosSectionView: View {
     }
 }
 
-/// A to-do: a gray dash that checks it off, the title, and its list (with the time when due at a time today).
-/// A tap on the title shows the due day and notes, with Check off and Open in Reminders.
+/// A to-do: its title, with when an earlier one was due (or today's time) in gray after it.
+/// A tap makes the title semibold and opens a card: due day and list, notes, ✓ at the top right, Open ↗.
 struct TodoRow: View {
-    static let verticalPadding: CGFloat = 5
-
     var todo: TodoEntry
-    var detail: String
+    var note: String?
+    var dueLine: String
     var isChecked: Bool
-    var isExpanded: Bool
-    var toggle: () -> Void
+    var isOpen: Bool
     var onTap: () -> Void
+    var toggleCheck: () -> Void
     var open: () -> Void
 
+    @Environment(\.swipeGuard) private var swipeGuard
+    @Environment(\.swipeProgress) private var swipeProgress
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .firstTextBaseline, spacing: 0) {
-                dash
-                Button(action: onTap) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(todo.title)
-                            .textRenderer(StrikeRenderer(progress: isChecked ? 1 : 0, color: Theme.ink))
-                            .foregroundStyle(isChecked ? Theme.secondary : Theme.ink)
-                            // The strike draws left to right when checked; undoing clears it at once.
-                            .animation(isChecked && !reduceMotion ? .easeOut(duration: 0.35) : nil, value: isChecked)
-                        if !detail.isEmpty {
-                            Text(detail)
-                                .font(.subheadline)
-                                .foregroundStyle(Theme.secondary)
-                        }
-                    }
+            // A swipe let go near where it began is ignored, not taken as a tap.
+            Button {
+                guard swipeGuard?.justSwiped != true else { return }
+                onTap()
+            } label: {
+                title
+                    .font(AgendaMetrics.itemFont.weight(isOpen ? .semibold : .regular))
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.vertical, Self.verticalPadding)
+                    .padding(.vertical, 2)
                     .contentShape(Rectangle())
+            }
+            .buttonStyle(StillButtonStyle())
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(note.map { "\(todo.title), \($0)" } ?? todo.title)
+            .accessibilityValue(isChecked ? "Checked off" : "")
+            .accessibilityHint(isOpen ? "Shows less" : "Shows details")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction(named: isChecked ? "Undo check off" : "Check off", toggleCheck)
+
+            if isOpen {
+                card
+            }
+        }
+    }
+
+    /// The strike draws when checked from the card, or follows the finger during a swipe.
+    private var strike: Double { isChecked ? 1 : swipeProgress }
+
+    private var title: some View {
+        var text = Text(todo.title)
+        if let note {
+            text = text + Text("  \(note)").foregroundStyle(Theme.secondary)
+        }
+        return text
+            .textRenderer(StrikeRenderer(progress: strike, color: Theme.ink))
+            .foregroundStyle(strike >= 1 ? Theme.past : Theme.ink)
+            // Checking from the card draws the strike left to right; undoing clears it at once.
+            .animation(isChecked && !reduceMotion ? .easeOut(duration: 0.35) : nil, value: isChecked)
+    }
+
+    private var card: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .top, spacing: 8) {
+                VStack(alignment: .leading, spacing: 6) {
+                    if !dueLine.isEmpty {
+                        Text(dueLine)
+                            .foregroundStyle(Theme.secondary)
+                    }
+                    if let notes = todo.notes {
+                        Text(notes)
+                            .lineLimit(3)
+                    }
                 }
-                .buttonStyle(StillButtonStyle())
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel(detail.isEmpty ? todo.title : "\(todo.title), \(detail)")
-                .accessibilityValue(isChecked ? "Checked off" : "")
-                .accessibilityHint(isExpanded ? "Shows less" : "Shows details")
-                .accessibilityAddTraits(.isButton)
-                .accessibilityAction(named: isChecked ? "Undo check off" : "Check off", toggle)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                // ✓ sits at the top right, where it is on a News card. Once checked it is the undo arrow.
+                RibbonButton(
+                    systemImage: isChecked ? "arrow.uturn.backward" : "checkmark",
+                    label: isChecked ? "Undo check off" : "Check off",
+                    action: toggleCheck
+                )
+                .padding(.top, -8)
+                .padding(.trailing, -RibbonButton.gap - 4)
             }
-
-            if isExpanded {
-                details
-                    .padding(.leading, DashColumn.width)
-                    .padding(.bottom, 6)
-            }
+            TextLink("Open ↗", action: open)
+                .accessibilityLabel("Open in Reminders")
+                .padding(.top, 4)
         }
-    }
-
-    /// The dash is the checkbox. Its tap area reaches into the margin so it is easy to hit.
-    private var dash: some View {
-        Button(action: toggle) {
-            Text("–")
-                .foregroundStyle(Theme.secondary)
-                .frame(width: DashColumn.width, alignment: .leading)
-                .padding(.leading, 20)
-                .padding(.vertical, 12)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(StillButtonStyle())
-        .padding(.leading, -20)
-        .padding(.vertical, -12 + Self.verticalPadding)
-        .accessibilityLabel(isChecked ? "Undo check off" : "Check off")
-        .accessibilityValue(todo.title)
-    }
-
-    private var details: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            if let due = dueText {
-                Text(due)
-                    .font(.callout)
-                    .foregroundStyle(Theme.secondary)
-            }
-            if let notes = todo.notes {
-                Text(PostKind.clipForRow(notes))
-                    .font(.callout)
-            }
-            HStack(spacing: 16) {
-                TextLink(isChecked ? "Undo" : "Check off", action: toggle)
-                    .accessibilityLabel(isChecked ? "Undo check off" : "Check off")
-                TextLink("Open in Reminders ↗", action: open)
-                    .accessibilityLabel("Open in Reminders")
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    /// The due day, plainly. An earlier day is just a date, never "overdue".
-    private var dueText: String? {
-        guard let due = todo.due else { return nil }
-        let calendar = Calendar.current
-        if calendar.isDateInToday(due) {
-            return todo.dueIncludesTime ? nil : "Due today"
-        }
-        let day = due.formatted(.dateTime.weekday(.wide).month(.abbreviated).day())
-        return todo.dueIncludesTime ? "Due \(day), \(due.formatted(date: .omitted, time: .shortened))" : "Due \(day)"
+        .font(AgendaMetrics.itemFont)
+        .agendaCard()
     }
 }
 
@@ -186,7 +254,7 @@ struct TodoRow: View {
     @Previewable @State var model = AgendaModel(source: SampleAgendaSource())
     ScrollView {
         TodosSectionView(model: model)
-            .padding(Theme.margin)
+            .padding(.vertical, Theme.margin)
     }
     .task { await model.reload() }
 }

@@ -26,19 +26,9 @@ private func event(_ id: String, _ start: Date, _ end: Date, allDay: Bool = fals
         event("holiday", at(0), at(0, day: 1), allDay: true),
         event("standup", at(9), at(9, 15)),
     ]
-    let today = CalendarAgenda.today(events, now: at(7), calendar: utc)
+    let today = CalendarAgenda.events(on: at(7), from: events, calendar: utc)
     #expect(today.map(\.entry.id) == ["holiday", "standup", "lunch"])
     #expect(today.first?.label == .allDay)
-}
-
-@Test func endedEventsLeaveTodayButAllDayStays() {
-    let events = [
-        event("holiday", at(0), at(0, day: 1), allDay: true),
-        event("breakfast", at(7), at(8)),
-        event("meeting", at(9), at(10)),
-    ]
-    let today = CalendarAgenda.today(events, now: at(9, 30), calendar: utc)
-    #expect(today.map(\.entry.id) == ["holiday", "meeting"])
 }
 
 @Test func eventFromYesterdayShowsUntilItsEnd() {
@@ -47,18 +37,6 @@ private func event(_ id: String, _ start: Date, _ end: Date, allDay: Bool = fals
     let today = CalendarAgenda.events(on: at(0), from: [overnight, longTrip], calendar: utc)
     #expect(today.first { $0.entry.id == "flight" }?.label == .until(at(6)))
     #expect(today.first { $0.entry.id == "trip" }?.label == .allDay)
-}
-
-@Test func restOfWeekGroupsByDayAndSkipsEmptyDays() {
-    let events = [
-        event("today", at(15), at(16)),
-        event("tuesday", at(10, day: 1), at(11, day: 1)),
-        event("thursday", at(18, day: 3), at(19, day: 3)),
-        event("nextWeek", at(9, day: 7), at(10, day: 7)),
-    ]
-    let week = CalendarAgenda.restOfWeek(events, now: at(8), calendar: utc)
-    #expect(week.map(\.date) == [at(0, day: 1), at(0, day: 3)])
-    #expect(week.flatMap(\.events).map(\.entry.id) == ["tuesday", "thursday"])
 }
 
 @Test func allDayEventDoesNotSpillIntoNextDay() {
@@ -72,33 +50,153 @@ private func event(_ id: String, _ start: Date, _ end: Date, allDay: Bool = fals
     #expect(range.upperBound == at(0, day: 7))
 }
 
+@Test func pastNowAndUpcomingEvents() {
+    let events = [
+        event("breakfast", at(7), at(8)),
+        event("meeting", at(9), at(10)),
+        event("lunch", at(12), at(13)),
+        event("holiday", at(0), at(0, day: 1), allDay: true),
+    ]
+    let today = CalendarAgenda.events(on: at(0), from: events, calendar: utc)
+    let timing = Dictionary(uniqueKeysWithValues: today.map { ($0.entry.id, CalendarAgenda.timing(of: $0, now: at(9, 30))) })
+    #expect(timing["breakfast"] == .past)
+    #expect(timing["meeting"] == .now)
+    #expect(timing["lunch"] == .upcoming)
+    #expect(timing["holiday"] == .upcoming)
+}
+
+@Test func weekShowsAllOfTodayThenFillsToTen() {
+    // Today 4 (two already over), Tuesday 2, Wednesday 2, Thursday 3, Friday 1.
+    var events = [
+        event("t1", at(7), at(8)), event("t2", at(9), at(10)), event("t3", at(13), at(14)), event("t4", at(18), at(19)),
+        event("tue1", at(8, day: 1), at(9, day: 1)), event("tue2", at(15, day: 1), at(16, day: 1)),
+        event("wed1", at(11, day: 2), at(12, day: 2)), event("wed2", at(17, day: 2), at(18, day: 2)),
+        event("thu1", at(8, day: 3), at(9, day: 3)), event("thu2", at(10, day: 3), at(11, day: 3)), event("thu3", at(16, day: 3), at(17, day: 3)),
+    ]
+    events.append(event("fri1", at(9, day: 4), at(10, day: 4)))
+    let plan = CalendarAgenda.plan(events, now: at(12), calendar: utc)
+    let shown = plan.filter { !$0.items.isEmpty }
+    #expect(shown.map(\.items.count) == [4, 2, 2, 2])
+    #expect(shown.last?.hiddenCount == 1)
+    // Thursday's third plus all of Friday.
+    #expect(DayPlanner.hiddenCount(plan) == 2)
+}
+
+@Test func busyTodayStillShowsTheNextDaysFirstEvent() {
+    let today = (0..<11).map { event("t\($0)", at(7 + $0), at(7 + $0, 30)) }
+    let tomorrow = [event("tue1", at(8, day: 1), at(9, day: 1)), event("tue2", at(10, day: 1), at(11, day: 1))]
+    let plan = CalendarAgenda.plan(today + tomorrow, now: at(6), calendar: utc).filter { !$0.items.isEmpty }
+    #expect(plan.map(\.items.count) == [11, 1])
+    #expect(plan.last?.hiddenCount == 1)
+}
+
+@Test func fillingInADayDoesNotPushLaterDaysOut() {
+    let plan = DayPlanner.plan(
+        [(day: at(0), items: Array(1...6)), (day: at(0, day: 1), items: Array(1...6)), (day: at(0, day: 2), items: [1])],
+        expanded: [at(0, day: 1)]
+    )
+    #expect(plan.map(\.items.count) == [6, 6, 0])
+    #expect(DayPlanner.hiddenCount(plan) == 1)
+}
+
+@Test func showAllShowsEverything() {
+    let plan = DayPlanner.plan(
+        [(day: at(0), items: Array(1...8)), (day: at(0, day: 1), items: Array(1...8))],
+        showAll: true
+    )
+    #expect(plan.map(\.items.count) == [8, 8])
+    #expect(DayPlanner.hiddenCount(plan) == 0)
+}
+
+// MARK: Formatting
+
+@Test func shortTimesUseAAndP() {
+    let us = Locale(identifier: "en_US")
+    #expect(AgendaFormat.shortTime(at(9, 30), calendar: utc, locale: us) == "9:30a")
+    #expect(AgendaFormat.shortTime(at(14, 15), calendar: utc, locale: us) == "2:15p")
+    #expect(AgendaFormat.shortTime(at(0, 5), calendar: utc, locale: us) == "12:05a")
+    #expect(AgendaFormat.shortTime(at(14, 15), calendar: utc, locale: Locale(identifier: "de_DE")) == "14:15")
+}
+
+@Test func eventLengths() {
+    #expect(AgendaFormat.length(of: event("a", at(9), at(9, 45)), calendar: utc) == "45 minutes")
+    #expect(AgendaFormat.length(of: event("b", at(9), at(10)), calendar: utc) == "1 hour")
+    #expect(AgendaFormat.length(of: event("c", at(9), at(10, 30)), calendar: utc) == "1 hour 30 minutes")
+    #expect(AgendaFormat.length(of: event("d", at(0), at(0, day: 1), allDay: true), calendar: utc) == "All day")
+    #expect(AgendaFormat.length(of: event("e", at(0), at(0, day: 3), allDay: true), calendar: utc) == "3 days")
+}
+
+@Test func peopleNamesUpToThree() {
+    #expect(AgendaFormat.people([]) == nil)
+    #expect(AgendaFormat.people(["Sam"]) == "Sam")
+    #expect(AgendaFormat.people(["Sam", "Maya"]) == "Sam and Maya")
+    #expect(AgendaFormat.people(["Sam", "Maya", "Leo", "Ana", "Ben"]) == "Sam, Maya, Leo and 2 others")
+}
+
+@Test func videoCallLinksLeaveTheNotes() {
+    let notes = "Bring the draft.\nJoin: https://zoom.us/j/123\nhttps://meet.google.com/abc"
+    #expect(AgendaFormat.notesWithoutCallLinks(notes) == "Bring the draft.")
+    #expect(AgendaFormat.notesWithoutCallLinks("https://zoom.us/j/1") == nil)
+}
+
+@Test func earlierDueDatesAreNeverOverdue() {
+    let us = Locale(identifier: "en_US")
+    #expect(AgendaFormat.earlierDue(at(9, day: -1), now: at(8), calendar: utc, locale: us) == "Yesterday")
+    #expect(AgendaFormat.earlierDue(at(9, day: -3), now: at(8), calendar: utc, locale: us) == "Fri")
+    #expect(AgendaFormat.earlierDue(at(9, day: -7), now: at(8), calendar: utc, locale: us) == "Nov 2")
+}
+
 // MARK: To-dos
 
-@Test func todosDueTodayOrEarlierComeFirstThenUndated() {
+private func todo(_ id: String, due: Date? = nil, timed: Bool = false, order: Int = 0) -> TodoEntry {
+    TodoEntry(id: id, title: id, listName: "Home", due: due, dueIncludesTime: timed, listOrder: order)
+}
+
+@Test func earlierTodosFoldIntoTodayAndLaterOnesWait() {
     let todos = [
-        TodoEntry(id: "undatedB", title: "B", listName: "Family", listOrder: 1),
-        TodoEntry(id: "tomorrow", title: "T", listName: "Home", due: at(9, day: 1)),
-        TodoEntry(id: "today", title: "D", listName: "Home", due: at(17), dueIncludesTime: true),
-        TodoEntry(id: "undatedA", title: "A", listName: "Home", listOrder: 0),
-        TodoEntry(id: "lastWeek", title: "L", listName: "Home", due: at(0, day: -7)),
-        TodoEntry(id: "done", title: "X", listName: "Home", isCompleted: true),
+        todo("today", due: at(17), timed: true),
+        todo("lastWeek", due: at(0, day: -7)),
+        todo("tomorrow", due: at(0, day: 1)),
+        todo("nextMonth", due: at(0, day: 30)),
+        todo("anytime"),
+        TodoEntry(id: "done", title: "done", listName: "Home", isCompleted: true),
     ]
-    let shown = TodoRules.forToday(todos, now: at(8), calendar: utc)
-    #expect(shown.map(\.id) == ["lastWeek", "today", "undatedA", "undatedB"])
+    let plan = TodoRules.plan(todos, now: at(8), calendar: utc)
+    let days = plan.days.filter { !$0.items.isEmpty }
+    #expect(days.map { $0.items.map(\.id) } == [["lastWeek", "today"], ["tomorrow"]])
+    #expect(plan.anytime.map(\.id) == ["anytime"])
+    #expect(plan.hiddenCount == 0)
 }
 
-@Test func todosAreCapped() {
-    let todos = (0..<25).map { TodoEntry(id: "\($0)", title: "\($0)", listName: "Home") }
-    #expect(TodoRules.forToday(todos, now: at(8), calendar: utc).count == TodoRules.itemsShown)
+@Test func anytimeShowsFiveWhenTheDayListIsFull() {
+    let dated = (0..<10).map { todo("d\($0)", due: at(9)) }
+    let anytime = (0..<8).map { todo("a\($0)", order: $0) }
+    let plan = TodoRules.plan(dated + anytime, now: at(8), calendar: utc)
+    #expect(plan.anytime.count == 5)
+    #expect(plan.anytimeHidden == 3)
+    #expect(plan.hiddenCount == 3)
 }
 
-@Test func todoDetailShowsTimeOnlyWhenDueAtATimeToday() {
-    let timed = TodoEntry(id: "a", title: "A", listName: "Home", due: at(17), dueIncludesTime: true)
-    let dayOnly = TodoEntry(id: "b", title: "B", listName: "Home", due: at(0))
-    let earlier = TodoEntry(id: "c", title: "C", listName: "Home", due: at(9, day: -2), dueIncludesTime: true)
-    #expect(TodoRules.detail(for: timed, now: at(8), calendar: utc).hasSuffix("· Home"))
-    #expect(TodoRules.detail(for: dayOnly, now: at(8), calendar: utc) == "Home")
-    #expect(TodoRules.detail(for: earlier, now: at(8), calendar: utc) == "Home")
+@Test func anytimeFillsRoomOnALightDay() {
+    let dated = [todo("d1", due: at(9)), todo("d2", due: at(10))]
+    let anytime = (0..<8).map { todo("a\($0)", order: $0) }
+    let plan = TodoRules.plan(dated + anytime, now: at(8), calendar: utc)
+    #expect(plan.anytime.count == 8)
+    #expect(plan.hiddenCount == 0)
+}
+
+@Test func todoNotesShowWhenEarlierOnesWereDue() {
+    let us = Locale(identifier: "en_US")
+    #expect(TodoRules.note(for: todo("a", due: at(9, day: -1)), now: at(8), calendar: utc, locale: us) == "Yesterday")
+    #expect(TodoRules.note(for: todo("b", due: at(17), timed: true), now: at(8), calendar: utc, locale: us) == "5:00p")
+    #expect(TodoRules.note(for: todo("c", due: at(0)), now: at(8), calendar: utc, locale: us) == nil)
+}
+
+@Test func dueLineSaysWhenAndWhere() {
+    let us = Locale(identifier: "en_US")
+    #expect(AgendaFormat.dueLine(for: todo("a", due: at(0)), now: at(8), calendar: utc, locale: us) == "Due today · Home")
+    #expect(AgendaFormat.dueLine(for: todo("b", due: at(9, day: -1)), now: at(8), calendar: utc, locale: us) == "Due yesterday · Home")
+    #expect(AgendaFormat.dueLine(for: todo("c"), now: at(8), calendar: utc, locale: us) == "Home")
 }
 
 // MARK: Model
@@ -135,17 +233,17 @@ private func threeTodos() -> [TodoEntry] {
     ["a", "b", "c"].enumerated().map { TodoEntry(id: $1, title: $1, listName: "Home", listOrder: $0) }
 }
 
-@MainActor @Test func checkingOffWritesBackAndStaysUntilTheUndoWindowEnds() async {
+@MainActor @Test func checkingOffWritesBackAndStaysUntilTheCardCloses() async {
     let source = FakeSource(todos: threeTodos())
-    let model = AgendaModel(source: source, undoWindow: .seconds(60), now: { at(8) })
+    let model = AgendaModel(source: source, now: { at(8) })
     await model.reload()
 
-    model.toggle(model.todos[1])
+    model.check(model.todos[1])
     #expect(source.writes.map(\.id) == ["b"])
     #expect(source.writes.first?.completed == true)
     #expect(model.checkedIDs == ["b"])
 
-    // Reminders now says it's done, but it stays in place, struck, while undo is possible.
+    // Reminders now says it's done, but it stays in place, struck, while its card is open.
     await model.reload()
     #expect(model.todos.map(\.id) == ["a", "b", "c"])
 
@@ -154,14 +252,14 @@ private func threeTodos() -> [TodoEntry] {
     #expect(model.checkedIDs.isEmpty)
 }
 
-@MainActor @Test func secondTapUndoesTheCheck() async {
+@MainActor @Test func undoArrowBringsItBack() async {
     let source = FakeSource(todos: threeTodos())
-    let model = AgendaModel(source: source, undoWindow: .seconds(60), now: { at(8) })
+    let model = AgendaModel(source: source, now: { at(8) })
     await model.reload()
 
     let todo = model.todos[0]
-    model.toggle(todo)
-    model.toggle(todo)
+    model.check(todo)
+    model.uncheck(todo)
     #expect(source.writes.map(\.completed) == [true, false])
     #expect(model.checkedIDs.isEmpty)
 
@@ -176,19 +274,20 @@ private func threeTodos() -> [TodoEntry] {
     let model = AgendaModel(source: source, now: { at(8) })
     await model.reload()
 
-    model.toggle(model.todos[0])
+    #expect(model.check(model.todos[0]) == false)
     #expect(model.checkedIDs.isEmpty)
     #expect(model.problem != nil)
 }
 
-@MainActor @Test func checkedTodoLeavesOnItsOwn() async throws {
+@MainActor @Test func goingToTheBackgroundClearsCheckedTodos() async {
     let source = FakeSource(todos: threeTodos())
-    let model = AgendaModel(source: source, undoWindow: .milliseconds(20), now: { at(8) })
+    let model = AgendaModel(source: source, now: { at(8) })
     await model.reload()
 
-    model.toggle(model.todos[0])
-    try await Task.sleep(for: .milliseconds(200))
-    #expect(model.todos.map(\.id) == ["b", "c"])
+    model.check(model.todos[0])
+    model.check(model.todos[2])
+    model.finishAllChecked()
+    #expect(model.todos.map(\.id) == ["b"])
 }
 
 @MainActor @Test func declinedAccessShowsNothing() async {

@@ -10,6 +10,15 @@ public enum EventTimeLabel: Sendable, Hashable {
     case until(Date)
 }
 
+/// Where an event stands against the clock.
+public enum EventTiming: Sendable {
+    /// Ended. Shown gray and struck through.
+    case past
+    /// Happening now. Marked with a thin slate line.
+    case now
+    case upcoming
+}
+
 /// One event as it appears on one day.
 public struct AgendaEvent: Sendable, Identifiable, Hashable {
     public var entry: CalendarEntry
@@ -20,15 +29,7 @@ public struct AgendaEvent: Sendable, Identifiable, Hashable {
     public var id: String { "\(entry.id)#\(Int(day.timeIntervalSince1970))" }
 }
 
-/// A day of the week ahead with its events.
-public struct AgendaDay: Sendable, Identifiable, Hashable {
-    public var date: Date
-    public var events: [AgendaEvent]
-
-    public var id: Date { date }
-}
-
-/// Rules for the Calendar section: today first, then the rest of the week when asked.
+/// Rules for the Calendar section: the week ahead as days, today first.
 public enum CalendarAgenda {
     /// Today plus the six days after it.
     public static let daysShown = 7
@@ -40,25 +41,27 @@ public enum CalendarAgenda {
         return start...end
     }
 
-    /// Today's events that haven't ended yet. All-day events stay all day.
-    public static func today(_ events: [CalendarEntry], now: Date, calendar: Calendar = .current) -> [AgendaEvent] {
-        let day = calendar.startOfDay(for: now)
-        return self.events(on: day, from: events, calendar: calendar).filter { event in
-            switch event.label {
-            case .allDay: true
-            case .starts, .until: event.entry.end > now || event.entry.end == event.entry.start && event.entry.start >= now
-            }
+    /// Each day of the week ahead with its events, today first, before the list is fit to its limit.
+    public static func week(_ events: [CalendarEntry], now: Date, calendar: Calendar = .current) -> [(day: Date, items: [AgendaEvent])] {
+        let today = calendar.startOfDay(for: now)
+        return (0..<daysShown).compactMap { offset in
+            guard let day = calendar.date(byAdding: .day, value: offset, to: today) else { return nil }
+            return (day: day, items: self.events(on: day, from: events, calendar: calendar))
         }
     }
 
-    /// The six days after today, leaving out days with nothing on them.
-    public static func restOfWeek(_ events: [CalendarEntry], now: Date, calendar: Calendar = .current) -> [AgendaDay] {
-        let today = calendar.startOfDay(for: now)
-        return (1..<daysShown).compactMap { offset in
-            guard let day = calendar.date(byAdding: .day, value: offset, to: today) else { return nil }
-            let listed = self.events(on: day, from: events, calendar: calendar)
-            return listed.isEmpty ? nil : AgendaDay(date: day, events: listed)
-        }
+    /// The days the Calendar section lists: all of today, the next day's first event at least,
+    /// then later days up to the limit.
+    public static func plan(_ events: [CalendarEntry], now: Date, expanded: Set<Date> = [], showAll: Bool = false, calendar: Calendar = .current) -> [DayGroup<AgendaEvent>] {
+        DayPlanner.plan(week(events, now: now, calendar: calendar), expanded: expanded, showAll: showAll)
+    }
+
+    /// Whether an event is over, happening, or still to come. All-day events are never over or happening.
+    public static func timing(of event: AgendaEvent, now: Date) -> EventTiming {
+        guard event.label != .allDay else { return .upcoming }
+        if event.entry.end <= now && event.entry.end > event.entry.start { return .past }
+        if event.entry.start <= now && now < event.entry.end { return .now }
+        return event.entry.start < now ? .past : .upcoming
     }
 
     /// Every event that touches the day starting at `day`: all-day events first, then by start time.

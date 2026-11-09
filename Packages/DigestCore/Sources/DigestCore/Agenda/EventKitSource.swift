@@ -1,4 +1,5 @@
 #if canImport(EventKit)
+import CoreLocation
 import EventKit
 import Foundation
 
@@ -52,7 +53,14 @@ public final class EventKitSource: AgendaSource {
                 end: event.endDate,
                 isAllDay: event.isAllDay,
                 calendarName: event.calendar?.title ?? "",
-                location: Self.cleaned(event.location)
+                location: Self.cleaned(event.location),
+                mapPoint: event.structuredLocation?.geoLocation.map {
+                    MapPoint(latitude: $0.coordinate.latitude, longitude: $0.coordinate.longitude)
+                },
+                attendees: (event.attendees ?? []).compactMap { person in
+                    person.isCurrentUser ? nil : Self.cleaned(person.name)
+                },
+                notes: Self.cleaned(event.notes)
             )
         }
     }

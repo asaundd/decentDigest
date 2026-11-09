@@ -10,9 +10,9 @@ public final class AgendaModel {
     public private(set) var remindersAccess: AccessState
     /// Every event from the start of today through the week ahead.
     public private(set) var events: [CalendarEntry] = []
-    /// The to-dos shown, including ones just checked off that are waiting to leave.
+    /// Open to-dos the section can list, plus ones just checked off whose card is still open.
     public private(set) var todos: [TodoEntry] = []
-    /// To-dos checked off moments ago. They stay struck through for a few seconds so a tap can undo.
+    /// To-dos checked off whose row is still showing, struck through, so the undo arrow can bring them back.
     public private(set) var checkedIDs: Set<String> = []
     /// True once both sections have been read at least once.
     public private(set) var hasLoaded = false
@@ -20,16 +20,12 @@ public final class AgendaModel {
     public private(set) var problem: String?
 
     private let source: any AgendaSource
-    private let undoWindow: Duration
     private let now: () -> Date
-    @ObservationIgnored private var removals: [String: Task<Void, Never>] = [:]
     /// Counts reloads, so an older read that finishes late doesn't replace a newer one.
     @ObservationIgnored private var generation = 0
 
-    /// - Parameter undoWindow: how long a checked-off to-do stays, struck through, before it leaves.
-    public init(source: any AgendaSource, undoWindow: Duration = .seconds(4), now: @escaping () -> Date = { .now }) {
+    public init(source: any AgendaSource, now: @escaping () -> Date = { .now }) {
         self.source = source
-        self.undoWindow = undoWindow
         self.now = now
         self.calendarAccess = source.calendarAccess()
         self.remindersAccess = source.remindersAccess()
@@ -50,7 +46,7 @@ public final class AgendaModel {
         if remindersAccess == .granted {
             let fetched = await source.incompleteReminders()
             guard current == generation else { return }
-            todos = keepingChecked(TodoRules.forToday(fetched, now: date))
+            todos = keepingChecked(TodoRules.candidates(fetched, now: date))
         } else {
             todos = []
             checkedIDs = []
@@ -68,39 +64,48 @@ public final class AgendaModel {
         await reload()
     }
 
-    /// Checks a to-do off in Reminders, or undoes a check made moments ago.
-    public func toggle(_ todo: TodoEntry) {
-        let completing = !checkedIDs.contains(todo.id)
+    /// Checks a to-do off in Reminders. It stays in the list, struck through, until `finishChecking`.
+    /// - Returns: false when Reminders refused the change.
+    @discardableResult
+    public func check(_ todo: TodoEntry) -> Bool {
+        guard !checkedIDs.contains(todo.id) else { return true }
         do {
-            try source.setCompleted(completing, todoID: todo.id)
+            try source.setCompleted(true, todoID: todo.id)
         } catch {
-            problem = completing ? "Couldn't check that off in Reminders." : "Couldn't undo that in Reminders."
+            problem = "Couldn't check that off in Reminders."
+            return false
+        }
+        problem = nil
+        checkedIDs.insert(todo.id)
+        return true
+    }
+
+    /// Undoes a check made while the to-do's card is still open.
+    public func uncheck(_ todo: TodoEntry) {
+        guard checkedIDs.contains(todo.id) else { return }
+        do {
+            try source.setCompleted(false, todoID: todo.id)
+        } catch {
+            problem = "Couldn't undo that in Reminders."
             return
         }
         problem = nil
-        removals[todo.id]?.cancel()
-        removals[todo.id] = nil
-        if completing {
-            checkedIDs.insert(todo.id)
-            removals[todo.id] = Task { [weak self, undoWindow] in
-                try? await Task.sleep(for: undoWindow)
-                guard !Task.isCancelled else { return }
-                self?.finishChecking(todo.id)
-            }
-        } else {
-            checkedIDs.remove(todo.id)
-        }
+        checkedIDs.remove(todo.id)
     }
 
-    /// The undo window has passed: the struck to-do leaves the list.
-    func finishChecking(_ id: String) {
-        removals[id] = nil
+    /// The card of a checked-off to-do closed: it leaves the list.
+    public func finishChecking(_ id: String) {
         guard checkedIDs.remove(id) != nil else { return }
         todos.removeAll { $0.id == id }
     }
 
-    /// Fresh to-dos with any just-checked ones kept where they were, so they don't jump or vanish
-    /// while their strike is showing. Reminders no longer lists them as open.
+    /// Clears every checked-off to-do, for when the app goes to the background.
+    public func finishAllChecked() {
+        for id in checkedIDs { finishChecking(id) }
+    }
+
+    /// Fresh to-dos with any checked ones kept where they were, so they don't vanish while
+    /// their card is open. Reminders no longer lists them as open.
     private func keepingChecked(_ fresh: [TodoEntry]) -> [TodoEntry] {
         var result = fresh.filter { !checkedIDs.contains($0.id) }
         for (index, todo) in todos.enumerated() where checkedIDs.contains(todo.id) {
