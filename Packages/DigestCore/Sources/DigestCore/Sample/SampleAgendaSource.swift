@@ -19,6 +19,24 @@ public final class SampleAgendaSource: AgendaSource {
     public func requestCalendarAccess() async -> AccessState { access }
     public func requestRemindersAccess() async -> AccessState { access }
 
+    public func calendars() -> [AgendaList] {
+        guard access == .granted else { return [] }
+        return [
+            AgendaList(id: "personal", title: "Personal", note: "iCloud"),
+            AgendaList(id: "family", title: "Family", note: "iCloud"),
+            AgendaList(id: "holidays", title: "US Holidays", note: "Subscribed"),
+        ]
+    }
+
+    public func reminderLists() -> [AgendaList] {
+        guard access == .granted else { return [] }
+        return [
+            AgendaList(id: "personal", title: "Personal", note: "iCloud"),
+            AgendaList(id: "family", title: "Family", note: "iCloud"),
+            AgendaList(id: "home", title: "Home", note: "iCloud"),
+        ]
+    }
+
     public func events(in range: ClosedRange<Date>) -> [CalendarEntry] {
         entries.filter { $0.start < range.upperBound && $0.end > range.lowerBound }
     }

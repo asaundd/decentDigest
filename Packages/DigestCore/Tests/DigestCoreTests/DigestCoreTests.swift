@@ -42,11 +42,42 @@ import Testing
     #expect(!ItemStatus.read.isUnread)
 }
 
-@Test func defaultFeedsAreHTTPSAndCoverEveryCategory() throws {
+@Test func choosingATopicFollowsItsTwoMostPopularSites() throws {
     let library = try FeedLibrary.bundled()
-    let feeds = library.defaultFeeds()
-    #expect(feeds.count == library.categories.count * NewsRules.starterFeedsPerCategory)
-    #expect(feeds.allSatisfy { $0.feedUrl.hasPrefix("https://") })
-    #expect(Set(feeds.map(\.category)).count == library.categories.count)
-    #expect(!feeds.contains { $0.id == "nature" })
+    for category in library.categories {
+        let picks = library.topicPicks(in: category.id)
+        #expect(picks.count == NewsRules.starterFeedsPerCategory)
+        #expect(picks.allSatisfy { $0.feedUrl.hasPrefix("https://") && $0.category == category.id })
+        #expect(!picks.contains { $0.id == "nature" })
+    }
+}
+
+@Test func topicNamesAreSentenceCase() throws {
+    let library = try FeedLibrary.bundled()
+    #expect(library.categories.map(\.name).contains("Healthtech and digital health"))
+    #expect(!library.categories.contains { $0.name.contains("&") })
+}
+
+@Test func librarySearchMatchesNamesFirst() throws {
+    let library = try FeedLibrary.bundled()
+    let found = library.searchFeeds("strat")
+    #expect(found.first?.title.lowercased().hasPrefix("strat") == true)
+    #expect(library.searchFeeds("   ").isEmpty)
+    #expect(library.searchFeeds("a", limit: 3).count <= 3)
+}
+
+@MainActor @Test func skippedSectionsStayOff() {
+    let defaults = UserDefaults(suiteName: "prefs-\(UUID().uuidString)")!
+    let prefs = DigestPreferences(defaults: defaults)
+    #expect(!prefs.hasFinishedSetup)
+    #expect(prefs.isShown(.news))
+    prefs.setShown(false, .news)
+    prefs.finishSetup()
+
+    let reopened = DigestPreferences(defaults: defaults)
+    #expect(reopened.hasFinishedSetup)
+    #expect(!reopened.isShown(.news))
+    #expect(reopened.isShown(.podcasts))
+    reopened.setShown(true, .news)
+    #expect(DigestPreferences(defaults: defaults).isShown(.news))
 }

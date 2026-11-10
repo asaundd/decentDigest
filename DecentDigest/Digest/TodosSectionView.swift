@@ -23,15 +23,9 @@ struct TodosSectionView: View {
             .padding(.bottom, Theme.titleToFirstItem - DayHeader.firstTopPadding)
             .digestRow()
 
+            // The digest shows this section only once Reminders access is on.
             if model.remindersAccess == .granted {
                 list(now: .now)
-            } else {
-                AccessNote(
-                    appName: "Reminders",
-                    shows: "your to-dos",
-                    request: { await model.requestRemindersAccess() }
-                )
-                .digestRow()
             }
         }
     }

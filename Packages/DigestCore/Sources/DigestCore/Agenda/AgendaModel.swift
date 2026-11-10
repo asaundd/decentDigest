@@ -18,15 +18,27 @@ public final class AgendaModel {
     public private(set) var hasLoaded = false
     /// A short note when Reminders refused a change.
     public private(set) var problem: String?
+    /// Every calendar, once Calendar access is on, for leaving some off the page.
+    public private(set) var calendars: [AgendaList] = []
+    /// Every Reminders list, once Reminders access is on.
+    public private(set) var reminderLists: [AgendaList] = []
+    /// Calendars the reader left off the page. Kept on this device, since identifiers differ between devices.
+    public private(set) var excludedCalendarIDs: Set<String>
+    /// Reminders lists the reader left off the page.
+    public private(set) var excludedListIDs: Set<String>
 
     private let source: any AgendaSource
     private let now: () -> Date
+    private let defaults: UserDefaults
     /// Counts reloads, so an older read that finishes late doesn't replace a newer one.
     @ObservationIgnored private var generation = 0
 
-    public init(source: any AgendaSource, now: @escaping () -> Date = { .now }) {
+    public init(source: any AgendaSource, defaults: UserDefaults = .standard, now: @escaping () -> Date = { .now }) {
         self.source = source
         self.now = now
+        self.defaults = defaults
+        self.excludedCalendarIDs = Set(defaults.stringArray(forKey: Keys.excludedCalendars) ?? [])
+        self.excludedListIDs = Set(defaults.stringArray(forKey: Keys.excludedLists) ?? [])
         self.calendarAccess = source.calendarAccess()
         self.remindersAccess = source.remindersAccess()
     }
@@ -39,15 +51,23 @@ public final class AgendaModel {
         remindersAccess = source.remindersAccess()
 
         let date = now()
-        events = calendarAccess == .granted
-            ? source.events(in: CalendarAgenda.fetchRange(now: date))
-            : []
+        if calendarAccess == .granted {
+            calendars = source.calendars()
+            events = source.events(in: CalendarAgenda.fetchRange(now: date))
+                .filter { !excludedCalendarIDs.contains($0.calendarID) }
+        } else {
+            calendars = []
+            events = []
+        }
 
         if remindersAccess == .granted {
+            reminderLists = source.reminderLists()
             let fetched = await source.incompleteReminders()
             guard current == generation else { return }
-            todos = keepingChecked(TodoRules.candidates(fetched, now: date))
+            let included = fetched.filter { !excludedListIDs.contains($0.listID) }
+            todos = keepingChecked(TodoRules.candidates(included, now: date))
         } else {
+            reminderLists = []
             todos = []
             checkedIDs = []
         }
@@ -61,6 +81,20 @@ public final class AgendaModel {
 
     public func requestRemindersAccess() async {
         remindersAccess = await source.requestRemindersAccess()
+        await reload()
+    }
+
+    /// Puts a calendar on the page, or leaves it off.
+    public func setIncluded(_ included: Bool, calendar id: String) async {
+        if included { excludedCalendarIDs.remove(id) } else { excludedCalendarIDs.insert(id) }
+        defaults.set(excludedCalendarIDs.sorted(), forKey: Keys.excludedCalendars)
+        await reload()
+    }
+
+    /// Puts a Reminders list on the page, or leaves it off.
+    public func setIncluded(_ included: Bool, list id: String) async {
+        if included { excludedListIDs.remove(id) } else { excludedListIDs.insert(id) }
+        defaults.set(excludedListIDs.sorted(), forKey: Keys.excludedLists)
         await reload()
     }
 
@@ -102,6 +136,11 @@ public final class AgendaModel {
     /// Clears every checked-off to-do, for when the app goes to the background.
     public func finishAllChecked() {
         for id in checkedIDs { finishChecking(id) }
+    }
+
+    private enum Keys {
+        static let excludedCalendars = "agenda.excludedCalendarIDs"
+        static let excludedLists = "agenda.excludedListIDs"
     }
 
     /// Fresh to-dos with any checked ones kept where they were, so they don't vanish while

@@ -1,0 +1,129 @@
+import DigestCore
+import SwiftData
+import SwiftUI
+
+/// Step 4: Podcasts. Apple Podcasts search, then the suggested shows from the library; none is
+/// followed until picked.
+struct PodcastsStep: View {
+    var back: () -> Void
+    var skip: () -> Void
+    var next: () -> Void
+
+    @Query private var sources: [Source]
+
+    var body: some View {
+        OnboardingStep(
+            number: 4,
+            title: "Podcasts",
+            intro: "Select the podcasts you follow. New episodes and their descriptions will show in your digest and open in the Apple Podcasts app.",
+            canContinue: sources.contains { $0.kind == SourceKind.podcast.rawValue && !$0.isMuted },
+            back: back,
+            skip: skip,
+            next: next
+        ) {
+            PodcastPicker()
+        }
+    }
+}
+
+/// Follow shows found with Apple's podcast search or picked from the suggestions. Only the typed
+/// words are sent to Apple. Used in setup and in Settings.
+struct PodcastPicker: View {
+    static let suggested = (try? FeedLibrary.bundled())?.suggestedPodcasts() ?? []
+
+    @Environment(\.modelContext) private var context
+    @Query(sort: \Source.sortOrder) private var sources: [Source]
+
+    @State private var text = ""
+    @State private var results: [ApplePodcasts.Show] = []
+    @State private var isSearching = false
+    @State private var searchedFor = ""
+    @FocusState private var searchFocused: Bool
+
+    private var followed: [Source] {
+        sources.filter { $0.kind == SourceKind.podcast.rawValue && !$0.isMuted }
+    }
+
+    private var query: String { text.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            SearchBox(placeholder: "Search Apple Podcasts", text: $text, isFocused: $searchFocused) {
+                searchFocused = false
+            }
+            // Searches once typing pauses.
+            .task(id: query) {
+                await search(query)
+            }
+
+            if !query.isEmpty {
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(results) { show in
+                        row(title: show.title, subtitle: show.author, feed: .init(kind: .podcast, feedURL: show.feedURL, title: show.title, appleID: show.id))
+                    }
+                    if isSearching && results.isEmpty {
+                        quiet("Searching…")
+                    } else if !isSearching && results.isEmpty && searchedFor == query {
+                        quiet("No shows found.")
+                    }
+                }
+                .padding(.top, 6)
+            }
+
+            // Shows followed from a search, so they can be unfollowed here too.
+            let extra = followed.filter { source in
+                !Self.suggested.contains { Following.key(for: $0.feedUrl) == Following.key(for: source.feedURL) }
+            }
+            if !extra.isEmpty && query.isEmpty {
+                ListHeading("Following")
+                ForEach(extra) { source in
+                    row(title: source.title, subtitle: nil, feed: .init(kind: .podcast, feedURL: source.feedURL, title: source.title, appleID: source.appleID))
+                }
+            }
+
+            ListHeading("Suggested")
+            ForEach(Self.suggested) { show in
+                row(title: show.title, subtitle: show.description, feed: .init(kind: .podcast, feedURL: show.feedUrl, title: show.title, category: show.category, appleID: show.appleId))
+            }
+        }
+    }
+
+    private func row(title: String, subtitle: String?, feed: Following.Feed) -> some View {
+        let following = Following.isFollowing(feed.feedURL, in: followed)
+        return ChoiceRow(title: title, subtitle: subtitle) {
+            FollowLink(title: title, isFollowing: following) {
+                if following {
+                    Following.unfollow(feed.feedURL, kind: .podcast, in: context)
+                } else {
+                    Following.follow(feed, in: context)
+                }
+            }
+        }
+    }
+
+    private func quiet(_ text: String) -> some View {
+        Text(text)
+            .font(.subheadline)
+            .foregroundStyle(Theme.secondary)
+            .padding(.vertical, 6)
+    }
+
+    private func search(_ term: String) async {
+        guard !term.isEmpty else {
+            results = []
+            isSearching = false
+            return
+        }
+        do {
+            try await Task.sleep(for: .milliseconds(400))
+        } catch {
+            return
+        }
+        isSearching = true
+        let found = await ApplePodcasts.search(term)
+        guard !Task.isCancelled else { return }
+        results = found
+        searchedFor = term
+        isSearching = false
+    }
+}

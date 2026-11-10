@@ -13,29 +13,29 @@ public enum SampleDigest {
         }
 
         let events = [
-            CalendarEntry(id: "e1", title: "Coffee with Priya", start: at(9, 30), end: at(10, 15), calendarName: "Personal", location: "Corner café"),
-            CalendarEntry(id: "e2", title: "Portfolio review with Sam", start: at(13), end: at(14), calendarName: "Personal", attendees: ["Sam Rivera"], notes: "Bring the case study draft.\nhttps://zoom.us/j/123456"),
-            CalendarEntry(id: "e3", title: "Soccer pickup", start: at(16, 30), end: at(17), calendarName: "Family", location: "Lincoln Park, field 3", mapPoint: MapPoint(latitude: 37.78, longitude: -122.50), notes: "Maya has the orange slices this week. Practice can run late if it rains, so check the team chat before leaving."),
-            CalendarEntry(id: "e4", title: "Family dinner", start: at(18, 30), end: at(20), calendarName: "Family", attendees: ["Maya", "Leo", "Grandma", "Uncle Ben"]),
-            CalendarEntry(id: "e5", title: "Run with Alex", start: at(8, dayOffset: 1), end: at(9, dayOffset: 1), calendarName: "Personal"),
-            CalendarEntry(id: "e6", title: "School pickup", start: at(15, 15, dayOffset: 1), end: at(15, 45, dayOffset: 1), calendarName: "Family"),
-            CalendarEntry(id: "e7", title: "Call with recruiter", start: at(11, dayOffset: 2), end: at(11, 30, dayOffset: 2), calendarName: "Personal"),
-            CalendarEntry(id: "e8", title: "Book club", start: at(17, dayOffset: 2), end: at(18, 30, dayOffset: 2), calendarName: "Personal"),
-            CalendarEntry(id: "e9", title: "Grandma visiting", start: day(3), end: day(4), isAllDay: true, calendarName: "Family"),
-            CalendarEntry(id: "e10", title: "Dentist", start: at(8, 30, dayOffset: 3), end: at(9, 15, dayOffset: 3), calendarName: "Family"),
-            CalendarEntry(id: "e11", title: "Piano lesson", start: at(16, dayOffset: 3), end: at(16, 45, dayOffset: 3), calendarName: "Family"),
-            CalendarEntry(id: "e12", title: "Date night", start: at(19, dayOffset: 4), end: at(21, dayOffset: 4), calendarName: "Personal"),
+            CalendarEntry(id: "e1", title: "Coffee with Priya", start: at(9, 30), end: at(10, 15), calendarName: "Personal", calendarID: "personal", location: "Corner café"),
+            CalendarEntry(id: "e2", title: "Portfolio review with Sam", start: at(13), end: at(14), calendarName: "Personal", calendarID: "personal", attendees: ["Sam Rivera"], notes: "Bring the case study draft.\nhttps://zoom.us/j/123456"),
+            CalendarEntry(id: "e3", title: "Soccer pickup", start: at(16, 30), end: at(17), calendarName: "Family", calendarID: "family", location: "Lincoln Park, field 3", mapPoint: MapPoint(latitude: 37.78, longitude: -122.50), notes: "Maya has the orange slices this week. Practice can run late if it rains, so check the team chat before leaving."),
+            CalendarEntry(id: "e4", title: "Family dinner", start: at(18, 30), end: at(20), calendarName: "Family", calendarID: "family", attendees: ["Maya", "Leo", "Grandma", "Uncle Ben"]),
+            CalendarEntry(id: "e5", title: "Run with Alex", start: at(8, dayOffset: 1), end: at(9, dayOffset: 1), calendarName: "Personal", calendarID: "personal"),
+            CalendarEntry(id: "e6", title: "School pickup", start: at(15, 15, dayOffset: 1), end: at(15, 45, dayOffset: 1), calendarName: "Family", calendarID: "family"),
+            CalendarEntry(id: "e7", title: "Call with recruiter", start: at(11, dayOffset: 2), end: at(11, 30, dayOffset: 2), calendarName: "Personal", calendarID: "personal"),
+            CalendarEntry(id: "e8", title: "Book club", start: at(17, dayOffset: 2), end: at(18, 30, dayOffset: 2), calendarName: "Personal", calendarID: "personal"),
+            CalendarEntry(id: "e9", title: "Grandma visiting", start: day(3), end: day(4), isAllDay: true, calendarName: "Family", calendarID: "family"),
+            CalendarEntry(id: "e10", title: "Dentist", start: at(8, 30, dayOffset: 3), end: at(9, 15, dayOffset: 3), calendarName: "Family", calendarID: "family"),
+            CalendarEntry(id: "e11", title: "Piano lesson", start: at(16, dayOffset: 3), end: at(16, 45, dayOffset: 3), calendarName: "Family", calendarID: "family"),
+            CalendarEntry(id: "e12", title: "Date night", start: at(19, dayOffset: 4), end: at(21, dayOffset: 4), calendarName: "Personal", calendarID: "personal"),
         ]
 
         let todos = [
-            TodoEntry(id: "t1", title: "Call the pharmacy about the refill", listName: "Personal", due: day(-1)),
-            TodoEntry(id: "t2", title: "Book dentist for the kids", listName: "Family", due: today, notes: "Ask about the Saturday slot. Dr. Patel's office opens at 8, and the kids are free after 10."),
-            TodoEntry(id: "t3", title: "Send thank-you note to Dana", listName: "Personal", due: at(17), dueIncludesTime: true),
-            TodoEntry(id: "t4", title: "Pay the water bill", listName: "Home", due: day(1)),
-            TodoEntry(id: "t5", title: "Pick up dry cleaning", listName: "Personal", due: day(2)),
-            TodoEntry(id: "t6", title: "Look into bike repair shops", listName: "Personal", listOrder: 0),
-            TodoEntry(id: "t7", title: "Plan dinner for Grandma's visit", listName: "Family", listOrder: 1),
-            TodoEntry(id: "t8", title: "Buy a birthday card for Mom", listName: "Family", listOrder: 1),
+            TodoEntry(id: "t1", title: "Call the pharmacy about the refill", listName: "Personal", listID: "personal", due: day(-1)),
+            TodoEntry(id: "t2", title: "Book dentist for the kids", listName: "Family", listID: "family", due: today, notes: "Ask about the Saturday slot. Dr. Patel's office opens at 8, and the kids are free after 10."),
+            TodoEntry(id: "t3", title: "Send thank-you note to Dana", listName: "Personal", listID: "personal", due: at(17), dueIncludesTime: true),
+            TodoEntry(id: "t4", title: "Pay the water bill", listName: "Home", listID: "home", due: day(1)),
+            TodoEntry(id: "t5", title: "Pick up dry cleaning", listName: "Personal", listID: "personal", due: day(2)),
+            TodoEntry(id: "t6", title: "Look into bike repair shops", listName: "Personal", listID: "personal", listOrder: 0),
+            TodoEntry(id: "t7", title: "Plan dinner for Grandma's visit", listName: "Family", listID: "family", listOrder: 1),
+            TodoEntry(id: "t8", title: "Buy a birthday card for Mom", listName: "Family", listID: "family", listOrder: 1),
         ]
 
         let news = [

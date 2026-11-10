@@ -5,40 +5,6 @@ import SwiftData
 /// The one place that writes fetched feeds into SwiftData, off the main thread.
 @ModelActor
 public actor FeedStore {
-    /// Follows the default starter feeds when the reader has no news sources yet,
-    /// and the default shows when the reader follows no podcasts yet.
-    public func addStarterSourcesIfNeeded(library: FeedLibrary) throws {
-        let news = SourceKind.news.rawValue
-        let podcast = SourceKind.podcast.rawValue
-        let newsCount = try modelContext.fetchCount(FetchDescriptor<Source>(predicate: #Predicate { $0.kind == news }))
-        let podcastCount = try modelContext.fetchCount(FetchDescriptor<Source>(predicate: #Predicate { $0.kind == podcast }))
-        if newsCount == 0 {
-            for (index, feed) in library.defaultFeeds().enumerated() {
-                modelContext.insert(Source(
-                    kind: .news,
-                    feedURL: feed.feedUrl,
-                    siteURL: feed.siteUrl,
-                    title: feed.title,
-                    category: feed.category,
-                    sortOrder: index
-                ))
-            }
-        }
-        if podcastCount == 0 {
-            for (index, show) in library.defaultPodcasts().enumerated() {
-                modelContext.insert(Source(
-                    kind: .podcast,
-                    feedURL: show.feedUrl,
-                    title: show.title,
-                    category: show.category,
-                    sortOrder: index,
-                    appleID: show.appleId
-                ))
-            }
-        }
-        try modelContext.save()
-    }
-
     /// Fetches every followed feed and show that is due, stores new items and prunes expired ones.
     /// - Parameter force: fetch every source now, even if it was fetched recently.
     /// - Returns: how many feeds were fetched.

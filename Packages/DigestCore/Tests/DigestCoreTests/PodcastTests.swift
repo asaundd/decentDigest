@@ -73,9 +73,34 @@ private let lookup = """
     #expect(show?.absoluteString == "https://podcasts.apple.com/us/podcast/hard-fork/id1528594034?uo=4")
 }
 
-@Test func libraryHasDefaultShows() throws {
+@Test func libraryHasSuggestedShows() throws {
     let library = try FeedLibrary.bundled()
-    let shows = library.defaultPodcasts()
-    #expect(!shows.isEmpty)
+    let shows = library.suggestedPodcasts()
+    #expect(shows.count == 6)
     #expect(shows.allSatisfy { $0.feedUrl.hasPrefix("https://") && Int($0.appleId) != nil })
+}
+
+private let search = """
+{"resultCount":3,"results":[
+ {"wrapperType":"track","kind":"podcast","collectionId":1528594034,"collectionName":"Hard Fork","artistName":"The New York Times","feedUrl":"https://feeds.simplecast.com/6HKOhNgS"},
+ {"wrapperType":"track","kind":"podcast","collectionId":111,"collectionName":"Old Show","artistName":"Someone","feedUrl":"http://example.com/feed"},
+ {"wrapperType":"track","kind":"podcast","collectionId":222,"collectionName":"No Feed"}
+]}
+"""
+
+@Test func podcastSearchKeepsShowsWithHTTPSFeeds() {
+    let shows = ApplePodcasts.shows(fromSearch: Data(search.utf8))
+    #expect(shows.map(\.title) == ["Hard Fork"])
+    #expect(shows.first?.id == "1528594034")
+    #expect(shows.first?.author == "The New York Times")
+    #expect(ApplePodcasts.shows(fromSearch: Data("nope".utf8)).isEmpty)
+}
+
+@Test func podcastSearchSendsOnlyTheTypedWords() throws {
+    let url = try #require(ApplePodcasts.searchURL("  hard fork "))
+    let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+    #expect(url.host() == "itunes.apple.com")
+    #expect(items.first { $0.name == "term" }?.value == "hard fork")
+    #expect(items.first { $0.name == "media" }?.value == "podcast")
+    #expect(ApplePodcasts.searchURL("   ") == nil)
 }

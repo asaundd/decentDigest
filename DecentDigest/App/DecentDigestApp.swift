@@ -8,6 +8,7 @@ struct DecentDigestApp: App {
     private let refresher: NewsRefresher
     private let agenda: AgendaModel
     private let weather: WeatherModel
+    private let preferences = DigestPreferences()
 
     init() {
         let container: ModelContainer
@@ -32,7 +33,7 @@ struct DecentDigestApp: App {
 
     var body: some Scene {
         WindowGroup {
-            DigestView(agenda: agenda, weather: weather, refresh: { [refresher] force in await refresher.refresh(force: force) })
+            DigestView(agenda: agenda, weather: weather, preferences: preferences, refresh: { [refresher] force in await refresher.refresh(force: force) })
         }
         .modelContainer(container)
     }

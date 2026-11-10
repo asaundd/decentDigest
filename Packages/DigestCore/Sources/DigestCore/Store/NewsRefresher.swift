@@ -20,9 +20,6 @@ public final class NewsRefresher {
         defer { isRefreshing = false }
 
         let store = await feedStore()
-        if let library = try? FeedLibrary.bundled() {
-            try? await store.addStarterSourcesIfNeeded(library: library)
-        }
         let started = Date.now
         let fetched = await store.refresh(force: force)
         // Headlines opened before this refresh leave the News list.

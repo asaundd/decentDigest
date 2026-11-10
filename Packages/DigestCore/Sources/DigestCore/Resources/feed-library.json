@@ -5,11 +5,11 @@
   "categories": [
     {
       "id": "healthtech",
-      "name": "Healthtech & Digital Health"
+      "name": "Healthtech and digital health"
     },
     {
       "id": "product",
-      "name": "Product & Leadership"
+      "name": "Product and leadership"
     },
     {
       "id": "ai",
@@ -17,11 +17,11 @@
     },
     {
       "id": "tech",
-      "name": "Tech & Apple"
+      "name": "Tech and Apple"
     },
     {
       "id": "news",
-      "name": "News & Science"
+      "name": "News and science"
     }
   ],
   "feeds": [

@@ -15,19 +15,9 @@ struct WeatherLines: View {
     @State private var showsWeek = false
 
     var body: some View {
+        // With no location and no city, the date stands alone.
         if let report = model.report, let place = model.place {
             forecast(report, place: place, unit: .current())
-        } else if model.locationAccess == .notAsked && model.typedCity == nil {
-            // Until the app has asked, one quiet line offers to set it up. Once location is
-            // declined and no city is typed in, the date stands alone.
-            VStack(alignment: .leading, spacing: 4) {
-                Text("See the weather here, for where you are or a city you choose.")
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.secondary)
-                TextLink("Set up weather", action: openSettings)
-            }
-            .padding(.top, 12)
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 

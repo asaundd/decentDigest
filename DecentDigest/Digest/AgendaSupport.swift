@@ -169,24 +169,3 @@ struct QuietLine: View {
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
-
-/// Shown in a section until the app has asked for access. Once onboarding asks, this is only a fallback.
-/// A section whose access was declined isn't shown at all; it is added back from Settings.
-struct AccessNote: View {
-    /// e.g. "Calendar".
-    var appName: String
-    /// What the section shows once allowed, e.g. "today's events".
-    var shows: String
-    var request: @MainActor () async -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("See \(shows) from \(appName) here. They stay in \(appName); nothing is copied.")
-                .foregroundStyle(Theme.secondary)
-            TextLink("Allow access") { Task { await request() } }
-                .accessibilityHint("Asks for access to \(appName)")
-        }
-        .padding(.vertical, 5)
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-}

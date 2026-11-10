@@ -28,6 +28,14 @@ enum Theme {
     /// The faint wash over the digest while the panel is open.
     static let scrim = Color.black.opacity(0.12)
 
+    /// The Dd logo on the Settings button: quiet, but still easy to find.
+    static let logoButton = Color(light: 0x8C918F, dark: 0x6F7573)
+    /// A button that can't be used yet: a fill one shade darker than the page, with gray text.
+    static let buttonDimmedFill = Color(light: 0xECEBE6, dark: 0x232826)
+    static let buttonDimmedText = Color(light: 0xA7ABA9, dark: 0x6F7573)
+    /// The filled search boxes in setup.
+    static let fieldFill = ribbonButtonFill
+
     // Spacing
     static let margin: CGFloat = 24
     static let ruleSpacing: CGFloat = 24

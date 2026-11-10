@@ -11,6 +11,8 @@ struct DigestView: View {
     var agenda: AgendaModel
     /// The weather lines under the date.
     var weather: WeatherModel
+    /// Which sections the reader set up, and whether setup is done.
+    var preferences: DigestPreferences
     /// Fetches news and podcasts. `true` means the reader pulled to refresh.
     var refresh: @Sendable (Bool) async -> Void = { _ in }
     var sectionOrder: [DigestSection] = DigestSection.allCases
@@ -19,6 +21,8 @@ struct DigestView: View {
     @Query(sort: \SavedItem.savedAt, order: .reverse) private var saved: [SavedItem]
     @State private var panel: PanelRequest?
     @State private var showsWeatherSettings = false
+    /// Setup opened again from the logo button. (Until Settings exists, it is how sections come back.)
+    @State private var showsSetup = false
     /// True while feeds are being checked, so News can say so.
     @State private var isRefreshing = false
     /// Where the visible list ends on screen.
@@ -58,8 +62,22 @@ struct DigestView: View {
                 listBottom = bottom
             }
         }
+        // Settings: the round logo button, pinned at the top right while the page scrolls under it.
+        .overlay(alignment: .topTrailing) {
+            SettingsButton { showsSetup = true }
+                .padding(.trailing, 16)
+                .padding(.top, 4)
+        }
         .blur(radius: panel == nil ? 0 : 2)
         .overlay { ArticlePanelHost(panel: $panel) }
+        .fullScreenCover(isPresented: setupBinding) {
+            OnboardingFlow(agenda: agenda, weather: weather, preferences: preferences) {
+                showsSetup = false
+                Task { await agenda.reload() }
+                Task { await weather.reload() }
+                Task { await runRefresh(force: false) }
+            }
+        }
         .sheet(isPresented: $showsWeatherSettings) {
             WeatherSettingsView(model: weather)
         }
@@ -95,19 +113,30 @@ struct DigestView: View {
                 .font(Theme.dateFont)
                 .accessibilityAddTraits(.isHeader)
             // Weather is the page's opening lines, not a titled section.
-            WeatherLines(model: weather) { showsWeatherSettings = true }
+            if preferences.isShown(.weather) {
+                WeatherLines(model: weather) { showsWeatherSettings = true }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    /// Setup shows on first launch, and again when the logo button is tapped.
+    private var setupBinding: Binding<Bool> {
+        Binding(
+            get: { !preferences.hasFinishedSetup || showsSetup },
+            set: { showsSetup = $0 }
+        )
+    }
+
+    /// A section skipped in setup, or whose access is off, isn't shown at all.
     private func isShown(_ section: DigestSection) -> Bool {
         switch section {
         // Saved appears only once something is saved.
         case .saved: !saved.isEmpty
-        // A section whose access was declined isn't shown at all. It comes back once access is on.
-        case .calendar: agenda.calendarAccess != .denied
-        case .todos: agenda.remindersAccess != .denied
-        default: true
+        case .calendar: preferences.isShown(.calendar) && agenda.calendarAccess == .granted
+        case .todos: preferences.isShown(.todos) && agenda.remindersAccess == .granted
+        case .news: preferences.isShown(.news)
+        case .podcasts: preferences.isShown(.podcasts)
         }
     }
 
@@ -148,7 +177,7 @@ struct DigestView: View {
     private var footer: some View {
         VStack(alignment: .leading, spacing: 8) {
             // WeatherKit asks for the Apple Weather mark and a link to its legal page.
-            if let credit = weather.credit, weather.report != nil, !weather.isSample {
+            if let credit = weather.credit, weather.report != nil, !weather.isSample, preferences.isShown(.weather) {
                 WeatherCreditLine(credit: credit)
             }
         }
@@ -164,22 +193,29 @@ extension View {
 }
 
 @MainActor
+private func samplePreferences() -> DigestPreferences {
+    let defaults = UserDefaults(suiteName: "preview-preferences")!
+    defaults.set(true, forKey: "setup.finished")
+    return DigestPreferences(defaults: defaults)
+}
+
+@MainActor
 private func sampleWeather(access: AccessState = .granted) -> WeatherModel {
     WeatherModel(provider: SampleWeatherProvider(), places: SamplePlaces(access: access), defaults: UserDefaults(suiteName: "preview")!)
 }
 
 #Preview("Light") {
-    DigestView(agenda: AgendaModel(source: SampleAgendaSource()), weather: sampleWeather())
+    DigestView(agenda: AgendaModel(source: SampleAgendaSource()), weather: sampleWeather(), preferences: samplePreferences())
         .modelContainer(DigestStore.previewContainer())
 }
 
 #Preview("Dark") {
-    DigestView(agenda: AgendaModel(source: SampleAgendaSource()), weather: sampleWeather())
+    DigestView(agenda: AgendaModel(source: SampleAgendaSource()), weather: sampleWeather(), preferences: samplePreferences())
         .modelContainer(DigestStore.previewContainer())
         .preferredColorScheme(.dark)
 }
 
 #Preview("Access declined") {
-    DigestView(agenda: AgendaModel(source: SampleAgendaSource(access: .denied)), weather: sampleWeather(access: .denied))
+    DigestView(agenda: AgendaModel(source: SampleAgendaSource(access: .denied)), weather: sampleWeather(access: .denied), preferences: samplePreferences())
         .modelContainer(DigestStore.previewContainer())
 }
