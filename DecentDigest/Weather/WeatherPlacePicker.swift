@@ -14,10 +14,8 @@ struct WeatherPlacePicker: View {
     var model: WeatherModel
     /// The gray line under "Don't use my location".
     var cityNote: String
-    /// Shows the picked city's weather under the search box, so the reader can see it's the right place.
-    var showsCityWeather = false
-    /// Puts a rule between the two choices, as on the Weather settings page.
-    var ruled = false
+    /// Puts a rule between the two choices.
+    var ruled = true
 
     @Environment(\.openURL) private var openURL
     @State private var text = ""
@@ -38,7 +36,7 @@ struct WeatherPlacePicker: View {
                 PlainRule(spacing: 20)
             }
 
-            ChoiceRow(title: "Don't use my location", subtitle: cityNote) {
+            ChoiceRow(title: "Don't use my location", subtitle: cityNote, emphasized: true) {
                 if let city = model.typedCity {
                     // "✓ In use" over the city's name.
                     VStack(alignment: .trailing, spacing: 1) {
@@ -58,7 +56,6 @@ struct WeatherPlacePicker: View {
             SearchBox(placeholder: "Search for a city", text: $text, isFocused: $searchFocused) {
                 lookUp(text)
             }
-            .textContentType(.addressCity)
             .onChange(of: text) { _, typed in
                 notFound = false
                 search.update(typed)
@@ -81,10 +78,6 @@ struct WeatherPlacePicker: View {
                     .foregroundStyle(Theme.secondary)
                     .padding(.top, 8)
             }
-            if showsCityWeather, text.isEmpty, let city = model.typedCity, let report = model.report, model.place == city {
-                cityWeather(report, city: city, unit: .current())
-                    .padding(.top, 14)
-            }
         }
     }
 
@@ -95,6 +88,7 @@ struct WeatherPlacePicker: View {
             HStack(alignment: .firstTextBaseline, spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Use my location")
+                        .fontWeight(.semibold)
                     locationNote
                         .font(.subheadline)
                         .foregroundStyle(Theme.secondary)
@@ -184,23 +178,6 @@ struct WeatherPlacePicker: View {
                 .accessibilityHint("Shows the weather for this city")
             }
         }
-    }
-
-    /// "52°  Cloudy  High 58° · Low 44° in Philadelphia": a first look at the picked city.
-    private func cityWeather(_ report: WeatherReport, city: WeatherPlace, unit: TemperatureUnit) -> some View {
-        HStack(alignment: .center, spacing: 12) {
-            Text(unit.degrees(report.temperature))
-                .font(.system(size: 28, weight: .light))
-                .monospacedDigit()
-            VStack(alignment: .leading, spacing: 1) {
-                Text(WeatherRules.todayPhrase(report, now: .now))
-                Text("\(WeatherRules.highLow(report.today, unit: unit)) in \(city.name)")
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.secondary)
-                    .monospacedDigit()
-            }
-        }
-        .accessibilityElement(children: .combine)
     }
 
     private func lookUp(_ query: String) {

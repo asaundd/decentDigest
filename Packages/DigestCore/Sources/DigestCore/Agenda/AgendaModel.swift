@@ -85,6 +85,15 @@ public final class AgendaModel {
     }
 
     /// Puts a calendar on the page, or leaves it off.
+    /// Shows every calendar and list again, for starting setup over.
+    public func showAllLists() async {
+        excludedCalendarIDs = []
+        excludedListIDs = []
+        defaults.removeObject(forKey: Keys.excludedCalendars)
+        defaults.removeObject(forKey: Keys.excludedLists)
+        await reload()
+    }
+
     public func setIncluded(_ included: Bool, calendar id: String) async {
         if included { excludedCalendarIDs.remove(id) } else { excludedCalendarIDs.insert(id) }
         defaults.set(excludedCalendarIDs.sorted(), forKey: Keys.excludedCalendars)

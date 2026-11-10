@@ -9,19 +9,40 @@ struct PodcastsStep: View {
     var skip: () -> Void
     var next: () -> Void
 
+    @Environment(\.modelContext) private var context
     @Query private var sources: [Source]
+    @State private var confirmsSkip = false
+
+    private var followed: [Source] {
+        sources.filter { $0.kind == SourceKind.podcast.rawValue && !$0.isMuted }
+    }
 
     var body: some View {
         OnboardingStep(
             number: 4,
             title: "Podcasts",
             intro: "Select the podcasts you follow. New episodes and their descriptions will show in your digest and open in the Apple Podcasts app.",
-            canContinue: sources.contains { $0.kind == SourceKind.podcast.rawValue && !$0.isMuted },
+            canContinue: !followed.isEmpty,
             back: back,
-            skip: skip,
+            skip: { if followed.isEmpty { skip() } else { confirmsSkip = true } },
             next: next
         ) {
             PodcastPicker()
+        }
+        .confirmationDialog(
+            followed.count == 1 ? "Skip Podcasts and unfollow the show you picked?" : "Skip Podcasts and unfollow the \(followed.count) shows you picked?",
+            isPresented: $confirmsSkip,
+            titleVisibility: .visible
+        ) {
+            Button("Skip and unfollow", role: .destructive) {
+                for source in followed {
+                    Following.unfollow(source.feedURL, kind: .podcast, in: context)
+                }
+                skip()
+            }
+            Button("Keep them", role: .cancel) {}
+        } message: {
+            Text("You can add Podcasts later in Settings.")
         }
     }
 }
@@ -61,7 +82,7 @@ struct PodcastPicker: View {
             if !query.isEmpty {
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(results) { show in
-                        row(title: show.title, subtitle: show.author, feed: .init(kind: .podcast, feedURL: show.feedURL, title: show.title, appleID: show.id))
+                        row(title: show.title, subtitle: show.author, feed: .init(kind: .podcast, feedURL: show.feedURL, title: show.title, appleID: show.id), clearsSearch: true)
                     }
                     if isSearching && results.isEmpty {
                         quiet("Searching…")
@@ -96,7 +117,9 @@ struct PodcastPicker: View {
         }
     }
 
-    private func row(title: String, subtitle: String?, feed: Following.Feed) -> some View {
+    /// A show with Follow or Unfollow. Following a search result clears the search, ready for the next
+    /// one; the show then appears under Following.
+    private func row(title: String, subtitle: String?, feed: Following.Feed, clearsSearch: Bool = false) -> some View {
         let following = Following.isFollowing(feed.feedURL, in: followed)
         return ChoiceRow(title: title, subtitle: subtitle, emphasized: following && !inSettings) {
             FollowLink(title: title, isFollowing: following) {
@@ -104,6 +127,10 @@ struct PodcastPicker: View {
                     Following.unfollow(feed.feedURL, kind: .podcast, in: context)
                 } else {
                     Following.follow(feed, in: context)
+                    if clearsSearch {
+                        text = ""
+                        searchFocused = false
+                    }
                 }
             }
         }

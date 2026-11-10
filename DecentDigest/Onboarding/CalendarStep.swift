@@ -65,7 +65,7 @@ struct AppAccessRow: View {
     @Environment(\.openURL) private var openURL
 
     var body: some View {
-        ChoiceRow(title: appName, subtitle: subtitle) {
+        ChoiceRow(title: appName, subtitle: subtitle, emphasized: true) {
             switch access {
             case .notAsked:
                 TextLink("Allow") { Task { await request() } }
@@ -91,7 +91,8 @@ struct AppAccessRow: View {
     }
 }
 
-/// Calendars or Reminders lists, all shown to start. Each has a link that says what a tap does:
+/// Calendars or Reminders lists, all shown to start, as a dashed list in a slightly smaller, lighter
+/// type than the app above them. Each has a link that says what a tap does:
 /// Hide, or Show once hidden, when the name turns gray and it stays off the digest. Used in setup and,
 /// grouped by account, in Settings.
 struct AgendaListPicker: View {
@@ -135,9 +136,15 @@ struct AgendaListPicker: View {
     private func row(_ list: AgendaList, note: String?) -> some View {
         let included = !excluded.contains(list.id)
         return HStack(alignment: .firstTextBaseline, spacing: 12) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: 0) {
+                Text("–")
+                    .foregroundStyle(Theme.secondary)
+                    .frame(width: DashColumn.width, alignment: .leading)
+                    .accessibilityHidden(true)
                 Text(list.title)
-                    .foregroundStyle(included ? Theme.ink : Theme.secondary)
+                    .font(.callout)
+                    .foregroundStyle(included ? Theme.itemInk : Theme.secondary)
+                    .padding(.trailing, 8)
                 if let note {
                     Text(note)
                         .font(.subheadline)

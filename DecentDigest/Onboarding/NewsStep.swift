@@ -9,25 +9,47 @@ struct NewsStep: View {
     var skip: () -> Void
     var next: () -> Void
 
+    @Environment(\.modelContext) private var context
     @Query private var sources: [Source]
+    @State private var confirmsSkip = false
+
+    private var followed: [Source] {
+        sources.filter { $0.kind == SourceKind.news.rawValue && !$0.isMuted }
+    }
 
     var body: some View {
         OnboardingStep(
             number: 3,
             title: "News",
-            intro: "Decent digest reads RSS feeds, which most news sites and blogs publish. Pick a topic to start, or add a site you follow.",
-            canContinue: sources.contains { $0.kind == SourceKind.news.rawValue && !$0.isMuted },
+            intro: "Decent digest reads RSS feeds, which most news sites and blogs publish. Open a topic to pick sites, or add a site you follow.",
+            canContinue: !followed.isEmpty,
             back: back,
-            skip: skip,
+            skip: { if followed.isEmpty { skip() } else { confirmsSkip = true } },
             next: next
         ) {
             NewsPicker()
+        }
+        .confirmationDialog(
+            followed.count == 1 ? "Skip News and unfollow the site you picked?" : "Skip News and unfollow the \(followed.count) sites you picked?",
+            isPresented: $confirmsSkip,
+            titleVisibility: .visible
+        ) {
+            Button("Skip and unfollow", role: .destructive) {
+                for source in followed {
+                    Following.unfollow(source.feedURL, kind: .news, in: context)
+                }
+                skip()
+            }
+            Button("Keep them", role: .cancel) {}
+        } message: {
+            Text("You can add News later in Settings.")
         }
     }
 }
 
 /// Follow sites by topic, by name, or by pasting an address. Every site has Follow, which becomes
-/// Unfollow. Used in setup and in Settings, where what you follow comes first.
+/// Unfollow, and nothing is followed until the reader picks it. Used in setup, where sites added by
+/// address come first, and in Settings, where everything followed comes first.
 struct NewsPicker: View {
     /// Settings lists what you follow above the topics.
     var inSettings = false
@@ -52,6 +74,13 @@ struct NewsPicker: View {
         sources.filter { $0.kind == SourceKind.news.rawValue && !$0.isMuted }
     }
 
+    /// Sites followed by name or address rather than from a topic.
+    private var addedByYou: [Source] {
+        followed.filter { source in
+            !(Self.library?.feeds.contains { Following.key(for: $0.feedUrl) == Following.key(for: source.feedURL) } ?? false)
+        }
+    }
+
     private var query: String { text.trimmingCharacters(in: .whitespacesAndNewlines) }
 
     var body: some View {
@@ -66,25 +95,27 @@ struct NewsPicker: View {
 
             if query.isEmpty {
                 if inSettings && !followed.isEmpty {
-                    followingList(limit: showsAllFollowed ? nil : 4)
+                    followingList(followed, heading: "Following", limit: showsAllFollowed ? nil : 4)
+                } else if !inSettings && !addedByYou.isEmpty {
+                    followingList(addedByYou, heading: "Added by you", limit: nil)
                 }
                 topics
             } else {
                 results
                 if !followed.isEmpty {
-                    followingList(limit: nil)
+                    followingList(followed, heading: "Following", limit: nil)
                 }
             }
         }
     }
 
-    /// What the reader follows, each with Unfollow. In Settings, the first 4, then "N more · Show all".
+    /// Sites the reader follows, each with Unfollow. In Settings, the first 4, then "N more · Show all".
     @ViewBuilder
-    private func followingList(limit: Int?) -> some View {
+    private func followingList(_ followed: [Source], heading: String, limit: Int?) -> some View {
         let shown = limit.map { Array(followed.prefix($0)) } ?? followed
-        ListHeading("Following")
+        ListHeading(heading)
         ForEach(shown) { source in
-            ChoiceRow(title: source.title, subtitle: categoryName(source.category) ?? "Added by you", emphasized: !inSettings) {
+            ChoiceRow(title: source.title, subtitle: categoryName(source.category) ?? (heading == "Added by you" ? Self.host(source.siteURL ?? source.feedURL) : "Added by you"), emphasized: !inSettings) {
                 FollowLink(title: source.title, isFollowing: true) {
                     Following.unfollow(source.feedURL, kind: .news, in: context)
                 }
@@ -117,66 +148,72 @@ struct NewsPicker: View {
         }
     }
 
+    /// A topic: its name over a few of its sites, and how many are followed. A tap anywhere on it opens
+    /// or closes its sites, each with Follow, plus Follow all.
     @ViewBuilder
     private func topic(_ category: FeedLibrary.Category) -> some View {
         let feeds = Self.library?.starterFeeds(in: category.id) ?? []
         let followedCount = feeds.filter { isFollowing($0.feedUrl) }.count
         let isOpen = openTopics.contains(category.id)
-        ChoiceRow(
-            title: category.name,
-            subtitle: isOpen ? nil : feeds.prefix(3).map(\.title).joined(separator: ", ")
-        ) {
-            if followedCount > 0 {
-                Button {
-                    if isOpen { openTopics.remove(category.id) } else { openTopics.insert(category.id) }
-                } label: {
-                    Text(inSettings ? "\(followedCount) of \(feeds.count) followed" : "\(followedCount) of \(feeds.count) ✓")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Theme.ink)
-                        .fixedSize()
-                        .padding(.vertical, 4)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.borderless)
-                .accessibilityLabel("\(followedCount) of \(feeds.count) followed")
-                .accessibilityHint(isOpen ? "Hides the sites in \(category.name)" : "Shows the sites in \(category.name)")
-            } else {
-                TextLink("Choose") { choose(category) }
-                    .accessibilityLabel("Choose \(category.name)")
-                    .accessibilityHint("Follows its two most popular sites")
+        Button {
+            if isOpen { openTopics.remove(category.id) } else { openTopics.insert(category.id) }
+        } label: {
+            ChoiceRow(
+                title: category.name,
+                subtitle: isOpen ? nil : feeds.prefix(3).map(\.title).joined(separator: ", "),
+                emphasized: followedCount > 0 && !inSettings
+            ) {
+                Text(followedCount > 0 ? (inSettings ? "\(followedCount) of \(feeds.count) followed" : "\(followedCount) of \(feeds.count) ✓") : "\(feeds.count) sites")
+                    .font(.subheadline.weight(followedCount > 0 ? .semibold : .regular))
+                    .foregroundStyle(followedCount > 0 ? Theme.ink : Theme.secondary)
+                    .fixedSize()
             }
+            .contentShape(Rectangle())
         }
+        .buttonStyle(StillButtonStyle())
+        .accessibilityElement(children: .combine)
+        .accessibilityHint(isOpen ? "Hides the sites in \(category.name)" : "Shows the sites in \(category.name)")
         if isOpen {
             let showsAll = fullTopics.contains(category.id)
             let shown = showsAll ? feeds : Array(feeds.prefix(Self.topicPreview))
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(shown) { feed in
-                    libraryRow(feed, subtitle: nil)
+                    libraryRow(feed, subtitle: nil, dashed: true)
                 }
-                if feeds.count > shown.count {
-                    Button {
-                        fullTopics.insert(category.id)
-                    } label: {
-                        Text("\(feeds.count - shown.count) more")
-                            .font(.subheadline)
+                HStack(spacing: 6) {
+                    if feeds.count > shown.count {
+                        Button {
+                            fullTopics.insert(category.id)
+                        } label: {
+                            Text("\(feeds.count - shown.count) more")
+                                .font(.subheadline)
+                                .foregroundStyle(Theme.secondary)
+                                .padding(.vertical, 6)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(StillButtonStyle())
+                        .accessibilityHint("Shows the rest of \(category.name)")
+                        Text("·")
                             .foregroundStyle(Theme.secondary)
-                            .padding(.vertical, 6)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .contentShape(Rectangle())
+                            .accessibilityHidden(true)
                     }
-                    .buttonStyle(StillButtonStyle())
-                    .accessibilityHint("Shows the rest of \(category.name)")
+                    if followedCount < feeds.count {
+                        TextLink("Follow all") {
+                            for feed in feeds where !isFollowing(feed.feedUrl) { follow(feed) }
+                            fullTopics.insert(category.id)
+                        }
+                        .accessibilityLabel("Follow all of \(category.name)")
+                    } else {
+                        QuietLink("Unfollow all") {
+                            for feed in feeds { Following.unfollow(feed.feedUrl, kind: .news, in: context) }
+                        }
+                        .accessibilityLabel("Unfollow all of \(category.name)")
+                    }
+                    Spacer(minLength: 0)
                 }
+                .padding(.bottom, 6)
             }
-            .padding(.leading, DashColumn.width)
         }
-    }
-
-    private func choose(_ category: FeedLibrary.Category) {
-        for feed in Self.library?.topicPicks(in: category.id) ?? [] where !isFollowing(feed.feedUrl) {
-            follow(feed)
-        }
-        openTopics.insert(category.id)
     }
 
     // MARK: Search
@@ -197,6 +234,8 @@ struct NewsPicker: View {
                                 Following.unfollow(found.feedURL, kind: .news, in: context)
                             } else {
                                 Following.follow(.init(kind: .news, feedURL: found.feedURL, title: found.title, siteURL: found.siteURL), in: context)
+                                // Ready for the next one; the site now shows under Added by you.
+                                clearSearch()
                             }
                         }
                     }
@@ -233,16 +272,24 @@ struct NewsPicker: View {
 
     // MARK: Rows
 
-    private func libraryRow(_ feed: FeedLibrary.Feed, subtitle: String?) -> some View {
-        ChoiceRow(title: feed.title, subtitle: subtitle, emphasized: !inSettings && isFollowing(feed.feedUrl)) {
+    private func libraryRow(_ feed: FeedLibrary.Feed, subtitle: String?, dashed: Bool = false) -> some View {
+        ChoiceRow(title: feed.title, subtitle: subtitle, emphasized: !inSettings && isFollowing(feed.feedUrl), dashed: dashed) {
             FollowLink(title: feed.title, isFollowing: isFollowing(feed.feedUrl)) {
                 if isFollowing(feed.feedUrl) {
                     Following.unfollow(feed.feedUrl, kind: .news, in: context)
                 } else {
                     follow(feed)
+                    if !query.isEmpty { clearSearch() }
                 }
             }
         }
+    }
+
+    private func clearSearch() {
+        text = ""
+        found = nil
+        notFound = false
+        searchFocused = false
     }
 
     private func quiet(_ text: String) -> some View {

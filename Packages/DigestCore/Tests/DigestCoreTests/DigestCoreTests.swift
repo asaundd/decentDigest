@@ -81,3 +81,21 @@ import Testing
     reopened.setShown(true, .news)
     #expect(DigestPreferences(defaults: defaults).isShown(.news))
 }
+
+@MainActor @Test func historyAppearanceAndStartingOver() {
+    let defaults = UserDefaults(suiteName: "prefs-\(UUID().uuidString)")!
+    let prefs = DigestPreferences(defaults: defaults)
+    #expect(prefs.keepsReadingHistory)
+    #expect(prefs.appearance == .automatic)
+    prefs.setKeepsReadingHistory(false)
+    prefs.setAppearance(.dark)
+    prefs.setShown(false, .weather)
+    prefs.setShown(false, .podcasts)
+
+    let reopened = DigestPreferences(defaults: defaults)
+    #expect(!reopened.keepsReadingHistory)
+    #expect(defaults.bool(forKey: DigestPreferences.readingHistoryOffKey))
+    #expect(reopened.appearance == .dark)
+    reopened.showAllSections()
+    #expect(DigestPreferences.Section.allCases.allSatisfy { DigestPreferences(defaults: defaults).isShown($0) })
+}

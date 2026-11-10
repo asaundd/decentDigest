@@ -93,12 +93,18 @@ struct DigestView: View {
             }
         }
         .sheet(isPresented: $showsWeatherSettings) {
-            WeatherSettingsView(model: weather, preferences: preferences)
+            // In a navigation stack so the search box's Done key above the keyboard shows.
+            NavigationStack {
+                WeatherSettingsView(model: weather, preferences: preferences)
+            }
         }
         .refreshable {
             await agenda.reload()
             await weather.reload(force: true)
             await runRefresh(force: true)
+        }
+        .onChange(of: preferences.appearance, initial: true) { _, appearance in
+            AppearanceStyle.apply(appearance)
         }
         .onChange(of: scenePhase, initial: true) { _, phase in
             // Checked-off to-dos still showing leave when the app goes away.
@@ -188,8 +194,17 @@ struct DigestView: View {
         }
     }
 
+    /// The end of the page: the small logo and name, like the foot of Settings, then the weather credit.
     private var footer: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .center, spacing: 8) {
+                LogoMark(color: Theme.secondary)
+                    .frame(width: 22)
+                    .accessibilityHidden(true)
+                Text("Decent digest")
+                    .font(Theme.wordmarkFont)
+                    .foregroundStyle(Theme.secondary)
+            }
             // WeatherKit asks for the Apple Weather mark and a link to its legal page.
             if let credit = weather.credit, weather.report != nil, !weather.isSample, preferences.isShown(.weather) {
                 WeatherCreditLine(credit: credit)

@@ -1,8 +1,9 @@
 import Foundation
 import Observation
 
-/// What the reader chose in setup: whether setup is done, and which sections are on the page.
-/// Skipping a setup step leaves its section off until it is turned on again. Kept on this device.
+/// What the reader chose in setup and Settings: whether setup is done, which sections are on the page,
+/// whether reading history is kept, and the appearance. Skipping a setup step leaves its section off
+/// until it is turned on again. Kept on this device.
 @MainActor
 @Observable
 public final class DigestPreferences {
@@ -11,8 +12,17 @@ public final class DigestPreferences {
         case weather, calendar, todos, news, podcasts
     }
 
+    /// Light, dark, or following the device.
+    public enum Appearance: String, CaseIterable, Sendable {
+        case automatic, light, dark
+    }
+
     /// True once the reader has been through setup.
     public private(set) var hasFinishedSetup: Bool
+    /// False when the reader turns reading history off: items they dealt with leave no record once
+    /// they expire.
+    public private(set) var keepsReadingHistory: Bool
+    public private(set) var appearance: Appearance
     private var hidden: Set<String>
 
     private let defaults: UserDefaults
@@ -21,6 +31,8 @@ public final class DigestPreferences {
         self.defaults = defaults
         self.hasFinishedSetup = defaults.bool(forKey: Keys.finishedSetup)
         self.hidden = Set(defaults.stringArray(forKey: Keys.hiddenSections) ?? [])
+        self.keepsReadingHistory = !defaults.bool(forKey: Self.readingHistoryOffKey)
+        self.appearance = Appearance(rawValue: defaults.string(forKey: Keys.appearance) ?? "") ?? .automatic
     }
 
     /// Whether the reader wants the section on the page. Calendar, To do and Weather also need
@@ -39,8 +51,28 @@ public final class DigestPreferences {
         defaults.set(true, forKey: Keys.finishedSetup)
     }
 
+    /// Puts every section back on the page, for starting setup over.
+    public func showAllSections() {
+        hidden = []
+        defaults.removeObject(forKey: Keys.hiddenSections)
+    }
+
+    public func setKeepsReadingHistory(_ keeps: Bool) {
+        keepsReadingHistory = keeps
+        defaults.set(!keeps, forKey: Self.readingHistoryOffKey)
+    }
+
+    public func setAppearance(_ appearance: Appearance) {
+        self.appearance = appearance
+        defaults.set(appearance.rawValue, forKey: Keys.appearance)
+    }
+
+    /// Read by the background refresh, which prunes expired items.
+    nonisolated public static let readingHistoryOffKey = "history.off"
+
     private enum Keys {
         static let finishedSetup = "setup.finished"
         static let hiddenSections = "setup.hiddenSections"
+        static let appearance = "appearance"
     }
 }

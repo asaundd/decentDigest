@@ -104,13 +104,13 @@ struct WelcomePage: View {
                     .accessibilityAddTraits(.isHeader)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, 6)
-                Text("Decent digest can show your weather, calendar, reminders, news and more from the Apple apps you already use, all in one clean view.")
+                Text("Decent digest can show your weather, calendar, reminders, news, and more from the Apple apps you already use, all in one clean view.")
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, 12)
                 SectionRule()
                 VStack(alignment: .leading, spacing: 8) {
                     DashLine("No account, no ads, and no tracking.")
-                    DashLine("What you follow, save and read stays on your device and in your own iCloud. Nothing is sent to us.")
+                    DashLine("What you follow, save and read stays on your device and in your own iCloud. It's never shared with developers.")
                     DashLine("Each step is optional and can be changed later.")
                 }
             }
@@ -149,8 +149,7 @@ struct WeatherStep: View {
         ) {
             WeatherPlacePicker(
                 model: weather,
-                cityNote: "Select a city instead and change it at any time in Settings.",
-                showsCityWeather: true
+                cityNote: "Select a city instead and change it at any time in Settings."
             )
         }
     }

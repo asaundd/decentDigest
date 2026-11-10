@@ -135,24 +135,38 @@ struct ChoiceRow<Trailing: View>: View {
     var subtitle: String?
     /// Semibold, for a site or show being followed in setup.
     var emphasized = false
+    /// A gray dash before the name, for items listed under a heading or a topic.
+    var dashed = false
     @ViewBuilder var trailing: Trailing
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .fontWeight(emphasized ? .semibold : .regular)
-                if let subtitle {
-                    Text(subtitle)
-                        .font(.subheadline)
+            HStack(alignment: .firstTextBaseline, spacing: 0) {
+                if dashed {
+                    Text("–")
                         .foregroundStyle(Theme.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(width: DashColumn.width, alignment: .leading)
+                        .accessibilityHidden(true)
                 }
+                choiceText
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             trailing
         }
         .padding(.vertical, 6)
+    }
+
+    private var choiceText: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .fontWeight(emphasized ? .semibold : .regular)
+            if let subtitle {
+                Text(subtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
     }
 }
 
@@ -215,7 +229,8 @@ struct QuietLink: View {
     }
 }
 
-/// A filled search box, so it's clear it can be typed in.
+/// A filled search box, so it's clear it can be typed in. An ✕ clears it while it holds text, and
+/// Done above the keyboard puts the keyboard away.
 struct SearchBox: View {
     var placeholder: String
     @Binding var text: String
@@ -224,16 +239,41 @@ struct SearchBox: View {
     var onSubmit: () -> Void = {}
 
     var body: some View {
-        TextField(placeholder, text: $text)
-            .keyboardType(keyboard)
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
-            .submitLabel(.search)
-            .focused(isFocused)
-            .onSubmit(onSubmit)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(Theme.fieldFill, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        HStack(spacing: 8) {
+            TextField(placeholder, text: $text)
+                .keyboardType(keyboard)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .submitLabel(.search)
+                .focused(isFocused)
+                .onSubmit(onSubmit)
+            if !text.isEmpty {
+                Button {
+                    text = ""
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Theme.secondary)
+                        .frame(width: 28, height: 28)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("Clear search")
+            }
+        }
+        .padding(.leading, 12)
+        .padding(.trailing, text.isEmpty ? 12 : 6)
+        .padding(.vertical, text.isEmpty ? 10 : 6)
+        .frame(minHeight: 44)
+        .background(Theme.fieldFill, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { isFocused.wrappedValue = false }
+                    .fontWeight(.semibold)
+                    .tint(Theme.accent)
+            }
+        }
     }
 }
 
