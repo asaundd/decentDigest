@@ -60,7 +60,8 @@ struct SettingsButton: View {
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .glassEffect(.regular.interactive(), in: .circle)
+        // Clear glass, so the page shows through more than the regular kind.
+        .glassEffect(.clear.interactive(), in: .circle)
         .accessibilityLabel("Settings")
     }
 }

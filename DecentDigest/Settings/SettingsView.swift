@@ -52,7 +52,7 @@ struct SettingsView: View {
 
                     SettingsLabel("Your data")
                         .padding(.top, 28)
-                    Text("What you follow, save and read is stored on your device and in your own iCloud. It's never shared with developers.")
+                    Text("What you follow, save, and read is stored on your device and in your own iCloud. It's never shared with developers.")
                         .font(.footnote)
                         .foregroundStyle(Theme.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -73,7 +73,7 @@ struct SettingsView: View {
             }
         }
         .tint(Theme.accent)
-        .confirmationDialog("Start setup over?", isPresented: $confirmsStartOver, titleVisibility: .visible) {
+        .alert("Start setup over?", isPresented: $confirmsStartOver) {
             Button("Keep my choices") { showWelcome() }
             Button("Clear my choices", role: .destructive) { startOver() }
             Button("Cancel", role: .cancel) {}
@@ -165,6 +165,22 @@ struct SettingsView: View {
 
     // MARK: Footer
 
+    @ViewBuilder
+    private var footerLinks: some View {
+        if let privacy = AppLinks.privacy {
+            TextLink("Privacy") { openURL(privacy) }
+        }
+        if let feedback = AppLinks.feedback {
+            TextLink("Send feedback") { openURL(feedback) }
+        }
+    }
+
+    /// For testing setup again; not in release builds, where every choice can be changed in Settings.
+    private var startOverLink: some View {
+        TextLink("Start setup over") { confirmsStartOver = true }
+            .accessibilityHint("Shows the welcome and setup again")
+    }
+
     private var footer: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .center, spacing: 10) {
@@ -174,16 +190,21 @@ struct SettingsView: View {
                     .font(.subheadline)
                     .foregroundStyle(Theme.secondary)
             }
-            HStack(spacing: 16) {
-                if let privacy = AppLinks.privacy {
-                    TextLink("Privacy") { openURL(privacy) }
+            // One line, or two on a narrow screen or at large text sizes.
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 16) {
+                    footerLinks
+                    #if DEBUG
+                    startOverLink
+                    #endif
                 }
-                if let feedback = AppLinks.feedback {
-                    TextLink("Send feedback") { openURL(feedback) }
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 16) { footerLinks }
+                    #if DEBUG
+                    startOverLink
+                    #endif
                 }
             }
-            TextLink("Start setup over") { confirmsStartOver = true }
-                .accessibilityHint("Shows the welcome and setup again")
         }
     }
 }
@@ -289,8 +310,10 @@ struct SettingsPage<Content: View>: View {
     var closes = false
     @ViewBuilder var content: Content
 
+    @State private var keyboardShown = false
+
     var body: some View {
-        ScrollView {
+        RevealingScrollView(keyboardShown: $keyboardShown) {
             VStack(alignment: .leading, spacing: 0) {
                 SettingsHeader(title: title, subtitle: subtitle, closes: closes)
                 PlainRule(spacing: 20)
@@ -463,7 +486,7 @@ struct ICloudSyncPage: View {
     @Environment(\.openURL) private var openURL
 
     var body: some View {
-        SettingsPage(title: "iCloud sync", subtitle: "Keeps what you follow, save and read in your own iCloud, so it's the same on each device you use and comes back on a new one.") {
+        SettingsPage(title: "iCloud sync", subtitle: "Keeps what you follow, save, and read in your own iCloud, so it's the same on each device you use and comes back on a new one.") {
             ChoiceRow(title: "Sync", subtitle: "On when you're signed in to iCloud.") {
                 Text(ICloudStatus.isSignedIn ? "On" : "Off")
                     .foregroundStyle(Theme.secondary)
@@ -506,13 +529,6 @@ struct ReadingHistoryPage: View {
                 get: { preferences.keepsReadingHistory },
                 set: { preferences.setKeepsReadingHistory($0) }
             ))
-            if !preferences.keepsReadingHistory {
-                Text("Items you've dealt with are forgotten once they leave your lists, after a week.")
-                    .font(.footnote)
-                    .foregroundStyle(Theme.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 6)
-            }
             PlainRule(spacing: 20)
             VStack(alignment: .leading, spacing: 8) {
                 DashLine("It stays on your device and in your own iCloud, and is never shared with developers.")
@@ -531,11 +547,12 @@ struct ReadingHistoryPage: View {
                 .foregroundStyle(Theme.secondary)
                 .padding(.top, 4)
         }
-        .confirmationDialog("Clear reading history?", isPresented: $confirming, titleVisibility: .visible) {
-            Button("Clear reading history", role: .destructive) {
+        .alert("Clear reading history?", isPresented: $confirming) {
+            Button("Clear", role: .destructive) {
                 ReadingState.clearHistory(in: context)
                 cleared = true
             }
+            Button("Cancel", role: .cancel) {}
         } message: {
             Text("Your saved items stay. This can't be undone.")
         }

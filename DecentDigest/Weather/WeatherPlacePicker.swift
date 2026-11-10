@@ -53,7 +53,7 @@ struct WeatherPlacePicker: View {
             }
             .padding(.top, ruled ? 0 : 8)
 
-            SearchBox(placeholder: "Search for a city", text: $text, isFocused: $searchFocused) {
+            SearchBox(placeholder: "Search for a city", text: $text, isFocused: $searchFocused, submitLabel: .search) {
                 lookUp(text)
             }
             .onChange(of: text) { _, typed in

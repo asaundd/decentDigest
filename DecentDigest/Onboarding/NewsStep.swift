@@ -11,7 +11,6 @@ struct NewsStep: View {
 
     @Environment(\.modelContext) private var context
     @Query private var sources: [Source]
-    @State private var confirmsSkip = false
 
     private var followed: [Source] {
         sources.filter { $0.kind == SourceKind.news.rawValue && !$0.isMuted }
@@ -23,26 +22,23 @@ struct NewsStep: View {
             title: "News",
             intro: "Decent digest reads RSS feeds, which most news sites and blogs publish. Open a topic to pick sites, or add a site you follow.",
             canContinue: !followed.isEmpty,
+            skipQuestion: followed.isEmpty ? nil : SkipQuestion(
+                title: "Skip News?",
+                message: followed.count == 1
+                    ? "The site you picked will be unfollowed. You can add News later in Settings."
+                    : "The \(followed.count) sites you picked will be unfollowed. You can add News later in Settings.",
+                confirm: "Skip and unfollow",
+                undo: {
+                    for source in followed {
+                        Following.unfollow(source.feedURL, kind: .news, in: context)
+                    }
+                }
+            ),
             back: back,
-            skip: { if followed.isEmpty { skip() } else { confirmsSkip = true } },
+            skip: skip,
             next: next
         ) {
             NewsPicker()
-        }
-        .confirmationDialog(
-            followed.count == 1 ? "Skip News and unfollow the site you picked?" : "Skip News and unfollow the \(followed.count) sites you picked?",
-            isPresented: $confirmsSkip,
-            titleVisibility: .visible
-        ) {
-            Button("Skip and unfollow", role: .destructive) {
-                for source in followed {
-                    Following.unfollow(source.feedURL, kind: .news, in: context)
-                }
-                skip()
-            }
-            Button("Keep them", role: .cancel) {}
-        } message: {
-            Text("You can add News later in Settings.")
         }
     }
 }
@@ -85,7 +81,7 @@ struct NewsPicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SearchBox(placeholder: "Search, or paste a site or feed address", text: $text, isFocused: $searchFocused, keyboard: .webSearch) {
+            SearchBox(placeholder: "Search, or paste a site or feed address", text: $text, isFocused: $searchFocused, keyboard: .webSearch, submitLabel: .search) {
                 if FeedFinder.looksLikeAddress(query) { lookUp() }
             }
             .onChange(of: text) { _, _ in
@@ -158,15 +154,20 @@ struct NewsPicker: View {
         Button {
             if isOpen { openTopics.remove(category.id) } else { openTopics.insert(category.id) }
         } label: {
-            ChoiceRow(
-                title: category.name,
-                subtitle: isOpen ? nil : feeds.prefix(3).map(\.title).joined(separator: ", "),
-                emphasized: followedCount > 0 && !inSettings
-            ) {
-                Text(followedCount > 0 ? (inSettings ? "\(followedCount) of \(feeds.count) followed" : "\(followedCount) of \(feeds.count) ✓") : "\(feeds.count) sites")
-                    .font(.subheadline.weight(followedCount > 0 ? .semibold : .regular))
-                    .foregroundStyle(followedCount > 0 ? Theme.ink : Theme.secondary)
-                    .fixedSize()
+            // A heading that opens, unlike a site or show row: semibold, with a › that turns down
+            // when open.
+            ChoiceRow(title: category.name, subtitle: nil, emphasized: true) {
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    if followedCount > 0 {
+                        Text(inSettings ? "\(followedCount) of \(feeds.count) followed" : "\(followedCount) of \(feeds.count) ✓")
+                            .font(.subheadline.weight(.semibold))
+                            .fixedSize()
+                    }
+                    Text("›")
+                        .foregroundStyle(Theme.secondary)
+                        .rotationEffect(.degrees(isOpen ? 90 : 0))
+                        .accessibilityHidden(true)
+                }
             }
             .contentShape(Rectangle())
         }
@@ -182,16 +183,9 @@ struct NewsPicker: View {
                 }
                 HStack(spacing: 6) {
                     if feeds.count > shown.count {
-                        Button {
+                        TextLink("Show \(feeds.count - shown.count) more") {
                             fullTopics.insert(category.id)
-                        } label: {
-                            Text("\(feeds.count - shown.count) more")
-                                .font(.subheadline)
-                                .foregroundStyle(Theme.secondary)
-                                .padding(.vertical, 6)
-                                .contentShape(Rectangle())
                         }
-                        .buttonStyle(StillButtonStyle())
                         .accessibilityHint("Shows the rest of \(category.name)")
                         Text("·")
                             .foregroundStyle(Theme.secondary)
@@ -211,7 +205,8 @@ struct NewsPicker: View {
                     }
                     Spacer(minLength: 0)
                 }
-                .padding(.bottom, 6)
+                .padding(.leading, DashColumn.width)
+                .padding(.bottom, 8)
             }
         }
     }

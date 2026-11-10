@@ -11,7 +11,6 @@ struct PodcastsStep: View {
 
     @Environment(\.modelContext) private var context
     @Query private var sources: [Source]
-    @State private var confirmsSkip = false
 
     private var followed: [Source] {
         sources.filter { $0.kind == SourceKind.podcast.rawValue && !$0.isMuted }
@@ -23,26 +22,23 @@ struct PodcastsStep: View {
             title: "Podcasts",
             intro: "Select the podcasts you follow. New episodes and their descriptions will show in your digest and open in the Apple Podcasts app.",
             canContinue: !followed.isEmpty,
+            skipQuestion: followed.isEmpty ? nil : SkipQuestion(
+                title: "Skip Podcasts?",
+                message: followed.count == 1
+                    ? "The show you picked will be unfollowed. You can add Podcasts later in Settings."
+                    : "The \(followed.count) shows you picked will be unfollowed. You can add Podcasts later in Settings.",
+                confirm: "Skip and unfollow",
+                undo: {
+                    for source in followed {
+                        Following.unfollow(source.feedURL, kind: .podcast, in: context)
+                    }
+                }
+            ),
             back: back,
-            skip: { if followed.isEmpty { skip() } else { confirmsSkip = true } },
+            skip: skip,
             next: next
         ) {
             PodcastPicker()
-        }
-        .confirmationDialog(
-            followed.count == 1 ? "Skip Podcasts and unfollow the show you picked?" : "Skip Podcasts and unfollow the \(followed.count) shows you picked?",
-            isPresented: $confirmsSkip,
-            titleVisibility: .visible
-        ) {
-            Button("Skip and unfollow", role: .destructive) {
-                for source in followed {
-                    Following.unfollow(source.feedURL, kind: .podcast, in: context)
-                }
-                skip()
-            }
-            Button("Keep them", role: .cancel) {}
-        } message: {
-            Text("You can add Podcasts later in Settings.")
         }
     }
 }

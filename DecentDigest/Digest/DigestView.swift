@@ -194,23 +194,42 @@ struct DigestView: View {
         }
     }
 
-    /// The end of the page: the small logo and name, like the foot of Settings, then the weather credit.
+    /// The end of the page, on one line: the small logo and name, like the foot of Settings, then the
+    /// weather credit. On a narrow screen or at large text sizes the credit drops to a second line.
     private var footer: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .center, spacing: 8) {
-                LogoMark(color: Theme.secondary)
-                    .frame(width: 22)
-                    .accessibilityHidden(true)
-                Text("Decent digest")
-                    .font(Theme.wordmarkFont)
-                    .foregroundStyle(Theme.secondary)
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .center, spacing: 16) {
+                appName
+                weatherCredit
+                Spacer(minLength: 0)
             }
-            // WeatherKit asks for the Apple Weather mark and a link to its legal page.
-            if let credit = weather.credit, weather.report != nil, !weather.isSample, preferences.isShown(.weather) {
-                WeatherCreditLine(credit: credit)
+            VStack(alignment: .leading, spacing: 12) {
+                appName
+                weatherCredit
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var appName: some View {
+        HStack(alignment: .center, spacing: 8) {
+            LogoMark(color: Theme.secondary)
+                .frame(width: 22)
+                .accessibilityHidden(true)
+            Text("Decent digest")
+                .font(Theme.wordmarkFont)
+                .foregroundStyle(Theme.secondary)
+                .fixedSize()
+        }
+    }
+
+    /// WeatherKit asks for the Apple Weather mark and a link to its legal page.
+    @ViewBuilder
+    private var weatherCredit: some View {
+        if let credit = weather.credit, weather.report != nil, !weather.isSample, preferences.isShown(.weather) {
+            WeatherCreditLine(credit: credit)
+                .fixedSize()
+        }
     }
 }
 

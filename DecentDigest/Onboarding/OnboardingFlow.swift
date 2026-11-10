@@ -110,7 +110,7 @@ struct WelcomePage: View {
                 SectionRule()
                 VStack(alignment: .leading, spacing: 8) {
                     DashLine("No account, no ads, and no tracking.")
-                    DashLine("What you follow, save and read stays on your device and in your own iCloud. It's never shared with developers.")
+                    DashLine("What you follow, save, and read stays on your device and in your own iCloud. It's never shared with developers.")
                     DashLine("Each step is optional and can be changed later.")
                 }
             }
@@ -143,6 +143,12 @@ struct WeatherStep: View {
             intro: "Show the forecast for where you are, or for a city you choose.",
             note: WeatherCopy.locationNote,
             canContinue: weather.hasPlaceSource,
+            skipQuestion: weather.hasPlaceSource ? SkipQuestion(
+                title: "Skip Weather?",
+                message: "The weather won't show on the digest. You can turn it on later in Settings.",
+                confirm: "Skip",
+                destructive: false
+            ) : nil,
             back: back,
             skip: skip,
             next: next

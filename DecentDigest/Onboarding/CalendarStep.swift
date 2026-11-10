@@ -17,6 +17,12 @@ struct CalendarStep: View {
             intro: "Show your upcoming events and to-dos from the Apple Calendar and Reminders apps, if you use them.",
             note: "Your events and to-dos stay in Calendar and Reminders and are never copied or shared.",
             canContinue: agenda.calendarAccess == .granted || agenda.remindersAccess == .granted,
+            skipQuestion: agenda.calendarAccess == .granted || agenda.remindersAccess == .granted ? SkipQuestion(
+                title: "Skip Calendar and To do?",
+                message: "Your events and to-dos won't show on the digest. You can turn them on later in Settings.",
+                confirm: "Skip",
+                destructive: false
+            ) : nil,
             back: back,
             skip: skip,
             next: next
