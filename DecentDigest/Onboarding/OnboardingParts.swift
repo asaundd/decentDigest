@@ -84,13 +84,14 @@ extension View {
     }
 }
 
-/// "‹ Back" at the top left of a setup step.
+/// "‹ Back" at the top left of a setup step, or "‹ Settings" on a Settings page.
 struct BackLink: View {
+    var title = "Back"
     var action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Text("‹ Back")
+            Text("‹ \(title)")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(Theme.accent)
                 .padding(.vertical, 8)
@@ -98,7 +99,7 @@ struct BackLink: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.borderless)
-        .accessibilityLabel("Back")
+        .accessibilityLabel(title == "Back" ? "Back" : "Back to \(title)")
     }
 }
 
@@ -132,12 +133,15 @@ struct PrimaryButton: View {
 struct ChoiceRow<Trailing: View>: View {
     var title: String
     var subtitle: String?
+    /// Semibold, for a site or show being followed in setup.
+    var emphasized = false
     @ViewBuilder var trailing: Trailing
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
+                    .fontWeight(emphasized ? .semibold : .regular)
                 if let subtitle {
                     Text(subtitle)
                         .font(.subheadline)
@@ -165,31 +169,49 @@ struct DoneNote: View {
     }
 }
 
-/// Follow, which becomes ✓ Following; a tap on ✓ Following stops following.
+/// Follow (slate), which becomes Unfollow (gray, faint underline): the link says what a tap does.
 struct FollowLink: View {
     var title: String
     var isFollowing: Bool
     var toggle: () -> Void
 
     var body: some View {
-        Group {
-            if isFollowing {
-                Button(action: toggle) {
-                    Text("✓ Following")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Theme.ink)
-                        .fixedSize()
-                        .padding(.vertical, 4)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.borderless)
-                .accessibilityLabel("Following \(title)")
-                .accessibilityHint("Stops following")
-            } else {
-                TextLink("Follow", action: toggle)
-                    .accessibilityLabel("Follow \(title)")
-            }
+        if isFollowing {
+            QuietLink("Unfollow", action: toggle)
+                .accessibilityLabel("Unfollow \(title)")
+        } else {
+            TextLink("Follow", action: toggle)
+                .accessibilityLabel("Follow \(title)")
         }
+    }
+}
+
+/// A link that undoes a choice (Unfollow, Hide): gray, with a faint underline a little below the text.
+struct QuietLink: View {
+    var title: String
+    var action: () -> Void
+
+    init(_ title: String, action: @escaping () -> Void) {
+        self.title = title
+        self.action = action
+    }
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(Theme.actionFont)
+                .foregroundStyle(Theme.secondary)
+                .fixedSize()
+                .overlay(alignment: .bottom) {
+                    Rectangle()
+                        .fill(Theme.faintUnderline)
+                        .frame(height: 1)
+                        .offset(y: 3)
+                }
+                .padding(.vertical, 4)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.borderless)
     }
 }
 

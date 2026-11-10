@@ -25,7 +25,7 @@ struct CalendarStep: View {
                 AppAccessRow(
                     appName: "Calendar",
                     waiting: "Events from your calendars",
-                    allowed: "Untick any you don't want to see.",
+                    allowed: "Hide any you don't want to see.",
                     access: agenda.calendarAccess,
                     request: { await agenda.requestCalendarAccess() }
                 )
@@ -37,7 +37,7 @@ struct CalendarStep: View {
                 AppAccessRow(
                     appName: "Reminders",
                     waiting: "To-dos from your lists",
-                    allowed: "Untick any lists you don't want to see.",
+                    allowed: "Hide any lists you don't want to see.",
                     access: agenda.remindersAccess,
                     request: { await agenda.requestRemindersAccess() }
                 )
@@ -91,50 +91,73 @@ struct AppAccessRow: View {
     }
 }
 
-/// Calendars or Reminders lists, all ticked to start. A tap leaves one off the page: it gets a dash,
-/// goes gray and is struck through. Used in setup and in Settings.
+/// Calendars or Reminders lists, all shown to start. Each has a link that says what a tap does:
+/// Hide, or Show once hidden, when the name turns gray and it stays off the digest. Used in setup and,
+/// grouped by account, in Settings.
 struct AgendaListPicker: View {
     var lists: [AgendaList]
     var excluded: Set<String>
     /// "calendar" or "list", for VoiceOver.
     var noun: String
+    /// Groups lists under their account ("iCloud", "Google") instead of naming it on each row.
+    var grouped = false
     var setIncluded: (String, Bool) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            ForEach(lists) { list in
-                let included = !excluded.contains(list.id)
-                Button {
-                    setIncluded(list.id, !included)
-                } label: {
-                    HStack(alignment: .firstTextBaseline, spacing: 0) {
-                        Text(included ? "✓" : "–")
-                            .foregroundStyle(included ? Theme.ink : Theme.secondary)
-                            .frame(width: DashColumn.width + 4, alignment: .leading)
-                        Text(list.title)
-                            .strikethrough(!included, color: Theme.secondary)
-                            .foregroundStyle(included ? Theme.ink : Theme.secondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        if let note = list.note {
-                            Text(note)
-                                .font(.subheadline)
-                                .foregroundStyle(Theme.secondary)
-                                .padding(.leading, 8)
-                        }
+            if grouped {
+                ForEach(groups, id: \.name) { group in
+                    ListHeading(group.name)
+                    ForEach(group.lists) { list in
+                        row(list, note: nil)
                     }
-                    .padding(.vertical, 6)
-                    .contentShape(Rectangle())
                 }
-                .buttonStyle(StillButtonStyle())
-                .animation(nil, value: included)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel(list.note.map { "\(list.title), \($0)" } ?? list.title)
-                .accessibilityValue(included ? "Shown" : "Left out")
-                .accessibilityHint(included ? "Leaves this \(noun) off your digest" : "Puts this \(noun) back on your digest")
-                .accessibilityAddTraits(.isButton)
+            } else {
+                ForEach(lists) { list in
+                    row(list, note: list.note)
+                }
             }
         }
-        .padding(.leading, 2)
         .padding(.bottom, 4)
+    }
+
+    private var groups: [(name: String, lists: [AgendaList])] {
+        var order: [String] = []
+        var byName: [String: [AgendaList]] = [:]
+        for list in lists {
+            let name = list.note ?? "Other"
+            if byName[name] == nil { order.append(name) }
+            byName[name, default: []].append(list)
+        }
+        return order.map { ($0, byName[$0] ?? []) }
+    }
+
+    private func row(_ list: AgendaList, note: String?) -> some View {
+        let included = !excluded.contains(list.id)
+        return HStack(alignment: .firstTextBaseline, spacing: 12) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(list.title)
+                    .foregroundStyle(included ? Theme.ink : Theme.secondary)
+                if let note {
+                    Text(note)
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.secondary)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Group {
+                if included {
+                    QuietLink("Hide") { setIncluded(list.id, false) }
+                        .accessibilityLabel("Hide \(list.title)")
+                        .accessibilityHint("Leaves this \(noun) off your digest")
+                } else {
+                    TextLink("Show") { setIncluded(list.id, true) }
+                        .accessibilityLabel("Show \(list.title)")
+                        .accessibilityHint("Puts this \(noun) back on your digest")
+                }
+            }
+            .animation(nil, value: included)
+        }
+        .padding(.vertical, 4)
     }
 }

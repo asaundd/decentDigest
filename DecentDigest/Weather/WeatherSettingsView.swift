@@ -7,6 +7,8 @@ import SwiftUI
 struct WeatherSettingsView: View {
     var model: WeatherModel
     var preferences: DigestPreferences
+    /// "Settings" when opened from Settings: ‹ Settings at the top instead of Done.
+    var backTitle: String? = nil
 
     @Environment(\.dismiss) private var dismiss
 
@@ -15,12 +17,18 @@ struct WeatherSettingsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
+                if let backTitle {
+                    BackLink(title: backTitle) { dismiss() }
+                        .padding(.bottom, 12)
+                }
                 HStack(alignment: .firstTextBaseline) {
                     Text("Weather")
                         .font(Theme.dateFont)
                         .accessibilityAddTraits(.isHeader)
                     Spacer()
-                    TextLink("Done") { dismiss() }
+                    if backTitle == nil {
+                        TextLink("Done") { dismiss() }
+                    }
                 }
                 Text("Show the forecast for where you are, or for a city you choose.")
                     .foregroundStyle(Theme.secondary)
@@ -29,11 +37,10 @@ struct WeatherSettingsView: View {
 
                 PlainRule(spacing: Self.gap)
 
-                Toggle("Show weather on the digest", isOn: Binding(
+                ShowSwitch(label: "Show weather on the digest", isOn: Binding(
                     get: { preferences.isShown(.weather) },
                     set: { preferences.setShown($0, .weather) }
                 ))
-                .tint(Theme.secondary)
 
                 if preferences.isShown(.weather) {
                     PlainRule(spacing: Self.gap)
@@ -44,8 +51,11 @@ struct WeatherSettingsView: View {
                         .foregroundStyle(Theme.secondary)
                 }
             }
-            .padding(Theme.margin)
+            .padding(.horizontal, Theme.margin)
+            .padding(.vertical, backTitle == nil ? Theme.margin : 0)
+            .padding(.bottom, backTitle == nil ? 0 : Theme.margin)
         }
+        .toolbar(.hidden, for: .navigationBar)
         .scrollDismissesKeyboard(.interactively)
         .foregroundStyle(Theme.ink)
         .tint(Theme.accent)

@@ -29,6 +29,8 @@ struct PodcastsStep: View {
 /// Follow shows found with Apple's podcast search or picked from the suggestions. Only the typed
 /// words are sent to Apple. Used in setup and in Settings.
 struct PodcastPicker: View {
+    /// Settings lists every show you follow first, then the suggestions you don't.
+    var inSettings = false
     static let suggested = (try? FeedLibrary.bundled())?.suggestedPodcasts() ?? []
 
     @Environment(\.modelContext) private var context
@@ -70,9 +72,10 @@ struct PodcastPicker: View {
                 .padding(.top, 6)
             }
 
-            // Shows followed from a search, so they can be unfollowed here too.
+            // In setup, shows followed from a search, so they can be unfollowed here too.
+            // In Settings, every show followed.
             let extra = followed.filter { source in
-                !Self.suggested.contains { Following.key(for: $0.feedUrl) == Following.key(for: source.feedURL) }
+                inSettings || !Self.suggested.contains { Following.key(for: $0.feedUrl) == Following.key(for: source.feedURL) }
             }
             if !extra.isEmpty && query.isEmpty {
                 ListHeading("Following")
@@ -81,8 +84,13 @@ struct PodcastPicker: View {
                 }
             }
 
-            ListHeading("Suggested")
-            ForEach(Self.suggested) { show in
+            let suggestions = inSettings
+                ? Self.suggested.filter { !Following.isFollowing($0.feedUrl, in: followed) }
+                : Self.suggested
+            if !suggestions.isEmpty {
+                ListHeading("Suggested")
+            }
+            ForEach(suggestions) { show in
                 row(title: show.title, subtitle: show.description, feed: .init(kind: .podcast, feedURL: show.feedUrl, title: show.title, category: show.category, appleID: show.appleId))
             }
         }
@@ -90,7 +98,7 @@ struct PodcastPicker: View {
 
     private func row(title: String, subtitle: String?, feed: Following.Feed) -> some View {
         let following = Following.isFollowing(feed.feedURL, in: followed)
-        return ChoiceRow(title: title, subtitle: subtitle) {
+        return ChoiceRow(title: title, subtitle: subtitle, emphasized: following && !inSettings) {
             FollowLink(title: title, isFollowing: following) {
                 if following {
                     Following.unfollow(feed.feedURL, kind: .podcast, in: context)

@@ -21,8 +21,11 @@ struct DigestView: View {
     @Query(sort: \SavedItem.savedAt, order: .reverse) private var saved: [SavedItem]
     @State private var panel: PanelRequest?
     @State private var showsWeatherSettings = false
-    /// Setup opened again from the logo button. (Until Settings exists, it is how sections come back.)
+    @State private var showsSettings = false
+    /// Setup replayed from Show welcome again in Settings.
     @State private var showsSetup = false
+    /// Set when Show welcome again closes Settings, so setup opens once Settings has gone.
+    @State private var setupAfterSettings = false
     /// True while feeds are being checked, so News can say so.
     @State private var isRefreshing = false
     /// Where the visible list ends on screen.
@@ -64,12 +67,23 @@ struct DigestView: View {
         }
         // Settings: the round logo button, pinned at the top right while the page scrolls under it.
         .overlay(alignment: .topTrailing) {
-            SettingsButton { showsSetup = true }
+            SettingsButton { showsSettings = true }
                 .padding(.trailing, 16)
                 .padding(.top, 4)
         }
         .blur(radius: panel == nil ? 0 : 2)
         .overlay { ArticlePanelHost(panel: $panel) }
+        .sheet(isPresented: $showsSettings, onDismiss: {
+            if setupAfterSettings {
+                setupAfterSettings = false
+                showsSetup = true
+            }
+        }) {
+            SettingsView(agenda: agenda, weather: weather, preferences: preferences) {
+                setupAfterSettings = true
+                showsSettings = false
+            }
+        }
         .fullScreenCover(isPresented: setupBinding) {
             OnboardingFlow(agenda: agenda, weather: weather, preferences: preferences) {
                 showsSetup = false
@@ -120,7 +134,7 @@ struct DigestView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// Setup shows on first launch, and again when the logo button is tapped.
+    /// Setup shows on first launch, and again from Show welcome again in Settings.
     private var setupBinding: Binding<Bool> {
         Binding(
             get: { !preferences.hasFinishedSetup || showsSetup },

@@ -110,7 +110,7 @@ struct WelcomePage: View {
                 SectionRule()
                 VStack(alignment: .leading, spacing: 8) {
                     DashLine("No account, no ads, and no tracking.")
-                    DashLine("Everything stays on your device and in your own iCloud.")
+                    DashLine("What you follow, save and read stays on your device and in your own iCloud. Nothing is sent to us.")
                     DashLine("Each step is optional and can be changed later.")
                 }
             }
@@ -191,6 +191,11 @@ struct ReadyPage: View {
                     DashLine("In News and Podcasts, swipe right if relevant or left if not to remove it from the list. To keep it for later, save it with the bookmark.")
                     DashLine("Any news or podcast item you don't get to clears after a week to keep the list fresh.")
                 }
+                Text("What you mark is kept privately, on your device and in your iCloud. A later update will use it to put the items you care about first.")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 20)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, Theme.margin)

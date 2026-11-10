@@ -27,8 +27,11 @@ struct NewsStep: View {
 }
 
 /// Follow sites by topic, by name, or by pasting an address. Every site has Follow, which becomes
-/// ✓ Following. Used in setup and in Settings.
+/// Unfollow. Used in setup and in Settings, where what you follow comes first.
 struct NewsPicker: View {
+    /// Settings lists what you follow above the topics.
+    var inSettings = false
+
     static let library = try? FeedLibrary.bundled()
     /// Sites shown under an open topic before "N more".
     static let topicPreview = 3
@@ -42,6 +45,7 @@ struct NewsPicker: View {
     @State private var notFound = false
     @State private var openTopics: Set<String> = []
     @State private var fullTopics: Set<String> = []
+    @State private var showsAllFollowed = false
     @FocusState private var searchFocused: Bool
 
     private var followed: [Source] {
@@ -61,20 +65,44 @@ struct NewsPicker: View {
             }
 
             if query.isEmpty {
+                if inSettings && !followed.isEmpty {
+                    followingList(limit: showsAllFollowed ? nil : 4)
+                }
                 topics
             } else {
                 results
                 if !followed.isEmpty {
-                    ListHeading("Following")
-                    ForEach(followed) { source in
-                        ChoiceRow(title: source.title, subtitle: categoryName(source.category) ?? "Added by you") {
-                            FollowLink(title: source.title, isFollowing: true) {
-                                Following.unfollow(source.feedURL, kind: .news, in: context)
-                            }
-                        }
-                    }
+                    followingList(limit: nil)
                 }
             }
+        }
+    }
+
+    /// What the reader follows, each with Unfollow. In Settings, the first 4, then "N more · Show all".
+    @ViewBuilder
+    private func followingList(limit: Int?) -> some View {
+        let shown = limit.map { Array(followed.prefix($0)) } ?? followed
+        ListHeading("Following")
+        ForEach(shown) { source in
+            ChoiceRow(title: source.title, subtitle: categoryName(source.category) ?? "Added by you", emphasized: !inSettings) {
+                FollowLink(title: source.title, isFollowing: true) {
+                    Following.unfollow(source.feedURL, kind: .news, in: context)
+                }
+            }
+        }
+        if inSettings && query.isEmpty && followed.count > 4 {
+            HStack(spacing: 6) {
+                if shown.count < followed.count {
+                    Text("\(followed.count - shown.count) more")
+                        .foregroundStyle(Theme.secondary)
+                    Text("·")
+                        .foregroundStyle(Theme.secondary)
+                        .accessibilityHidden(true)
+                }
+                TextLink(showsAllFollowed ? "Show less" : "Show all") { showsAllFollowed.toggle() }
+            }
+            .font(.subheadline)
+            .padding(.top, 2)
         }
     }
 
@@ -102,7 +130,7 @@ struct NewsPicker: View {
                 Button {
                     if isOpen { openTopics.remove(category.id) } else { openTopics.insert(category.id) }
                 } label: {
-                    Text("\(followedCount) of \(feeds.count) ✓")
+                    Text(inSettings ? "\(followedCount) of \(feeds.count) followed" : "\(followedCount) of \(feeds.count) ✓")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Theme.ink)
                         .fixedSize()
@@ -163,7 +191,7 @@ struct NewsPicker: View {
             }
             if isAddress {
                 if let found {
-                    ChoiceRow(title: found.title, subtitle: [Self.host(found.siteURL ?? found.feedURL), "Feed found"].compactMap { $0 }.joined(separator: " · ")) {
+                    ChoiceRow(title: found.title, subtitle: [Self.host(found.siteURL ?? found.feedURL), "Feed found"].compactMap { $0 }.joined(separator: " · "), emphasized: !inSettings && isFollowing(found.feedURL)) {
                         FollowLink(title: found.title, isFollowing: isFollowing(found.feedURL)) {
                             if isFollowing(found.feedURL) {
                                 Following.unfollow(found.feedURL, kind: .news, in: context)
@@ -206,7 +234,7 @@ struct NewsPicker: View {
     // MARK: Rows
 
     private func libraryRow(_ feed: FeedLibrary.Feed, subtitle: String?) -> some View {
-        ChoiceRow(title: feed.title, subtitle: subtitle) {
+        ChoiceRow(title: feed.title, subtitle: subtitle, emphasized: !inSettings && isFollowing(feed.feedUrl)) {
             FollowLink(title: feed.title, isFollowing: isFollowing(feed.feedUrl)) {
                 if isFollowing(feed.feedUrl) {
                     Following.unfollow(feed.feedUrl, kind: .news, in: context)

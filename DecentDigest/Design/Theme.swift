@@ -33,6 +33,8 @@ enum Theme {
     /// A button that can't be used yet: a fill one shade darker than the page, with gray text.
     static let buttonDimmedFill = Color(light: 0xECEBE6, dark: 0x232826)
     static let buttonDimmedText = Color(light: 0xA7ABA9, dark: 0x6F7573)
+    /// The faint underline under links that undo a choice (Unfollow, Hide).
+    static let faintUnderline = Color(light: 0xC9CBC7, dark: 0x4A504D)
     /// The filled search boxes in setup.
     static let fieldFill = ribbonButtonFill
 
