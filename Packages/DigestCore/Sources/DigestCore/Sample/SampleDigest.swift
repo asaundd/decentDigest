@@ -12,18 +12,6 @@ public enum SampleDigest {
             calendar.date(byAdding: .day, value: offset, to: today) ?? today
         }
 
-        let weather = WeatherSummary(
-            place: "San Francisco",
-            temperature: 48,
-            condition: "Clear",
-            today: WeatherDay(date: today, high: 58, low: 41, condition: "Sunny"),
-            restOfWeek: [
-                WeatherDay(date: day(1), high: 61, low: 45, condition: "Partly cloudy"),
-                WeatherDay(date: day(2), high: 55, low: 43, condition: "Rain in the afternoon"),
-                WeatherDay(date: day(3), high: 52, low: 39, condition: "Cloudy"),
-            ]
-        )
-
         let events = [
             CalendarEntry(id: "e1", title: "Coffee with Priya", start: at(9, 30), end: at(10, 15), calendarName: "Personal", location: "Corner café"),
             CalendarEntry(id: "e2", title: "Portfolio review with Sam", start: at(13), end: at(14), calendarName: "Personal", attendees: ["Sam Rivera"], notes: "Bring the case study draft.\nhttps://zoom.us/j/123456"),
@@ -57,10 +45,40 @@ public enum SampleDigest {
         ]
 
         let episodes = [
-            FeedEntry(id: "p1", title: "The future of primary care", sourceName: "Out-Of-Pocket", published: at(4)),
-            FeedEntry(id: "p2", title: "Building calm software", sourceName: "Design Details", published: at(21, dayOffset: -1), summary: "Show notes: a conversation about interfaces that respect attention."),
+            FeedEntry(id: "p1", title: "The AI hype cycle, one year later", sourceName: "Hard Fork", published: at(4), summary: "A year after the peak, Kevin and Casey look at which AI products people still use every day, which ones quietly vanished, and what the next twelve months might bring for everyone else."),
+            FeedEntry(id: "p2", title: "How great product teams run planning", sourceName: "Lenny's Podcast", published: at(21, dayOffset: -1), summary: "A conversation about planning that respects the team's attention."),
         ]
 
-        return Digest(date: now, weather: weather, events: events, todos: todos, news: news, episodes: episodes)
+        return Digest(date: now, weather: weather(now: now, calendar: calendar), weatherPlace: weatherPlace, events: events, todos: todos, news: news, episodes: episodes)
+    }
+
+    /// Where the sample weather is for.
+    public static let weatherPlace = WeatherPlace(name: "Brooklyn, NY", latitude: 40.68, longitude: -73.94, isCurrentLocation: true)
+
+    /// A fixed forecast: rain this afternoon, then colder with rain from the day after tomorrow.
+    public static func weather(now: Date = .now, calendar: Calendar = .current) -> WeatherReport {
+        let today = calendar.startOfDay(for: now)
+        func day(_ offset: Int) -> Date {
+            calendar.date(byAdding: .day, value: offset, to: today) ?? today
+        }
+        let hours = (0..<24).map { hour in
+            WeatherHour(date: calendar.date(byAdding: .hour, value: hour, to: today) ?? today, sky: hour >= 16 ? .rain : .cloudy)
+        }
+        return WeatherReport(
+            fetchedAt: now,
+            temperature: 48,
+            condition: "Cloudy",
+            sky: .cloudy,
+            today: WeatherDay(date: today, high: 61, low: 46, condition: "Cloudy", sky: .cloudy),
+            hours: hours,
+            days: [
+                WeatherDay(date: day(1), high: 57, low: 44, condition: "Cloudy", sky: .cloudy),
+                WeatherDay(date: day(2), high: 49, low: 38, condition: "Rain", sky: .rain),
+                WeatherDay(date: day(3), high: 48, low: 36, condition: "Cloudy", sky: .cloudy),
+                WeatherDay(date: day(4), high: 47, low: 34, condition: "Clear", sky: .clear),
+                WeatherDay(date: day(5), high: 50, low: 37, condition: "Clear", sky: .clear),
+                WeatherDay(date: day(6), high: 52, low: 40, condition: "Showers", sky: .rain),
+            ]
+        )
     }
 }

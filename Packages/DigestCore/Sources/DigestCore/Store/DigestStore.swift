@@ -25,7 +25,7 @@ public enum DigestStore {
         return try ModelContainer(for: Schema(syncedModels + localModels), configurations: [synced, local])
     }
 
-    /// An in-memory container filled with sample headlines, for previews.
+    /// An in-memory container filled with sample headlines and episodes, for previews.
     @MainActor
     public static func previewContainer(now: Date = .now) -> ModelContainer {
         do {
@@ -33,16 +33,26 @@ public enum DigestStore {
             let context = container.mainContext
             let sample = SampleDigest.make(now: now)
             var sources: [String: Source] = [:]
-            for entry in sample.news {
+            let entries = sample.news.map { ($0, SourceKind.news) } + sample.episodes.map { ($0, SourceKind.podcast) }
+            for (entry, kind) in entries {
                 let source: Source
                 if let existing = sources[entry.sourceName] {
                     source = existing
                 } else {
-                    source = Source(feedURL: "https://example.com/\(sources.count)/feed", title: entry.sourceName)
+                    source = Source(kind: kind, feedURL: "https://example.com/\(sources.count)/feed", title: entry.sourceName)
                     context.insert(source)
                     sources[entry.sourceName] = source
                 }
-                context.insert(FeedItem(itemID: entry.id, sourceID: source.id, title: entry.title, link: "https://example.com/\(entry.id)", summary: entry.summary, author: nil, publishedAt: entry.published))
+                context.insert(FeedItem(
+                    itemID: entry.id,
+                    sourceID: source.id,
+                    title: entry.title,
+                    link: "https://example.com/\(entry.id)",
+                    summary: entry.summary,
+                    author: nil,
+                    publishedAt: entry.published,
+                    durationSeconds: kind == .podcast ? 58 * 60 : nil
+                ))
             }
             if let last = sample.news.last, let source = sources[last.sourceName] {
                 context.insert(ItemState(itemID: last.id, sourceID: source.id, status: .read, firstShownAt: now))

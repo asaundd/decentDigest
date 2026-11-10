@@ -22,7 +22,9 @@ Decent Digest is a window onto the apps you already use. It reads from Calendar,
 2. Create `Config/Local.xcconfig` containing one line, `DEVELOPMENT_TEAM = YOURTEAMID`, with your Apple developer team ID. Git ignores this file, so your team stays out of the project. If the bundle ID is taken, change it to something unique to you.
 3. Pick an iPhone simulator or a connected iPhone and press **Run** (⌘R).
 
-News comes live from a starter set of RSS feeds. Calendar and to-dos come live from Calendar and Reminders on the phone, once you allow access; checking off a to-do checks it off in Reminders. Weather and podcasts still show sample content.
+News comes live from a starter set of RSS feeds, and new episodes from a few starter podcasts. Calendar and to-dos come live from Calendar and Reminders on the device, once you allow access; checking off a to-do checks it off in Reminders. Weather comes from Apple's WeatherKit, for your location or a city you type in.
+
+WeatherKit needs a paid Apple Developer Program team. Turn on WeatherKit for your bundle ID in the developer portal (under both Capabilities and App Services), then add `CODE_SIGN_ENTITLEMENTS = Config/WeatherKit.entitlements` to `Config/Local.xcconfig`. Until then the app still runs, and debug builds show sample weather.
 
 Run the core package tests from the command line:
 

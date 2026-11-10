@@ -2,8 +2,11 @@ import DigestCore
 import SwiftData
 import SwiftUI
 
-/// Live headlines from the followed feeds. Each headline can be expanded and swiped.
-struct NewsSectionView: View {
+/// Live headlines from the followed feeds, or new episodes from the followed shows.
+/// Each row can be expanded and swiped. News and Podcasts share every rule.
+struct FeedListSection: View {
+    /// News or podcasts.
+    var kind: SourceKind = .news
     /// True while feeds are being checked.
     var isRefreshing: Bool
     /// Checks every feed now.
@@ -29,22 +32,27 @@ struct NewsSectionView: View {
 
     var body: some View {
         let eligible = eligibleEntries
-        let shown = showsAll ? eligible : Array(eligible.prefix(NewsRules.itemsShown))
+        let shown = showsAll ? eligible : Array(eligible.prefix(limit))
         let remaining = eligible.count - shown.count
 
         HStack(alignment: .firstTextBaseline) {
-            Text(DigestSection.news.title)
+            Text(isEpisodes ? DigestSection.podcasts.title : DigestSection.news.title)
                 .font(Theme.sectionTitleFont)
                 .accessibilityAddTraits(.isHeader)
             Spacer()
-            TextLink(isRefreshing ? "Checking…" : (refreshedByReader ? "Up to date" : "Refresh")) {
-                Task {
-                    await refresh()
-                    refreshedByReader = true
+            if isEpisodes {
+                TextLink("Podcasts ↗") { openURL(ApplePodcasts.app) }
+                    .accessibilityLabel("Open Podcasts")
+            } else {
+                TextLink(isRefreshing ? "Checking…" : (refreshedByReader ? "Up to date" : "Refresh")) {
+                    Task {
+                        await refresh()
+                        refreshedByReader = true
+                    }
                 }
+                .disabled(isRefreshing)
+                .accessibilityHint("Checks your feeds for new headlines")
             }
-            .disabled(isRefreshing)
-            .accessibilityHint("Checks your feeds for new headlines")
         }
         .padding(.bottom, Theme.titleToFirstItem - HeadlineRow.verticalPadding)
         .digestRow()
@@ -56,7 +64,7 @@ struct NewsSectionView: View {
                     ProgressView()
                         .controlSize(.small)
                 }
-                Text(isRefreshing ? "Checking your feeds…" : "No new headlines right now.")
+                Text(emptyText)
             }
             .foregroundStyle(Theme.secondary)
             .padding(.vertical, HeadlineRow.verticalPadding)
@@ -89,7 +97,7 @@ struct NewsSectionView: View {
             }
         }
 
-        if remaining > 0 || showsAll && eligible.count > NewsRules.itemsShown {
+        if remaining > 0 || showsAll && eligible.count > limit {
             HStack(spacing: 6) {
                 if remaining > 0 {
                     Text("\(remaining) more")
@@ -112,15 +120,29 @@ struct NewsSectionView: View {
 
     // MARK: Data
 
+    private var isEpisodes: Bool { kind == .podcast }
+
+    private var limit: Int { isEpisodes ? PodcastRules.itemsShown : NewsRules.itemsShown }
+
+    private var emptyText: String {
+        switch (isEpisodes, isRefreshing) {
+        case (false, true): "Checking your feeds…"
+        case (false, false): "No new headlines right now."
+        case (true, true): "Checking your shows…"
+        case (true, false): "No new episodes right now."
+        }
+    }
+
     private struct Entry {
         var item: FeedItem
         var sourceName: String
+        var appleID: String?
         var status: ItemStatus
     }
 
     private var eligibleEntries: [Entry] {
-        let newsSources = Dictionary(
-            sources.filter { $0.kind == SourceKind.news.rawValue && !$0.isMuted }.map { ($0.id, $0) },
+        let followed = Dictionary(
+            sources.filter { $0.kind == kind.rawValue && !$0.isMuted }.map { ($0.id, $0) },
             uniquingKeysWith: { first, _ in first }
         )
         let readings = Dictionary(
@@ -129,20 +151,35 @@ struct NewsSectionView: View {
         )
         let byID = Dictionary(items.map { ($0.itemID, $0) }, uniquingKeysWith: { first, _ in first })
         let candidates = items
-            .filter { newsSources[$0.sourceID] != nil }
+            .filter { followed[$0.sourceID] != nil }
             .map { NewsRules.Candidate(itemID: $0.itemID, publishedAt: $0.publishedAt) }
         let started = listStartedAt > 0 ? Date(timeIntervalSince1970: listStartedAt) : nil
         return NewsRules.eligible(candidates, readings: readings, listStartedAt: started, now: .now).compactMap { candidate in
             guard let item = byID[candidate.itemID] else { return nil }
             return Entry(
                 item: item,
-                sourceName: newsSources[item.sourceID]?.title ?? "",
+                sourceName: followed[item.sourceID]?.title ?? "",
+                appleID: followed[item.sourceID]?.appleID,
                 status: readings[item.itemID]?.status ?? .new
             )
         }
     }
 
     private func headline(for entry: Entry) -> Headline {
+        if isEpisodes {
+            // An episode shows only its show's name; its length waits on the card.
+            return Headline(
+                id: entry.item.itemID,
+                title: entry.item.title,
+                detail: entry.sourceName,
+                summary: entry.item.summary,
+                fullText: entry.item.fullText,
+                link: entry.item.linkURL,
+                isUnread: entry.status.isUnread,
+                isEpisode: true,
+                episodeLength: entry.item.durationSeconds.map { PodcastRules.length(seconds: $0) }
+            )
+        }
         let age = HeadlineAge.text(for: entry.item.publishedAt)
         return Headline(
             id: entry.item.itemID,
@@ -159,12 +196,21 @@ struct NewsSectionView: View {
     private func actions(for entry: Entry) -> HeadlineActions {
         let item = entry.item
         let row = self.headline(for: entry)
+        let openAction: (() -> Void)?
+        if isEpisodes {
+            openAction = { openEpisode(entry) }
+        } else if row.link != nil {
+            openAction = { open(item) }
+        } else {
+            openAction = nil
+        }
         var actions = HeadlineActions(
             save: { save(item, sourceName: entry.sourceName) },
             useful: { resolve(item, as: .useful) },
             notUseful: { resolve(item, as: .notRelevant) },
-            openInSafari: row.link == nil ? nil : { open(item) },
-            readLabel: row.readLabel
+            open: openAction,
+            readLabel: row.readLabel,
+            openLabel: isEpisodes ? "Open in Podcasts" : "Open the site"
         )
         if row.opensPanel {
             let panelActions = actions
@@ -201,10 +247,16 @@ struct NewsSectionView: View {
         }
     }
 
+    private func openEpisode(_ entry: Entry) {
+        let item = entry.item
+        ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, in: context)
+        EpisodeLink.open(showID: entry.appleID, guid: item.guid, title: item.title, fallback: item.linkURL, with: openURL)
+    }
+
     private func save(_ item: FeedItem, sourceName: String) {
         // The row is gone at once; the rows below slide up briefly to close the gap.
         withAnimation(HeadlineMotion.close) {
-            ReadingState.save(item, sourceTitle: sourceName, in: context)
+            ReadingState.save(item, sourceTitle: sourceName, kind: kind, in: context)
         }
     }
 

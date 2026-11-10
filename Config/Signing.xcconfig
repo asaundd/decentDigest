@@ -4,5 +4,12 @@
 // so choosing a team never changes the project file. Create that file with one line:
 //
 //     DEVELOPMENT_TEAM = YOURTEAMID
+//
+// WeatherKit needs a paid Apple Developer Program team. Once WeatherKit is turned on for the
+// app's identifier, add this second line to Local.xcconfig to sign with its entitlement:
+//
+//     CODE_SIGN_ENTITLEMENTS = Config/WeatherKit.entitlements
+//
+// Without it the app builds with a personal team, and debug builds show sample weather.
 
 #include? "Local.xcconfig"

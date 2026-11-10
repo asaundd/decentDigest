@@ -1,34 +1,49 @@
 import DigestCore
 import SwiftUI
 
-/// What a headline row shows and can do. Used by News and Saved news.
+/// What a headline or episode row shows and can do. Used by News, Podcasts and Saved.
 struct Headline: Identifiable {
     var id: String
     var title: String
-    /// Feed name and age, e.g. "STAT · 2 hr".
+    /// Feed name and age, e.g. "STAT · 2 hr", or a show's name.
     var detail: String
     var author: String?
     var summary: String?
     var fullText: String?
     var link: URL?
     var isUnread: Bool
+    /// True for a podcast episode: its text is show notes, and Open ↗ opens Podcasts.
+    var isEpisode = false
+    /// An episode's length, e.g. "58 min". It takes the byline's place on the card.
+    var episodeLength: String?
 
     var kind: PostKind {
         PostKind.classify(summary: summary, fullText: fullText)
     }
 
     /// The whole post is in the feed.
-    var readsHere: Bool { kind == .fullPost }
+    var readsHere: Bool { !isEpisode && kind == .fullPost }
 
-    /// Full posts and excerpts open in the panel; summaries and link-only rows go to the site.
-    var opensPanel: Bool { kind == .fullPost || kind == .excerpt }
+    /// Full posts, excerpts and long show notes open in the panel; summaries and link-only rows go to the site.
+    var opensPanel: Bool {
+        if isEpisode { return (notes?.count ?? 0) > PostKind.rowTextLimit }
+        return kind == .fullPost || kind == .excerpt
+    }
 
     /// The ribbon's label for opening the panel. It also says what the feed sent.
-    var readLabel: String { readsHere ? "Read full post" : "Read excerpt" }
+    var readLabel: String {
+        if isEpisode { return "Read notes" }
+        return readsHere ? "Read full post" : "Read excerpt"
+    }
 
-    /// Only title-only rows carry a marker: ↗ says reading it means going to the site.
+    /// Only title-only headlines carry a marker: ↗ says reading it means going to the site.
     var marker: String? {
-        kind == .titleOnly ? "↗" : nil
+        !isEpisode && kind == .titleOnly ? "↗" : nil
+    }
+
+    /// An episode's show notes: the longest text the feed sent.
+    private var notes: String? {
+        PostKind.previewText(summary: summary, fullText: fullText)
     }
 
     /// The summary for full posts, otherwise the longest text the feed sent.
@@ -41,13 +56,15 @@ struct Headline: Identifiable {
         previewText.map { PostKind.clipForRow($0) }
     }
 
-    /// What the panel shows: the full post, or the whole excerpt.
+    /// What the panel shows: the full post, the whole excerpt or all the show notes.
     var panelText: String? {
         readsHere ? fullText : previewText
     }
 
+    /// The top line of the card: "By Jane Doe", or an episode's length.
     var byline: String? {
-        author.map { "By \($0)" }
+        if isEpisode { return episodeLength }
+        return author.map { "By \($0)" }
     }
 }
 
@@ -58,12 +75,16 @@ struct HeadlineActions {
     var notUseful: () -> Void
     /// Opens the panel. When present it is the ribbon's first action.
     var readFull: (() -> Void)?
-    var openInSafari: (() -> Void)?
-    /// "Read full post" or "Read excerpt".
+    /// Open ↗: the site in the browser, or an episode in Podcasts.
+    var open: (() -> Void)?
+    /// "Read full post", "Read excerpt" or "Read notes".
     var readLabel = "Read full post"
+    /// What VoiceOver says for Open ↗.
+    var openLabel = "Open the site"
 }
 
-/// One headline: gray dash, title (semibold while unread, regular once opened), feed name and age.
+/// One headline or episode: gray dash, title (semibold while unread, regular once opened), then the
+/// feed name and age, or the show's name.
 /// Title-only rows end in ↗. A tap expands any row: under the title, a lighter card holds the byline
 /// and up to 320 characters of text over a ribbon of actions.
 struct HeadlineRow: View {
@@ -249,20 +270,17 @@ struct ActionRibbon: View {
     }
 }
 
-/// The text actions: read in the panel first when the post opens there, otherwise go to the site.
+/// The text actions: read in the panel first when the post opens there, then Open ↗.
 struct ActionLinks: View {
     var actions: HeadlineActions
 
     var body: some View {
         if let readFull = actions.readFull {
             TextLink(actions.readLabel, action: readFull)
-            if let openInSafari = actions.openInSafari {
-                TextLink("Open ↗", action: openInSafari)
-                    .accessibilityLabel("Open the site")
-            }
-        } else if let openInSafari = actions.openInSafari {
-            TextLink("Open ↗", action: openInSafari)
-                .accessibilityLabel("Open the site")
+        }
+        if let open = actions.open {
+            TextLink("Open ↗", action: open)
+                .accessibilityLabel(actions.openLabel)
         }
     }
 }
@@ -337,10 +355,14 @@ enum DashColumn {
 /// An action shown as a plain link: slate, semibold, underlined. No outline or fill.
 struct TextLink: View {
     var title: String
+    /// True for a link whose label changes when tapped (Show week / Show less): it skips the
+    /// pressed dimming, which otherwise fades back in on the new label.
+    var still = false
     var action: () -> Void
 
-    init(_ title: String, action: @escaping () -> Void) {
+    init(_ title: String, still: Bool = false, action: @escaping () -> Void) {
         self.title = title
+        self.still = still
         self.action = action
     }
 
@@ -354,6 +376,21 @@ struct TextLink: View {
                 .padding(.vertical, 4)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.borderless)
+        .buttonStyle(LinkButtonStyle(still: still))
+    }
+}
+
+/// The borderless look, optionally without the pressed dimming.
+private struct LinkButtonStyle: PrimitiveButtonStyle {
+    var still: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        if still {
+            Button(role: configuration.role, action: configuration.trigger) { configuration.label }
+                .buttonStyle(StillButtonStyle())
+        } else {
+            Button(role: configuration.role, action: configuration.trigger) { configuration.label }
+                .buttonStyle(.borderless)
+        }
     }
 }

@@ -14,8 +14,10 @@ public struct ParsedItem: Sendable, Hashable {
     public var fullText: String?
     public var author: String?
     public var published: Date?
+    /// A podcast episode's length, from `<itunes:duration>`.
+    public var durationSeconds: Int?
 
-    public init(guid: String? = nil, link: String? = nil, title: String, summary: String? = nil, fullText: String? = nil, author: String? = nil, published: Date? = nil) {
+    public init(guid: String? = nil, link: String? = nil, title: String, summary: String? = nil, fullText: String? = nil, author: String? = nil, published: Date? = nil, durationSeconds: Int? = nil) {
         self.guid = guid
         self.link = link
         self.title = title
@@ -23,6 +25,7 @@ public struct ParsedItem: Sendable, Hashable {
         self.fullText = fullText
         self.author = author
         self.published = published
+        self.durationSeconds = durationSeconds
     }
 
     /// The value `ItemID` hashes: the guid, then the link, then the title plus date.
@@ -147,7 +150,9 @@ public enum FeedParser {
             case "content:encoded", "content": if current.content == nil { current.content = value }
             case "pubdate", "published", "dc:date": if current.published == nil { current.published = FeedDate.parse(value) }
             case "updated": if current.updated == nil { current.updated = FeedDate.parse(value) }
-            case "author", "dc:creator": if current.author == nil, !value.isEmpty { current.author = value }
+            case "author", "dc:creator", "itunes:author": if current.author == nil, !value.isEmpty { current.author = value }
+            case "itunes:summary": if current.itunesSummary == nil, !value.isEmpty { current.itunesSummary = value }
+            case "itunes:duration": if current.duration == nil { current.duration = PodcastRules.durationSeconds(value) }
             default: break
             }
         }
@@ -162,14 +167,16 @@ public enum FeedParser {
         var author: String?
         var published: Date?
         var updated: Date?
+        var itunesSummary: String?
+        var duration: Int?
 
         func build() -> ParsedItem? {
             let cleanTitle = HTMLText.plain(title)
-            let source = summary ?? content
+            let source = summary ?? content ?? itunesSummary
             let cleanSummary = source.map { HTMLText.plain($0, limit: FeedParser.summaryLimit) }
             guard !cleanTitle.isEmpty || link != nil else { return nil }
             // The longest body the feed sends counts as the full post if it says more than the summary.
-            let bodies = [content, summary].compactMap { $0 }.map { HTMLText.paragraphs($0) }
+            let bodies = [content, summary, itunesSummary].compactMap { $0 }.map { HTMLText.paragraphs($0) }
             let longest = bodies.max { $0.count < $1.count }
             let fullText = longest.flatMap { $0.count > FeedParser.summaryLimit ? $0 : nil }
             return ParsedItem(
@@ -179,7 +186,8 @@ public enum FeedParser {
                 summary: (cleanSummary?.isEmpty ?? true) ? nil : cleanSummary,
                 fullText: fullText,
                 author: author.map { HTMLText.plain($0) },
-                published: published ?? updated
+                published: published ?? updated,
+                durationSeconds: duration
             )
         }
     }

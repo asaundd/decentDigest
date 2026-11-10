@@ -5,24 +5,41 @@ import SwiftData
 /// The one place that writes fetched feeds into SwiftData, off the main thread.
 @ModelActor
 public actor FeedStore {
-    /// Follows the default starter feeds when the reader has no sources yet.
+    /// Follows the default starter feeds when the reader has no news sources yet,
+    /// and the default shows when the reader follows no podcasts yet.
     public func addStarterSourcesIfNeeded(library: FeedLibrary) throws {
-        let existing = try modelContext.fetchCount(FetchDescriptor<Source>())
-        guard existing == 0 else { return }
-        for (index, feed) in library.defaultFeeds().enumerated() {
-            modelContext.insert(Source(
-                kind: .news,
-                feedURL: feed.feedUrl,
-                siteURL: feed.siteUrl,
-                title: feed.title,
-                category: feed.category,
-                sortOrder: index
-            ))
+        let news = SourceKind.news.rawValue
+        let podcast = SourceKind.podcast.rawValue
+        let newsCount = try modelContext.fetchCount(FetchDescriptor<Source>(predicate: #Predicate { $0.kind == news }))
+        let podcastCount = try modelContext.fetchCount(FetchDescriptor<Source>(predicate: #Predicate { $0.kind == podcast }))
+        if newsCount == 0 {
+            for (index, feed) in library.defaultFeeds().enumerated() {
+                modelContext.insert(Source(
+                    kind: .news,
+                    feedURL: feed.feedUrl,
+                    siteURL: feed.siteUrl,
+                    title: feed.title,
+                    category: feed.category,
+                    sortOrder: index
+                ))
+            }
+        }
+        if podcastCount == 0 {
+            for (index, show) in library.defaultPodcasts().enumerated() {
+                modelContext.insert(Source(
+                    kind: .podcast,
+                    feedURL: show.feedUrl,
+                    title: show.title,
+                    category: show.category,
+                    sortOrder: index,
+                    appleID: show.appleId
+                ))
+            }
         }
         try modelContext.save()
     }
 
-    /// Fetches every followed news feed that is due, stores new headlines and prunes expired ones.
+    /// Fetches every followed feed and show that is due, stores new items and prunes expired ones.
     /// - Parameter force: fetch every source now, even if it was fetched recently.
     /// - Returns: how many feeds were fetched.
     @discardableResult
@@ -75,6 +92,7 @@ public actor FeedStore {
 
     private struct Job: Sendable {
         var sourceID: String
+        var kind: SourceKind
         var feedURL: String
         var etag: String?
         var lastModified: String?
@@ -89,9 +107,8 @@ public actor FeedStore {
     }
 
     private func dueJobs(force: Bool, now: Date) throws -> [Job] {
-        let news = SourceKind.news.rawValue
         let sources = try modelContext.fetch(FetchDescriptor<Source>(
-            predicate: #Predicate { $0.kind == news && !$0.isMuted },
+            predicate: #Predicate { !$0.isMuted },
             sortBy: [SortDescriptor(\.sortOrder)]
         ))
         let states = Dictionary(try modelContext.fetch(FetchDescriptor<FetchState>()).map { ($0.sourceID, $0) }, uniquingKeysWith: { first, _ in first })
@@ -104,6 +121,7 @@ public actor FeedStore {
             let hasCutoff = state?.backfillCutoff != nil
             return Job(
                 sourceID: source.id,
+                kind: SourceKind(rawValue: source.kind) ?? .news,
                 feedURL: source.feedURL,
                 etag: hasCutoff ? state?.etag : nil,
                 lastModified: hasCutoff ? state?.lastModified : nil
@@ -138,7 +156,11 @@ public actor FeedStore {
             if let existing = state.backfillCutoff {
                 backfillCutoff = existing
             } else {
-                backfillCutoff = NewsRules.backfillCutoff(publishedDates: feed.items.map { $0.published ?? now }, now: now)
+                let dates = feed.items.map { $0.published ?? now }
+                // News starts with today's items; a new show with its newest episode from the last week.
+                backfillCutoff = job.kind == .podcast
+                    ? PodcastRules.backfillCutoff(publishedDates: dates, now: now)
+                    : NewsRules.backfillCutoff(publishedDates: dates, now: now)
                 state.backfillCutoff = backfillCutoff
                 removeUntouchedItems(sourceID: job.sourceID, before: backfillCutoff)
             }
@@ -167,6 +189,8 @@ public actor FeedStore {
                 // Fill in text an earlier version of the app didn't keep.
                 if existing.fullText == nil, let fullText = item.fullText { existing.fullText = fullText }
                 if existing.author == nil, let author = item.author { existing.author = author }
+                if existing.durationSeconds == nil, let duration = item.durationSeconds { existing.durationSeconds = duration }
+                if existing.guid == nil, let guid = item.guid { existing.guid = guid }
                 continue
             }
             let published = item.published ?? now
@@ -181,7 +205,9 @@ public actor FeedStore {
                 author: item.author,
                 // A future date (bad clock on the server) would pin an item to the top.
                 publishedAt: min(published, now),
-                fetchedAt: now
+                fetchedAt: now,
+                durationSeconds: item.durationSeconds,
+                guid: item.guid
             )
             modelContext.insert(feedItem)
             known[itemID] = feedItem
