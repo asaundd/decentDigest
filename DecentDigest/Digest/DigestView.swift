@@ -79,7 +79,7 @@ struct DigestView: View {
             }
         }
         .sheet(isPresented: $showsWeatherSettings) {
-            WeatherSettingsView(model: weather)
+            WeatherSettingsView(model: weather, preferences: preferences)
         }
         .refreshable {
             await agenda.reload()

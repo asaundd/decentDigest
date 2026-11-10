@@ -82,3 +82,16 @@ struct SectionRule: View {
             .accessibilityHidden(true)
     }
 }
+
+/// A thin 1pt rule with the given space above and below, for pages other than the digest.
+struct PlainRule: View {
+    var spacing: CGFloat
+
+    var body: some View {
+        Rectangle()
+            .fill(Theme.rule)
+            .frame(height: 1)
+            .padding(.vertical, spacing)
+            .accessibilityHidden(true)
+    }
+}

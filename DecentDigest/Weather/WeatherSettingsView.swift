@@ -1,12 +1,16 @@
 import DigestCore
 import SwiftUI
 
-/// Weather settings: where the forecast is for. Opened from the place under the week.
-/// The same place picker as the Weather step in setup, on the same paper page as the digest.
+/// Weather settings: whether the weather shows on the digest, and where the forecast is for.
+/// Opened from the place under the week. Uses the same place picker as the Weather step in setup,
+/// on the same paper page as the digest, with an even 20pt around each rule.
 struct WeatherSettingsView: View {
     var model: WeatherModel
+    var preferences: DigestPreferences
 
     @Environment(\.dismiss) private var dismiss
+
+    private static let gap: CGFloat = 20
 
     var body: some View {
         ScrollView {
@@ -18,31 +22,27 @@ struct WeatherSettingsView: View {
                     Spacer()
                     TextLink("Done") { dismiss() }
                 }
-
-                Group {
-                    if let place = model.place, model.report != nil {
-                        HStack(alignment: .firstTextBaseline, spacing: 4) {
-                            Text("Showing the weather for \(place.name)")
-                            if place.isCurrentLocation {
-                                Image(systemName: "location")
-                                    .font(.caption2)
-                                    .accessibilityLabel("Current location")
-                            }
-                        }
-                    } else {
-                        Text("Pick where the forecast is for.")
-                    }
-                }
-                .foregroundStyle(Theme.secondary)
-                .padding(.top, 8)
-
-                WeatherPlacePicker(model: model, cityNote: "Select a city instead.")
-                    .padding(.top, 20)
-
-                Text(WeatherCopy.locationNote)
-                    .font(.footnote)
+                Text("Show the forecast for where you are, or for a city you choose.")
                     .foregroundStyle(Theme.secondary)
-                    .padding(.top, 24)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 8)
+
+                PlainRule(spacing: Self.gap)
+
+                Toggle("Show weather on the digest", isOn: Binding(
+                    get: { preferences.isShown(.weather) },
+                    set: { preferences.setShown($0, .weather) }
+                ))
+                .tint(Theme.secondary)
+
+                if preferences.isShown(.weather) {
+                    PlainRule(spacing: Self.gap)
+                    WeatherPlacePicker(model: model, cityNote: "Select a city instead.", ruled: true)
+                    PlainRule(spacing: Self.gap)
+                    Text(WeatherCopy.locationNote)
+                        .font(.footnote)
+                        .foregroundStyle(Theme.secondary)
+                }
             }
             .padding(Theme.margin)
         }
@@ -59,5 +59,8 @@ enum WeatherCopy {
 }
 
 #Preview {
-    WeatherSettingsView(model: WeatherModel(provider: SampleWeatherProvider(), places: SamplePlaces()))
+    WeatherSettingsView(
+        model: WeatherModel(provider: SampleWeatherProvider(), places: SamplePlaces()),
+        preferences: DigestPreferences(defaults: UserDefaults(suiteName: "preview-weather")!)
+    )
 }

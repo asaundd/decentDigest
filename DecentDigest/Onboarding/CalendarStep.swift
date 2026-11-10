@@ -77,7 +77,7 @@ struct AppAccessRow: View {
                 TextLink("Open Settings ↗") {
                     if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
                 }
-                .accessibilityHint("Access can be turned on for Decent in the Settings app")
+                .accessibilityHint("Access can be turned on for Decent digest in the Settings app")
             }
         }
     }
@@ -86,7 +86,7 @@ struct AppAccessRow: View {
         switch access {
         case .notAsked: waiting
         case .granted: allowed
-        case .denied: "\(appName) access is off for Decent."
+        case .denied: "\(appName) access is off for Decent digest."
         }
     }
 }

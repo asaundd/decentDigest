@@ -5,16 +5,19 @@ import UIKit
 /// Where the forecast is for: the device's location, or a city the reader picks. One piece, used by
 /// the Weather step in setup and by Weather settings. Picking is saving; there is nothing to confirm.
 ///
-/// - "Use my location" has an Allow link (iOS then asks), ✓ In use once it's the source, Use when a
-///   city is in use instead, or Open Settings ↗ when location was declined.
+/// - "Use my location" has an Allow link (iOS then asks); ✓ In use with the place and "Turn off in the
+///   Settings app ↗" once it's the source; Use when a city is in use instead; or "Turn on in the
+///   Settings app ↗" when location was declined.
 /// - "Don't use my location" has a search box under it. Each letter typed brings up to 5 cities from
-///   Apple Maps; a tap picks one, which then says ✓ In use.
+///   Apple Maps; a tap picks one, which then shows ✓ In use over its name.
 struct WeatherPlacePicker: View {
     var model: WeatherModel
     /// The gray line under "Don't use my location".
     var cityNote: String
     /// Shows the picked city's weather under the search box, so the reader can see it's the right place.
     var showsCityWeather = false
+    /// Puts a rule between the two choices, as on the Weather settings page.
+    var ruled = false
 
     @Environment(\.openURL) private var openURL
     @State private var text = ""
@@ -29,17 +32,28 @@ struct WeatherPlacePicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            ChoiceRow(title: "Use my location", subtitle: locationSubtitle) {
-                locationAction
-            }
-            .accessibilityElement(children: .contain)
+            locationRow
 
-            ChoiceRow(title: "Don't use my location", subtitle: model.typedCity?.name ?? cityNote) {
-                if model.typedCity != nil {
-                    DoneNote(text: "In use")
+            if ruled {
+                PlainRule(spacing: 20)
+            }
+
+            ChoiceRow(title: "Don't use my location", subtitle: cityNote) {
+                if let city = model.typedCity {
+                    // "✓ In use" over the city's name.
+                    VStack(alignment: .trailing, spacing: 1) {
+                        Text("✓ In use")
+                            .foregroundStyle(Theme.secondary)
+                        Text(city.name)
+                            .foregroundStyle(Theme.ink)
+                            .multilineTextAlignment(.trailing)
+                    }
+                    .font(.subheadline)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("In use: \(city.name)")
                 }
             }
-            .padding(.top, 8)
+            .padding(.top, ruled ? 0 : 8)
 
             SearchBox(placeholder: "Search for a city", text: $text, isFocused: $searchFocused) {
                 lookUp(text)
@@ -74,38 +88,73 @@ struct WeatherPlacePicker: View {
         }
     }
 
-    private var locationSubtitle: String {
-        switch model.locationAccess {
-        case .denied:
-            return "Location is off for Decent."
-        case .granted where model.typedCity == nil:
-            if let place = model.place, place.isCurrentLocation { return place.name }
-            return "Follows you when you travel."
-        default:
-            return "Follows you when you travel."
+    /// "Use my location": Allow until iOS has asked; ✓ In use with the place and a way to turn it off
+    /// in iOS Settings; Use when a city is in use instead; a way to turn it on once declined.
+    private var locationRow: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Use my location")
+                    locationNote
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                switch model.locationAccess {
+                case .notAsked:
+                    TextLink("Allow") { Task { await model.useCurrentLocation() } }
+                        .accessibilityLabel("Allow location")
+                        .accessibilityHint("Asks for your location")
+                case .granted:
+                    if usingLocation {
+                        DoneNote(text: "In use")
+                    } else {
+                        TextLink("Use") { Task { await model.useCurrentLocation() } }
+                            .accessibilityLabel("Use my location")
+                    }
+                case .denied:
+                    EmptyView()
+                }
+            }
+            .padding(.vertical, ruled ? 0 : 6)
+
+            switch model.locationAccess {
+            case .denied:
+                TextLink("Turn on in the Settings app ↗", action: openSystemSettings)
+                    .accessibilityHint("Opens Decent digest in the Settings app")
+            case .granted where usingLocation:
+                TextLink("Turn off in the Settings app ↗", action: openSystemSettings)
+                    .accessibilityHint("Opens Decent digest in the Settings app")
+            default:
+                EmptyView()
+            }
         }
     }
 
     @ViewBuilder
-    private var locationAction: some View {
+    private var locationNote: some View {
         switch model.locationAccess {
-        case .notAsked:
-            TextLink("Allow") { Task { await model.useCurrentLocation() } }
-                .accessibilityLabel("Allow location")
-                .accessibilityHint("Asks for your location")
         case .denied:
-            TextLink("Open Settings ↗") {
-                if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
-            }
-            .accessibilityHint("Location can be turned on for Decent in the Settings app")
-        case .granted:
-            if usingLocation {
-                DoneNote(text: "In use")
+            Text("Location is off for Decent digest.")
+        case .granted where usingLocation:
+            if let place = model.place, place.isCurrentLocation {
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text(place.name)
+                    Image(systemName: "location")
+                        .font(.caption2)
+                        .accessibilityLabel("Current location")
+                }
             } else {
-                TextLink("Use") { Task { await model.useCurrentLocation() } }
-                    .accessibilityLabel("Use my location")
+                Text("Follows you when you travel.")
             }
+        default:
+            Text("Follows you when you travel.")
         }
+    }
+
+    private func openSystemSettings() {
+        if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
     }
 
     private var suggestions: some View {
