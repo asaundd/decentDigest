@@ -57,7 +57,7 @@ struct SettingsView: View {
                         .foregroundStyle(Theme.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.bottom, 4)
-                    SettingsRow(title: "iCloud sync", value: ICloudStatus.isSignedIn ? "On" : "Off", page: .sync)
+                    SettingsRow(title: "Cloud sync", value: ICloudStatus.isSignedIn ? "On" : "Off", page: .sync)
                     SettingsDivider()
                     SettingsRow(title: "Reading history", value: preferences.keepsReadingHistory ? "On" : "Off", page: .history)
 
@@ -481,12 +481,12 @@ struct AgendaSettingsPage: View {
     }
 }
 
-/// Settings › iCloud sync: whether it's on, how to change that, and what it covers.
+/// Settings › Cloud sync (iCloud): whether it's on, how to change that, and what it covers.
 struct ICloudSyncPage: View {
     @Environment(\.openURL) private var openURL
 
     var body: some View {
-        SettingsPage(title: "iCloud sync", subtitle: "Keeps what you follow, save, and read in your own iCloud, so it's the same on each device you use and comes back on a new one.") {
+        SettingsPage(title: "Cloud sync", subtitle: "Keeps what you follow, save, and read in your own iCloud, so it's the same on each device you use and comes back on a new one.") {
             ChoiceRow(title: "Sync", subtitle: "On when you're signed in to iCloud.") {
                 Text(ICloudStatus.isSignedIn ? "On" : "Off")
                     .foregroundStyle(Theme.secondary)
