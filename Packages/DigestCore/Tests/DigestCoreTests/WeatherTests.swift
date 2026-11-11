@@ -233,3 +233,38 @@ private struct CreditedWeather: WeatherProvider {
     await next.reload()
     #expect(next.credit != nil)
 }
+
+private final class CountingWeather: WeatherProvider, @unchecked Sendable {
+    private let lock = NSLock()
+    private var count = 0
+    var fetches: Int { lock.withLock { count } }
+
+    func report(latitude: Double, longitude: Double, now: Date) async throws -> WeatherReport {
+        lock.withLock { count += 1 }
+        return SampleDigest.weather(now: now)
+    }
+
+    func credit() async -> WeatherCredit? { nil }
+}
+
+@MainActor
+@Test func pullingToRefreshFetchesAtMostEveryTenMinutes() async {
+    let defaults = UserDefaults(suiteName: "weather-tests-\(UUID().uuidString)")!
+    let provider = CountingWeather()
+    let start = Date(timeIntervalSince1970: 1_800_000_000)
+    var clock = start
+    let weather = WeatherModel(provider: provider, places: SamplePlaces(), defaults: defaults, now: { clock })
+    await weather.reload(force: true)
+    #expect(provider.fetches == 1)
+    // Pulling again and again in the next few minutes reuses the forecast.
+    clock = start.addingTimeInterval(60)
+    await weather.reload(force: true)
+    await weather.reload(force: true)
+    #expect(provider.fetches == 1)
+    // After ten minutes a pull fetches again; opening the page still waits for thirty.
+    clock = start.addingTimeInterval(11 * 60)
+    await weather.reload()
+    #expect(provider.fetches == 1)
+    await weather.reload(force: true)
+    #expect(provider.fetches == 2)
+}

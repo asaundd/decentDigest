@@ -61,6 +61,8 @@ public final class WeatherModel {
     }
 
     /// Fetches a new forecast when the cached one is old or for another place.
+    /// `force` (a pull to refresh, or a new place) still reuses a forecast for the same place
+    /// fetched in the last few minutes.
     public func reload(force: Bool = false) async {
         locationAccess = places.locationAccess()
         guard !isLoading else { return }
@@ -73,8 +75,9 @@ public final class WeatherModel {
             return
         }
         let date = now()
-        if !force, !isSample, let report, place == target,
-           date.timeIntervalSince(report.fetchedAt) < WeatherRules.refreshInterval {
+        let reuseFor = force ? WeatherRules.pullRefreshInterval : WeatherRules.refreshInterval
+        if !isSample, let report, place == target,
+           date.timeIntervalSince(report.fetchedAt) < reuseFor {
             // The page opened with a cached forecast; it still needs the Apple Weather credit.
             if credit == nil { credit = await provider.credit() }
             return
