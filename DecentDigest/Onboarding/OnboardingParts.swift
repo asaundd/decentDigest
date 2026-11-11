@@ -129,7 +129,7 @@ struct RevealingScrollView<Content: View>: View {
             .scrollDismissesKeyboard(.interactively)
             .environment(searchReveal)
             .onChange(of: searchReveal.requests) { _, _ in
-                SearchReveal.scroll(proxy)
+                searchReveal.scroll(proxy)
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
@@ -148,15 +148,21 @@ struct RevealingScrollView<Content: View>: View {
 @Observable
 final class SearchReveal {
     private(set) var requests = 0
+    /// The view to bring to the top: the search box, or a topic that was just opened.
+    private(set) var target = SearchBox.scrollID
 
-    func request() { requests += 1 }
+    func request(_ id: String = SearchBox.scrollID) {
+        target = id
+        requests += 1
+    }
 
-    static func scroll(_ proxy: ScrollViewProxy) {
-        // After the keyboard starts to rise, so the scroll view knows its new height.
+    func scroll(_ proxy: ScrollViewProxy) {
+        let target = target
+        // After the keyboard starts to rise or the topic opens, so the page knows its new size.
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(150))
             withAnimation(.easeOut(duration: 0.25)) {
-                proxy.scrollTo(SearchBox.scrollID, anchor: UnitPoint(x: 0.5, y: 0.02))
+                proxy.scrollTo(target, anchor: UnitPoint(x: 0.5, y: 0.02))
             }
         }
     }
@@ -356,6 +362,8 @@ struct SearchBox: View {
     /// The return key's label: Done where results come as you type, Search where return looks
     /// something up.
     var submitLabel: SubmitLabel = .done
+    /// Shows Paste beside Cancel while the box is empty, for boxes where pasting is likely.
+    var offersPaste = false
     var onSubmit: () -> Void = {}
 
     @Environment(SearchReveal.self) private var reveal: SearchReveal?
@@ -363,6 +371,20 @@ struct SearchBox: View {
     var body: some View {
         HStack(spacing: 12) {
             field
+            if offersPaste && isFocused.wrappedValue && text.isEmpty {
+                // Apple's own Paste control, so iOS doesn't ask before pasting. Styled as close
+                // to Cancel as iOS allows.
+                PasteButton(payloadType: String.self) { strings in
+                    guard let pasted = strings.first else { return }
+                    Task { @MainActor in text = pasted.trimmingCharacters(in: .whitespacesAndNewlines) }
+                }
+                .labelStyle(.titleOnly)
+                .buttonStyle(.borderless)
+                .font(.callout)
+                .tint(Theme.accent)
+                .fixedSize()
+                .transition(.opacity.animation(.easeOut(duration: 0.12).delay(0.2)))
+            }
             // Stays while there's a search, even after the keyboard is swiped away.
             if isFocused.wrappedValue || !text.isEmpty {
                 Button {

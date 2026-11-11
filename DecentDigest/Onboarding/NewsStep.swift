@@ -54,6 +54,7 @@ struct NewsPicker: View {
     /// Sites shown under an open topic before "N more".
     static let topicPreview = 10
 
+    @Environment(SearchReveal.self) private var reveal: SearchReveal?
     @Environment(\.modelContext) private var context
     @Query(sort: \Source.sortOrder) private var sources: [Source]
 
@@ -83,7 +84,7 @@ struct NewsPicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SearchBox(placeholder: "Search, or paste a site or feed address", text: $text, isFocused: $searchFocused, keyboard: .webSearch, submitLabel: .search) {
+            SearchBox(placeholder: "Search, or paste a site or feed address", text: $text, isFocused: $searchFocused, keyboard: .webSearch, submitLabel: .search, offersPaste: true) {
                 searchFocused = false
             }
             .onChange(of: text) { old, new in
@@ -99,21 +100,10 @@ struct NewsPicker: View {
             }
 
             // Search mode starts with the tap, not the first letter: the lists step aside for a
-            // short hint and a Paste button, then results.
+            // short hint, then results. (Paste sits beside Cancel in the box's row.)
             if searchFocused && query.isEmpty {
-                HStack(alignment: .center, spacing: 12) {
-                    quiet("Type a site's name, or paste its address.")
-                    Spacer(minLength: 0)
-                    PasteButton(payloadType: String.self) { strings in
-                        guard let pasted = strings.first else { return }
-                        Task { @MainActor in text = pasted }
-                    }
-                    .labelStyle(.titleOnly)
-                    .buttonBorderShape(.capsule)
-                    .controlSize(.small)
-                    .tint(Theme.accent)
-                }
-                .padding(.top, 6)
+                quiet("Type a site's name, or paste its address.")
+                    .padding(.top, 6)
             } else if query.isEmpty {
                 if inSettings && !followed.isEmpty {
                     followingList(followed, heading: "Following", limit: showsAllFollowed ? nil : 4)
@@ -182,7 +172,13 @@ struct NewsPicker: View {
         let followedCount = feeds.filter { isFollowing($0.feedUrl) }.count
         let isOpen = openTopics.contains(category.id)
         Button {
-            if isOpen { openTopics.remove(category.id) } else { openTopics.insert(category.id) }
+            if isOpen {
+                openTopics.remove(category.id)
+            } else {
+                openTopics.insert(category.id)
+                // Bring the topic to the top so its sites show without scrolling.
+                reveal?.request("topic-\(category.id)")
+            }
         } label: {
             // A heading that opens, unlike a site or show row: semibold, with a › that turns down
             // when open.
@@ -202,6 +198,7 @@ struct NewsPicker: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(StillButtonStyle())
+        .id("topic-\(category.id)")
         .accessibilityElement(children: .combine)
         .accessibilityHint(isOpen ? "Hides the sites in \(category.name)" : "Shows the sites in \(category.name)")
         if isOpen {
