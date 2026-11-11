@@ -43,10 +43,13 @@ struct DigestView: View {
     /// A row closing asks the page to hold its place for a moment. It also keeps the last scroll
     /// position seen, outside of view state, so scrolling never redraws the page.
     @State private var scrollHold = ScrollHold()
+    /// Set only to scroll an opened row into view, by offset. (Scrolling to a row by id made iOS keep
+    /// that row's bottom pinned, so closing it later pulled the page back.)
+    @State private var scrollPosition = ScrollPosition(idType: String.self)
 
     var body: some View {
         // A plain scrolling page. (A List re-measured expanded rows late, which made titles jump.)
-        ScrollViewReader { proxy in
+        ScrollViewReader { _ in
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     header
@@ -56,7 +59,7 @@ struct DigestView: View {
                         if isShown(section) {
                             SectionRule()
                                 .digestRow()
-                            sectionView(section) { id, bottom in reveal(id, bottom: bottom, with: proxy) }
+                            sectionView(section) { _, bottom in reveal(bottom: bottom) }
                         }
                     }
                     SectionRule()
@@ -76,6 +79,12 @@ struct DigestView: View {
                 scrollHold.overhang = overhang
                 trimSlack()
             }
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                geometry.contentOffset.y
+            } action: { _, offset in
+                scrollHold.offset = offset
+            }
+            .scrollPosition($scrollPosition)
             .environment(\.scrollHold, scrollHold)
             .onAppear { scrollHold.onHold = { holdPlace() } }
             // Pull to refresh on the digest only. Set here, on the page's own scroll view, so it
@@ -280,10 +289,11 @@ struct DigestView: View {
     }
 
     /// Scrolls an expanded row up only when its bottom is hidden, so rows higher on the screen stay put.
-    private func reveal(_ id: String, bottom: CGFloat, with proxy: ScrollViewProxy) {
+    private func reveal(bottom: CGFloat) {
         guard bottom > listBottom - 8 else { return }
+        let target = scrollHold.offset + bottom - listBottom
         withAnimation(.easeInOut(duration: 0.25)) {
-            proxy.scrollTo(id, anchor: .bottom)
+            scrollPosition.scrollTo(y: target)
         }
     }
 

@@ -59,6 +59,8 @@ final class ScrollHold: @unchecked Sendable {
     var overhang: CGFloat = 0
     /// While a row closes or leaves, the held space is kept whole.
     var holdsUntil = Date.distantPast
+    /// The page's scroll offset, last seen.
+    var offset: CGFloat = 0
 
     func hold() {
         onHold?()
