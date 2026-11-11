@@ -36,10 +36,12 @@ struct CalendarStep: View {
                     request: { await agenda.requestCalendarAccess() }
                 )
                 if agenda.calendarAccess == .granted {
-                    AgendaListPicker(lists: agenda.calendars, excluded: agenda.excludedCalendarIDs, noun: "calendar") { id, included in
+                    AgendaListPicker(lists: agenda.calendars, excluded: agenda.excludedCalendarIDs, noun: "calendar", limit: 5) { id, included in
                         Task { await agenda.setIncluded(included, calendar: id) }
                     }
                 }
+                // A rule, so Reminders stands apart from a long list of calendars.
+                PlainRule(spacing: 20)
                 AppAccessRow(
                     appName: "Reminders",
                     waiting: "To-dos from your lists",
@@ -47,9 +49,8 @@ struct CalendarStep: View {
                     access: agenda.remindersAccess,
                     request: { await agenda.requestRemindersAccess() }
                 )
-                .padding(.top, 10)
                 if agenda.remindersAccess == .granted {
-                    AgendaListPicker(lists: agenda.reminderLists, excluded: agenda.excludedListIDs, noun: "list") { id, included in
+                    AgendaListPicker(lists: agenda.reminderLists, excluded: agenda.excludedListIDs, noun: "list", limit: 5) { id, included in
                         Task { await agenda.setIncluded(included, list: id) }
                     }
                 }
@@ -108,7 +109,11 @@ struct AgendaListPicker: View {
     var noun: String
     /// Groups lists under their account ("iCloud", "Google") instead of naming it on each row.
     var grouped = false
+    /// In setup, how many show before "Show N more".
+    var limit: Int? = nil
     var setIncluded: (String, Bool) -> Void
+
+    @State private var showsAll = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -120,8 +125,15 @@ struct AgendaListPicker: View {
                     }
                 }
             } else {
-                ForEach(lists) { list in
+                let shown = showsAll ? lists : Array(lists.prefix(limit ?? lists.count))
+                ForEach(shown) { list in
                     row(list, note: list.note)
+                }
+                if shown.count < lists.count {
+                    TextLink("Show \(lists.count - shown.count) more") { showsAll = true }
+                        .padding(.leading, DashColumn.width)
+                        .padding(.top, 2)
+                        .accessibilityHint("Shows every \(noun)")
                 }
             }
         }
