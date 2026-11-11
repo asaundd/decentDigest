@@ -33,11 +33,15 @@ struct FeedListSection: View {
     @State private var showsAll = false
     /// Rows playing their leaving animation, and what was chosen for each.
     @State private var leaving: [String: RowAction] = [:]
+    /// Rows closing up as they leave. They no longer count toward the rows shown, so the next one
+    /// joins while they close and the list below them doesn't move twice.
+    @State private var closing: Set<String> = []
 
     var body: some View {
         let eligible = eligibleEntries
-        let shown = showsAll ? eligible : Array(eligible.prefix(limit))
-        let remaining = eligible.count - shown.count
+        let shown = showsAll ? eligible : visible(eligible)
+        let staying = eligible.count(where: { !closing.contains($0.item.itemID) })
+        let remaining = staying - shown.count(where: { !closing.contains($0.item.itemID) })
 
         HStack(alignment: .firstTextBaseline) {
             Text(isEpisodes ? DigestSection.podcasts.title : DigestSection.news.title)
@@ -93,7 +97,9 @@ struct FeedListSection: View {
             // A row that leaves is gone at once. One that joins waits for the slide, then fades in,
             // so it never overlaps the rows still moving.
             .transition(HeadlineMotion.transition)
-            .leaveSwipe(choices, request: leaving[entry.item.itemID]) { choice in
+            .leaveSwipe(choices, request: leaving[entry.item.itemID], closing: {
+                closing.insert(entry.item.itemID)
+            }) { choice in
                 finish(entry.item, as: choice)
             }
             .onAppear {
@@ -102,13 +108,13 @@ struct FeedListSection: View {
         }
 
         // News shows its line only when more wait; Podcasts always does, for Podcasts ↗.
-        let toggles = remaining > 0 || showsAll && eligible.count > limit
+        let toggles = remaining > 0 || showsAll && staying > limit
         if toggles || isEpisodes {
             ListFooter(
                 hidden: remaining,
                 phrase: { _ in "more" },
                 empty: nil,
-                showsAll: showsAll && eligible.count > limit,
+                showsAll: showsAll && staying > limit,
                 app: isEpisodes ? ListFooter.Link(title: "Podcasts ↗", spoken: "Open Podcasts") { openURL(ApplePodcasts.app) } : nil
             ) {
                 showsAll.toggle()
@@ -121,6 +127,16 @@ struct FeedListSection: View {
     // MARK: Data
 
     private var isEpisodes: Bool { kind == .podcast }
+
+    /// The first rows up to the limit, plus any closing up among them, which don't count.
+    private func visible(_ eligible: [Entry]) -> [Entry] {
+        var counted = 0
+        return eligible.filter { entry in
+            guard counted < limit else { return false }
+            if !closing.contains(entry.item.itemID) { counted += 1 }
+            return true
+        }
+    }
 
     private var limit: Int { isEpisodes ? PodcastRules.itemsShown : NewsRules.itemsShown }
 

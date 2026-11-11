@@ -43,8 +43,15 @@ extension View {
     /// a full swipe does the right-most one. Once an action is chosen, here or from the card or the
     /// panel (`request`), the row slides off to the left with the action riding out at its edge, rests
     /// a beat, then closes up and the rows below slide up. `perform` records the action at the end.
-    func leaveSwipe(_ choices: [RowAction], request: RowAction?, perform: @escaping (RowAction) -> Void) -> some View {
-        modifier(LeaveSwipe(stripActions: choices, request: request, perform: perform))
+    /// `closing` is called as the row starts to close up, in the same animation, so a list can let
+    /// the next row join then.
+    func leaveSwipe(
+        _ choices: [RowAction],
+        request: RowAction?,
+        closing: (() -> Void)? = nil,
+        perform: @escaping (RowAction) -> Void
+    ) -> some View {
+        modifier(LeaveSwipe(stripActions: choices, request: request, closing: closing, perform: perform))
     }
 }
 
@@ -52,6 +59,7 @@ private struct LeaveSwipe: ViewModifier {
     /// Left to right as they show in the open strip; the last one is what a full swipe does.
     var stripActions: [RowAction]
     var request: RowAction?
+    var closing: (() -> Void)?
     var perform: (RowAction) -> Void
 
     /// Each action's share of the open strip.
@@ -229,6 +237,7 @@ private struct LeaveSwipe: ViewModifier {
             withAnimation(.easeOut(duration: 0.16)) {
                 frozenHeight = 0
                 labelOpacity = 0
+                closing?()
             }
             try? await Task.sleep(for: .seconds(0.16))
             perform(action)
