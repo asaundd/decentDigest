@@ -392,14 +392,14 @@ struct SettingsDivider: View {
     }
 }
 
-/// "Show … on the digest": a native switch, tinted gray rather than slate.
+/// "Show … on the digest": a native switch, tinted gray (muted slate in dark mode).
 struct ShowSwitch: View {
     var label: String
     var isOn: Binding<Bool>
 
     var body: some View {
         Toggle(label, isOn: isOn)
-            .tint(Theme.secondary)
+            .tint(Theme.switchOn)
     }
 }
 

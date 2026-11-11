@@ -35,6 +35,9 @@ enum Theme {
     static let buttonDimmedText = Color(light: 0xA7ABA9, dark: 0x6F7573)
     /// The faint underline under links that undo a choice (Unfollow, Hide).
     static let faintUnderline = Color(light: 0xC9CBC7, dark: 0x4A504D)
+    /// The "on" track of every switch. In dark mode a muted slate rather than gray, so on is plain to see
+    /// against the dark off track.
+    static let switchOn = Color(light: 0x6F7573, dark: 0x7A7A94)
     /// The filled search boxes in setup.
     /// Lighter than the page in dark mode (the button fill there matches the page), so the box shows.
     static let fieldFill = Color(light: 0xF2F1EC, dark: 0x272C2A)
