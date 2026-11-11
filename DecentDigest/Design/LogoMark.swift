@@ -2,10 +2,30 @@ import SwiftUI
 
 /// The Dd logo: a capital D and a lowercase d drawn as seven slightly ragged strokes, from the
 /// app icon's source (design/app-icon). Drawn bare, with no tile, in the given color.
+/// `progress` below 1 draws only part of it, stroke by stroke, left to right and top to bottom,
+/// for the launch animation.
 struct LogoMark: View {
     var color: Color = Theme.accent
+    var progress: Double = 1
 
-    /// Each stroke: start, end and width, in the icon's 100-point grid.
+    var body: some View {
+        LogoShape(progress: progress)
+            .fill(color)
+            .aspectRatio(LogoShape.bounds.width / LogoShape.bounds.height, contentMode: .fit)
+            .accessibilityHidden(true)
+    }
+}
+
+/// The logo's strokes as one filled outline, so it can be drawn in by animating `progress`.
+struct LogoShape: Shape {
+    var progress: Double
+
+    var animatableData: Double {
+        get { progress }
+        set { progress = newValue }
+    }
+
+    /// Each stroke: start, end and width, in the icon's 100-point grid, in reading order.
     private static let strokes: [(CGPoint, CGPoint, CGFloat)] = [
         (CGPoint(x: 15.08, y: 26.15), CGPoint(x: 31.80, y: 25.49), 4.78),
         (CGPoint(x: 77.42, y: 26.01), CGPoint(x: 82.38, y: 25.44), 4.69),
@@ -24,28 +44,58 @@ struct LogoMark: View {
     ]
 
     /// The part of the grid the strokes cover, with room for their round ends.
-    private static let bounds = CGRect(x: 12, y: 22, width: 77, height: 56)
+    static let bounds = CGRect(x: 12, y: 22, width: 77, height: 56)
+
+    private static let totalLength: CGFloat = strokes.reduce(0) { $0 + hypot($1.1.x - $1.0.x, $1.1.y - $1.0.y) }
+
+    func path(in rect: CGRect) -> Path {
+        let scale = min(rect.width / Self.bounds.width, rect.height / Self.bounds.height)
+        let offset = CGPoint(
+            x: rect.minX + (rect.width - Self.bounds.width * scale) / 2,
+            y: rect.minY + (rect.height - Self.bounds.height * scale) / 2
+        )
+        func place(_ point: CGPoint) -> CGPoint {
+            CGPoint(x: offset.x + (point.x - Self.bounds.minX) * scale, y: offset.y + (point.y - Self.bounds.minY) * scale)
+        }
+        var remaining = Self.totalLength * CGFloat(min(max(progress, 0), 1))
+        var outline = Path()
+        for (start, end, width) in Self.strokes where remaining > 0 {
+            let length = hypot(end.x - start.x, end.y - start.y)
+            let drawn = min(length, remaining)
+            remaining -= drawn
+            let fraction = length > 0 ? drawn / length : 1
+            let tip = CGPoint(x: start.x + (end.x - start.x) * fraction, y: start.y + (end.y - start.y) * fraction)
+            var line = Path()
+            line.move(to: place(start))
+            line.addLine(to: place(tip))
+            outline.addPath(line.strokedPath(StrokeStyle(lineWidth: width * scale, lineCap: .round)))
+        }
+        return outline
+    }
+}
+
+/// The launch animation: after iOS's plain paper launch screen, the logo draws itself at the center of
+/// the page, its slate lines left to right and top to bottom, in the same hand as the strike.
+struct LaunchLogo: View {
+    /// How long the lines take to draw.
+    static let drawDuration: Double = 0.5
+    /// The logo's width at the center of the page.
+    static let width: CGFloat = 88
+
+    var progress: Double
 
     var body: some View {
-        Canvas { context, size in
-            let scale = min(size.width / Self.bounds.width, size.height / Self.bounds.height)
-            let offset = CGPoint(
-                x: (size.width - Self.bounds.width * scale) / 2,
-                y: (size.height - Self.bounds.height * scale) / 2
-            )
-            func place(_ point: CGPoint) -> CGPoint {
-                CGPoint(x: offset.x + (point.x - Self.bounds.minX) * scale, y: offset.y + (point.y - Self.bounds.minY) * scale)
-            }
-            for (start, end, width) in Self.strokes {
-                var path = Path()
-                path.move(to: place(start))
-                path.addLine(to: place(end))
-                context.stroke(path, with: .color(color), style: StrokeStyle(lineWidth: width * scale, lineCap: .round))
-            }
-        }
-        .aspectRatio(Self.bounds.width / Self.bounds.height, contentMode: .fit)
-        .accessibilityHidden(true)
+        LogoMark(progress: progress)
+            .frame(width: Self.width)
+            .accessibilityHidden(true)
     }
+}
+
+/// Whether the launch animation has played in this run of the app. It plays once, on a cold launch,
+/// never when the reader comes back from another app.
+@MainActor
+enum LaunchIntro {
+    static var hasPlayed = false
 }
 
 /// The round see-through button with the Dd logo, pinned at the top right of the digest. Opens Settings.

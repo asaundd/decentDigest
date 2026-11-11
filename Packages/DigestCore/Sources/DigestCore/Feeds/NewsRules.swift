@@ -31,14 +31,18 @@ public enum NewsRules {
     public struct Reading: Sendable, Hashable {
         public var status: ItemStatus
         public var openedAt: Date?
-        public init(status: ItemStatus, openedAt: Date? = nil) {
+        /// When the reader acted on it. A read item with this set was marked Read (with reading
+        /// history off) and leaves at once.
+        public var resolvedAt: Date?
+        public init(status: ItemStatus, openedAt: Date? = nil, resolvedAt: Date? = nil) {
             self.status = status
             self.openedAt = openedAt
+            self.resolvedAt = resolvedAt
         }
     }
 
-    /// Headlines that belong in the News list, newest first: not expired, not acted on,
-    /// and, if only opened, opened since the list last refreshed.
+    /// Headlines that belong in the News list, newest first: not expired, not acted on (marked Read
+    /// counts), and, if only opened, opened since the list last refreshed.
     public static func eligible(_ candidates: [Candidate], readings: [String: Reading], listStartedAt: Date?, now: Date) -> [Candidate] {
         let cutoff = expiryCutoff(now: now)
         return candidates
@@ -46,6 +50,7 @@ public enum NewsRules {
                 guard candidate.publishedAt >= cutoff else { return false }
                 guard let reading = readings[candidate.itemID] else { return true }
                 guard reading.status.isActive else { return false }
+                if reading.status == .read, reading.resolvedAt != nil { return false }
                 if reading.status == .read, let listStartedAt, let opened = reading.openedAt, opened < listStartedAt {
                     return false
                 }

@@ -42,6 +42,18 @@ import Testing
     #expect(!ItemStatus.read.isUnread)
 }
 
+@Test func markedReadLeavesButOpenedStays() {
+    let now = Date(timeIntervalSince1970: 1_800_000_000)
+    let opened = NewsRules.Candidate(itemID: "opened", publishedAt: now.addingTimeInterval(-60))
+    let marked = NewsRules.Candidate(itemID: "marked", publishedAt: now.addingTimeInterval(-120))
+    let readings = [
+        "opened": NewsRules.Reading(status: .read, openedAt: now),
+        "marked": NewsRules.Reading(status: .read, openedAt: now, resolvedAt: now),
+    ]
+    let shown = NewsRules.eligible([opened, marked], readings: readings, listStartedAt: nil, now: now)
+    #expect(shown.map(\.itemID) == ["opened"])
+}
+
 @Test func choosingATopicFollowsItsTwoMostPopularSites() throws {
     let library = try FeedLibrary.bundled()
     for category in library.categories {

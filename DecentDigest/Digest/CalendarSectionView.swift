@@ -14,15 +14,15 @@ struct CalendarSectionView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.titleToFirstItem - DayHeader.firstTopPadding) {
-            SectionHeader(title: DigestSection.calendar.title) {
-                if model.calendarAccess == .granted {
-                    TextLink("Calendar ↗") { openURL(AgendaLinks.calendar(at: .now)) }
-                        .accessibilityLabel("Open Calendar")
-                }
-            }
+            // Calendar ↗ sits on the footer line.
+            SectionHeader(title: DigestSection.calendar.title) { EmptyView() }
 
             // The digest shows this section only once Calendar access is on.
-            if model.calendarAccess == .granted {
+            if model.calendarAccess == .granted, !model.hasLoaded {
+                // Only when the first read is slow; the rows replace the bars in place.
+                PlaceholderBars()
+                    .padding(.top, DayHeader.firstTopPadding)
+            } else if model.calendarAccess == .granted {
                 // Redrawn each minute, so past and happening-now events change on their own.
                 TimelineView(.everyMinute) { context in
                     days(now: context.date)
@@ -39,12 +39,11 @@ struct CalendarSectionView: View {
         VStack(alignment: .leading, spacing: 0) {
             if shown.first?.day != todayStart {
                 DayHeader(title: "Today", isFirst: true)
-                if model.hasLoaded {
-                    Text("Nothing on the calendar today.")
-                        .font(AgendaMetrics.itemFont)
-                        .foregroundStyle(Theme.secondary)
-                        .padding(.leading, DashColumn.width)
-                }
+                Text("Nothing on the calendar today.")
+                    .font(AgendaMetrics.itemFont)
+                    .foregroundStyle(Theme.secondary)
+                    .padding(.leading, DashColumn.width)
+                    .padding(.vertical, AgendaMetrics.rowPadding)
             }
             ForEach(shown) { group in
                 DayHeader(
@@ -69,17 +68,18 @@ struct CalendarSectionView: View {
                     }
                 }
             }
-            if model.hasLoaded {
-                AgendaFooter(
-                    hidden: DayPlanner.hiddenCount(groups),
-                    phrase: { $0 == 1 ? "more event this week" : "more events this week" },
-                    empty: "No other events this week",
-                    showsAll: showsAll
-                ) {
-                    showsAll.toggle()
-                    if !showsAll { expandedDays = [] }
-                }
+            // Always shown, for Calendar ↗.
+            ListFooter(
+                hidden: DayPlanner.hiddenCount(groups),
+                phrase: { $0 == 1 ? "more event this week" : "more events this week" },
+                empty: "No other events this week",
+                showsAll: showsAll,
+                app: ListFooter.Link(title: "Calendar ↗", spoken: "Open Calendar") { openURL(AgendaLinks.calendar(at: .now)) }
+            ) {
+                showsAll.toggle()
+                if !showsAll { expandedDays = [] }
             }
+            .padding(.top, 10)
         }
     }
 
@@ -95,11 +95,13 @@ struct CalendarSectionView: View {
     }
 }
 
-/// An event: time in a 60pt gray column, then its name. Past events are gray and struck; one happening
-/// now has a thin slate line at its left. A tap makes the row semibold and opens a card with the details;
-/// a tap on the row or the card closes it.
+/// An event: time in a 60pt gray column, then its name. Past events are gray and struck; the one
+/// happening now sits on a pale slate tint. A tap makes the row semibold and opens a card behind it with
+/// the details; a tap anywhere on the open row, away from its links, closes it.
 struct EventRow: View {
     static let timeWidth: CGFloat = 60
+    /// How far the now tint reaches past the time and title.
+    static let tintInset: CGFloat = 6
 
     var event: AgendaEvent
     var timing: EventTiming
@@ -138,19 +140,20 @@ struct EventRow: View {
                 .animation(nil, value: isOpen)
                 .strikethrough(isPast, color: Theme.past)
                 .padding(.vertical, 2)
+                // The event happening now sits on a pale slate tint behind its time and title.
+                .background {
+                    if timing == .now {
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .fill(Theme.nowTint)
+                            .padding(.horizontal, -Self.tintInset)
+                            .accessibilityHidden(true)
+                    }
+                }
+                // The tap area reaches into the space between rows.
+                .padding(.vertical, AgendaMetrics.rowPadding - 2)
                 .contentShape(Rectangle())
             }
             .buttonStyle(StillButtonStyle())
-            // The event happening now gets a thin slate line at the left of its row.
-            .overlay(alignment: .leading) {
-                if timing == .now {
-                    Rectangle()
-                        .fill(Theme.accent)
-                        .frame(width: 2)
-                        .offset(x: -AgendaMetrics.cardInset)
-                        .accessibilityHidden(true)
-                }
-            }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(spokenLabel)
             .accessibilityHint(isOpen ? "Shows less" : "Shows details")
@@ -160,6 +163,14 @@ struct EventRow: View {
                 card
             }
         }
+        // One card holds the row and its details, so nothing moves when it opens.
+        .openCard(isOpen)
+        // A tap anywhere on the open row, away from its links, closes it.
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if isOpen { onTap() }
+        }
+        .padding(.bottom, isOpen ? 6 : 0)
     }
 
     private var card: some View {
@@ -199,10 +210,9 @@ struct EventRow: View {
             .padding(.top, 4)
         }
         .font(AgendaMetrics.itemFont)
-        .agendaCard()
-        // A tap on the card, away from its links, closes it.
-        .contentShape(Rectangle())
-        .onTapGesture(perform: onTap)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 2)
+        .padding(.bottom, 10)
     }
 
     private var hasMore: Bool {

@@ -18,6 +18,7 @@ struct DigestView: View {
     var sectionOrder: [DigestSection] = DigestSection.allCases
 
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query(sort: \SavedItem.savedAt, order: .reverse) private var saved: [SavedItem]
     @State private var panel: PanelRequest?
     @State private var showsWeatherSettings = false
@@ -30,6 +31,12 @@ struct DigestView: View {
     @State private var isRefreshing = false
     /// Where the visible list ends on screen.
     @State private var listBottom: CGFloat = .infinity
+    /// False until the launch animation lets the page show, whole.
+    @State private var revealed = false
+    /// How much of the launch logo is drawn, and whether it is still on screen.
+    @State private var logoProgress: Double = 0
+    @State private var logoOpacity: Double = 1
+    @State private var showsLogo = false
 
     var body: some View {
         // A plain scrolling page. (A List re-measured expanded rows late, which made titles jump.)
@@ -52,12 +59,13 @@ struct DigestView: View {
                         .padding(.bottom, Theme.margin)
                         .digestRow()
                 }
+                .opacity(revealed ? 1 : 0)
             }
             // Pull to refresh on the digest only. Set here, on the page's own scroll view, so it
             // doesn't reach the scroll views in Settings and setup, where a pull down closes the sheet.
             .refreshable {
-                await agenda.reload()
-                await weather.reload(force: true)
+                await reloadAgenda()
+                await reloadWeather(force: true)
                 await runRefresh(force: true)
             }
             .foregroundStyle(Theme.ink)
@@ -77,7 +85,16 @@ struct DigestView: View {
             SettingsButton { showsSettings = true }
                 .padding(.trailing, 16)
                 .padding(.top, 4)
+                .opacity(revealed ? 1 : 0)
         }
+        // The launch logo draws itself at the center, then fades as the page fades in.
+        .overlay {
+            if showsLogo {
+                LaunchLogo(progress: logoProgress)
+                    .opacity(logoOpacity)
+            }
+        }
+        .task { await playLaunch() }
         .blur(radius: panel == nil ? 0 : 2)
         .overlay { ArticlePanelHost(panel: $panel) }
         .sheet(isPresented: $showsSettings, onDismiss: {
@@ -94,8 +111,8 @@ struct DigestView: View {
         .fullScreenCover(isPresented: setupBinding) {
             OnboardingFlow(agenda: agenda, weather: weather, preferences: preferences) {
                 showsSetup = false
-                Task { await agenda.reload() }
-                Task { await weather.reload() }
+                Task { await reloadAgenda() }
+                Task { await reloadWeather() }
                 Task { await runRefresh(force: false) }
             }
         }
@@ -112,18 +129,57 @@ struct DigestView: View {
             // Checked-off to-dos still showing leave when the app goes away.
             if phase == .background { agenda.finishAllChecked() }
             guard phase == .active else { return }
-            Task { await agenda.reload() }
-            Task { await weather.reload() }
+            Task { await reloadAgenda() }
+            Task { await reloadWeather() }
             Task { await runRefresh(force: false) }
         }
         // Edits made in Calendar or Reminders, or checking off here, show within moments.
         .onReceive(NotificationCenter.default.publisher(for: .EKEventStoreChanged).receive(on: RunLoop.main)) { _ in
-            Task { await agenda.reload() }
+            Task { await reloadAgenda() }
         }
         // A new day, or a time zone change.
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification).receive(on: RunLoop.main)) { _ in
-            Task { await agenda.reload() }
+            Task { await reloadAgenda() }
         }
+    }
+
+    /// On a cold launch: the logo draws itself (about 0.5s) while the phone's own reads finish
+    /// (Calendar and Reminders; stored news and the cached forecast are already there), then the logo
+    /// fades as the page fades in, whole (about 0.25s). A read still going after 0.6s shows placeholder
+    /// bars in its section. With Reduce Motion on, the page just fades in. On first launch the welcome
+    /// page plays its own version, so the page shows at once underneath it.
+    private func playLaunch() async {
+        guard !revealed else { return }
+        guard preferences.hasFinishedSetup, !LaunchIntro.hasPlayed else {
+            revealed = true
+            return
+        }
+        LaunchIntro.hasPlayed = true
+        let start = ContinuousClock.now
+        if !reduceMotion {
+            showsLogo = true
+            withAnimation(.easeInOut(duration: LaunchLogo.drawDuration)) { logoProgress = 1 }
+            try? await Task.sleep(for: .seconds(LaunchLogo.drawDuration))
+        }
+        while !agenda.hasLoaded, ContinuousClock.now - start < .milliseconds(600) {
+            try? await Task.sleep(for: .milliseconds(30))
+        }
+        withAnimation(.easeOut(duration: 0.25)) {
+            revealed = true
+            logoOpacity = 0
+        }
+        try? await Task.sleep(for: .seconds(0.25))
+        showsLogo = false
+    }
+
+    private func reloadAgenda() async {
+        await SlowLoading.pause()
+        await agenda.reload()
+    }
+
+    private func reloadWeather(force: Bool = false) async {
+        await SlowLoading.pause()
+        await weather.reload(force: force)
     }
 
     private var header: some View {
@@ -166,6 +222,7 @@ struct DigestView: View {
     private func runRefresh(force: Bool) async {
         guard !isRefreshing else { return }
         isRefreshing = true
+        await SlowLoading.pause()
         await refresh(force)
         isRefreshing = false
     }

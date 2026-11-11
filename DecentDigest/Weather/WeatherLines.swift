@@ -81,8 +81,9 @@ struct WeatherLines: View {
     }
 
     /// One bullet per day: the day's name, then the condition and low to high, all regular weight.
+    /// Spaced like the Calendar and To do rows.
     private func week(_ days: [WeatherDay], unit: TemperatureUnit) -> some View {
-        Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: 0, verticalSpacing: 4) {
+        Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: 0, verticalSpacing: 2 * AgendaMetrics.rowPadding) {
             ForEach(Array(days.prefix(WeatherRules.weekDays))) { day in
                 GridRow {
                     Text("–")

@@ -14,17 +14,18 @@ struct TodosSectionView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SectionHeader(title: DigestSection.todos.title) {
-                if model.remindersAccess == .granted {
-                    TextLink("Reminders ↗") { openURL(AgendaLinks.reminders) }
-                        .accessibilityLabel("Open Reminders")
-                }
-            }
-            .padding(.bottom, Theme.titleToFirstItem - DayHeader.firstTopPadding)
-            .digestRow()
+            // Reminders ↗ sits on the footer line.
+            SectionHeader(title: DigestSection.todos.title) { EmptyView() }
+                .padding(.bottom, Theme.titleToFirstItem - DayHeader.firstTopPadding)
+                .digestRow()
 
             // The digest shows this section only once Reminders access is on.
-            if model.remindersAccess == .granted {
+            if model.remindersAccess == .granted, !model.hasLoaded {
+                // Only when the first read is slow; the rows replace the bars in place.
+                PlaceholderBars()
+                    .padding(.top, DayHeader.firstTopPadding)
+                    .digestRow()
+            } else if model.remindersAccess == .granted {
                 list(now: .now)
             }
         }
@@ -34,7 +35,7 @@ struct TodosSectionView: View {
         let plan = TodoRules.plan(model.todos, now: now, expanded: expandedDays, anytimeExpanded: anytimeExpanded, showAll: showsAll)
         let days = plan.days.filter { !$0.items.isEmpty }
         return VStack(alignment: .leading, spacing: 0) {
-            if isEmpty(plan, days: days) && model.hasLoaded {
+            if isEmpty(plan, days: days) {
                 QuietLine("Nothing to do.")
                     .digestRow()
             }
@@ -71,21 +72,22 @@ struct TodosSectionView: View {
                     .digestRow()
                 }
             }
-            if model.hasLoaded && !isEmpty(plan, days: days) {
-                AgendaFooter(
-                    hidden: plan.hiddenCount,
-                    phrase: { $0 == 1 ? "more item" : "more items" },
-                    empty: "No other items this week",
-                    showsAll: showsAll
-                ) {
-                    showsAll.toggle()
-                    if !showsAll {
-                        expandedDays = []
-                        anytimeExpanded = false
-                    }
+            // Always shown, for Reminders ↗.
+            ListFooter(
+                hidden: plan.hiddenCount,
+                phrase: { $0 == 1 ? "more item" : "more items" },
+                empty: isEmpty(plan, days: days) ? nil : "No other items this week",
+                showsAll: showsAll,
+                app: ListFooter.Link(title: "Reminders ↗", spoken: "Open Reminders") { openURL(AgendaLinks.reminders) }
+            ) {
+                showsAll.toggle()
+                if !showsAll {
+                    expandedDays = []
+                    anytimeExpanded = false
                 }
-                .digestRow()
             }
+            .padding(.top, 10)
+            .digestRow()
             if let problem = model.problem {
                 Text(problem)
                     .font(.subheadline)
@@ -169,8 +171,8 @@ struct TodosSectionView: View {
 }
 
 /// A to-do: its title, with its time in gray after it when it is due today or later at a set time.
-/// A tap makes the title semibold and opens a card: due day and list, notes, ✓ at the top right, Open ↗.
-/// A tap on the title or the card closes it.
+/// A tap makes the title semibold and opens a card behind it: due day and list, notes, ✓ at the top
+/// right, Open ↗. A tap anywhere on the open row, away from its buttons and links, closes it.
 struct TodoRow: View {
     var todo: TodoEntry
     var note: String?
@@ -189,7 +191,7 @@ struct TodoRow: View {
         VStack(alignment: .leading, spacing: 0) {
             // A swipe let go near where it began is ignored, not taken as a tap.
             Button {
-                guard swipeGuard?.justSwiped != true else { return }
+                guard swipeGuard?.takesTap() != true else { return }
                 onTap()
             } label: {
                 title
@@ -197,7 +199,8 @@ struct TodoRow: View {
                     // Regular to semibold is an instant change, never animated.
                     .animation(nil, value: isOpen)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.vertical, 2)
+                    // The tap area reaches into the space between rows.
+                    .padding(.vertical, AgendaMetrics.rowPadding)
                     .contentShape(Rectangle())
             }
             .buttonStyle(StillButtonStyle())
@@ -212,6 +215,15 @@ struct TodoRow: View {
                 card
             }
         }
+        // One card holds the row and its details, so nothing moves when it opens.
+        .openCard(isOpen)
+        // A tap anywhere on the open row, away from its buttons and links, closes it.
+        .contentShape(Rectangle())
+        .onTapGesture {
+            guard isOpen, swipeGuard?.takesTap() != true else { return }
+            onTap()
+        }
+        .padding(.bottom, isOpen ? 6 : 0)
     }
 
     /// The strike draws when checked from the card, or follows the finger during a swipe.
@@ -252,21 +264,17 @@ struct TodoRow: View {
                     label: isChecked ? "Undo check off" : "Check off",
                     action: toggleCheck
                 )
-                .padding(.top, -8)
-                .padding(.trailing, -RibbonButton.gap - 4)
+                .padding(.top, -6)
+                .padding(.trailing, -RibbonButton.gap)
             }
             TextLink("Open ↗", action: open)
                 .accessibilityLabel("Open in Reminders")
                 .padding(.top, 4)
         }
         .font(AgendaMetrics.itemFont)
-        .agendaCard()
-        // A tap on the card, away from its buttons, closes it like a tap on the title.
-        .contentShape(Rectangle())
-        .onTapGesture {
-            guard swipeGuard?.justSwiped != true else { return }
-            onTap()
-        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 2)
+        .padding(.bottom, 10)
     }
 }
 

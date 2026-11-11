@@ -20,6 +20,10 @@ enum Theme {
     /// A faint edge and shadow that lift the expanded card off the page.
     static let expandedRing = Color(light: 0x1A1D1E, dark: 0x000000).opacity(0.06)
     static let expandedShadow = Color(light: 0x1A1D1E, dark: 0x000000).opacity(0.06)
+    /// A pale slate tint behind the event happening now.
+    static let nowTint = Color(light: 0xE8E8EE, dark: 0x2A2C33)
+    /// Faint, still bars that stand in for rows while a slow read finishes.
+    static let placeholder = Color(light: 0xEDEDE9, dark: 0x232826)
     /// The small square buttons on the ribbon, a shade darker than the card.
     static let ribbonButtonFill = Color(light: 0xF2F1EC, dark: 0x151817)
     /// The panel matches the expanded card, so the post reads the same in both.

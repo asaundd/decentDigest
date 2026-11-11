@@ -22,6 +22,7 @@ struct FeedListSection: View {
     @Query private var sources: [Source]
     @Query private var states: [ItemState]
     @AppStorage(NewsRefresher.listStartedAtKey) private var listStartedAt: Double = 0
+    @AppStorage(DigestPreferences.readingHistoryOffKey) private var historyOff = false
 
     /// Set once the reader has refreshed, so the link can say the list is current.
     @State private var refreshedByReader = false
@@ -29,6 +30,8 @@ struct FeedListSection: View {
     @State private var expandedIDs: Set<String> = []
     @State private var pendingReveal: String?
     @State private var showsAll = false
+    /// Rows playing their leaving animation, and what was chosen for each.
+    @State private var leaving: [String: RowAction] = [:]
 
     var body: some View {
         let eligible = eligibleEntries
@@ -40,10 +43,8 @@ struct FeedListSection: View {
                 .font(Theme.sectionTitleFont)
                 .accessibilityAddTraits(.isHeader)
             Spacer()
-            if isEpisodes {
-                TextLink("Podcasts ↗") { openURL(ApplePodcasts.app) }
-                    .accessibilityLabel("Open Podcasts")
-            } else {
+            // Podcasts ↗ sits on the footer line.
+            if !isEpisodes {
                 TextLink(isRefreshing ? "Checking…" : (refreshedByReader ? "Up to date" : "Refresh")) {
                     Task {
                         await refresh()
@@ -91,29 +92,27 @@ struct FeedListSection: View {
             // A row that leaves is gone at once. One that joins waits for the slide, then fades in,
             // so it never overlaps the rows still moving.
             .transition(HeadlineMotion.transition)
-            .judgmentSwipes(useful: { resolve(entry.item, as: .useful) }, notUseful: { resolve(entry.item, as: .notRelevant) })
+            .leaveSwipe(choices, request: leaving[entry.item.itemID]) { choice in
+                finish(entry.item, as: choice)
+            }
             .onAppear {
                 ReadingState.markShown(itemID: entry.item.itemID, sourceID: entry.item.sourceID, in: context)
             }
         }
 
-        if remaining > 0 || showsAll && eligible.count > limit {
-            HStack(spacing: 6) {
-                if remaining > 0 {
-                    Text("\(remaining) more")
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.secondary)
-                    Text("·")
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.secondary)
-                        .accessibilityHidden(true)
-                }
-                TextLink(showsAll ? "Show less" : "Show all") {
-                    withAnimation { showsAll.toggle() }
-                }
+        // News shows its line only when more wait; Podcasts always does, for Podcasts ↗.
+        let toggles = remaining > 0 || showsAll && eligible.count > limit
+        if toggles || isEpisodes {
+            ListFooter(
+                hidden: remaining,
+                phrase: { _ in "more" },
+                empty: nil,
+                showsAll: showsAll && eligible.count > limit,
+                app: isEpisodes ? ListFooter.Link(title: "Podcasts ↗", spoken: "Open Podcasts") { openURL(ApplePodcasts.app) } : nil
+            ) {
+                withAnimation { showsAll.toggle() }
             }
             .padding(.top, 4)
-            .frame(maxWidth: .infinity, alignment: .leading)
             .digestRow()
         }
     }
@@ -123,6 +122,8 @@ struct FeedListSection: View {
     private var isEpisodes: Bool { kind == .podcast }
 
     private var limit: Int { isEpisodes ? PodcastRules.itemsShown : NewsRules.itemsShown }
+
+    private var choices: [RowAction] { RowAction.choices(keepsHistory: !historyOff) }
 
     private var emptyText: String {
         switch (isEpisodes, isRefreshing) {
@@ -146,7 +147,7 @@ struct FeedListSection: View {
             uniquingKeysWith: { first, _ in first }
         )
         let readings = Dictionary(
-            states.map { ($0.itemID, NewsRules.Reading(status: $0.status, openedAt: $0.openedAt)) },
+            states.map { ($0.itemID, NewsRules.Reading(status: $0.status, openedAt: $0.openedAt, resolvedAt: $0.resolvedAt)) },
             uniquingKeysWith: { first, _ in first }
         )
         let byID = Dictionary(items.map { ($0.itemID, $0) }, uniquingKeysWith: { first, _ in first })
@@ -206,8 +207,8 @@ struct FeedListSection: View {
         }
         var actions = HeadlineActions(
             save: { save(item, sourceName: entry.sourceName) },
-            useful: { resolve(item, as: .useful) },
-            notUseful: { resolve(item, as: .notRelevant) },
+            choices: choices,
+            choose: { leaving[item.itemID] = $0 },
             open: openAction,
             readLabel: row.readLabel,
             openLabel: isEpisodes ? "Open in Podcasts" : "Open the site",
@@ -262,10 +263,12 @@ struct FeedListSection: View {
         }
     }
 
-    private func resolve(_ item: FeedItem, as status: ItemStatus) {
-        // The row is gone at once; the rows below slide up briefly to close the gap.
+    /// Records the action once the row has played its leaving animation and closed up.
+    private func finish(_ item: FeedItem, as choice: RowAction) {
+        leaving[item.itemID] = nil
+        expandedIDs.remove(item.itemID)
         withAnimation(HeadlineMotion.close) {
-            ReadingState.resolve(itemID: item.itemID, sourceID: item.sourceID, as: status, in: context)
+            ReadingState.resolve(itemID: item.itemID, sourceID: item.sourceID, as: choice.status, in: context)
         }
     }
 }
