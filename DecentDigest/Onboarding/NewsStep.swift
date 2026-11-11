@@ -52,7 +52,7 @@ struct NewsPicker: View {
 
     static let library = try? FeedLibrary.bundled()
     /// Sites shown under an open topic before "N more".
-    static let topicPreview = 3
+    static let topicPreview = 10
 
     @Environment(\.modelContext) private var context
     @Query(sort: \Source.sortOrder) private var sources: [Source]
