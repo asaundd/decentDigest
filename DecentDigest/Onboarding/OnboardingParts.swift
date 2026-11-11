@@ -379,9 +379,13 @@ struct SearchBox: View {
                     Task { @MainActor in text = pasted.trimmingCharacters(in: .whitespacesAndNewlines) }
                 }
                 .labelStyle(.titleOnly)
-                .buttonStyle(.borderless)
+                // iOS always fills this control; a pill in the field's own color with a slate
+                // label is as quiet as it allows. (iOS checks the label stays readable.)
+                .buttonBorderShape(.capsule)
+                .controlSize(.small)
                 .font(.callout)
-                .tint(Theme.accent)
+                .tint(Theme.fieldFill)
+                .foregroundStyle(Theme.accent)
                 .fixedSize()
                 .transition(.opacity.animation(.easeOut(duration: 0.12).delay(0.2)))
             }
