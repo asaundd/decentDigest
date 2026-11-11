@@ -121,6 +121,8 @@ struct NewsPicker: View {
                         .padding(.top, 6)
                 } else if !inSettings && !addedByYou.isEmpty {
                     followingList(addedByYou, heading: "Added by you", limit: nil)
+                    PlainRule(spacing: 20)
+                        .padding(.top, 6)
                 }
                 topics
             } else {
