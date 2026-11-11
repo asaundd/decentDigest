@@ -97,6 +97,8 @@ struct NewsPicker: View {
             } else if query.isEmpty {
                 if inSettings && !followed.isEmpty {
                     followingList(followed, heading: "Following", limit: showsAllFollowed ? nil : 4)
+                    PlainRule(spacing: 20)
+                        .padding(.top, 6)
                 } else if !inSettings && !addedByYou.isEmpty {
                     followingList(addedByYou, heading: "Added by you", limit: nil)
                 }

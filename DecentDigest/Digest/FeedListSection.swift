@@ -51,7 +51,7 @@ struct FeedListSection: View {
                     }
                 }
                 .disabled(isRefreshing)
-                .accessibilityHint("Checks your feeds for new headlines")
+                .accessibilityHint("Checks your feeds for new items")
             }
         }
         .padding(.bottom, Theme.titleToFirstItem - HeadlineRow.verticalPadding)
@@ -127,7 +127,7 @@ struct FeedListSection: View {
     private var emptyText: String {
         switch (isEpisodes, isRefreshing) {
         case (false, true): "Checking your feeds…"
-        case (false, false): "No new headlines right now."
+        case (false, false): "No new news right now."
         case (true, true): "Checking your shows…"
         case (true, false): "No new episodes right now."
         }

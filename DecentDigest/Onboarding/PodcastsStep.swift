@@ -107,6 +107,9 @@ struct PodcastPicker: View {
                 ForEach(extra) { source in
                     row(title: source.title, subtitle: nil, feed: .init(kind: .podcast, feedURL: source.feedURL, title: source.title, appleID: source.appleID))
                 }
+                if inSettings {
+                    PlainRule(spacing: 20)
+                }
             }
 
             let suggestions = inSettings

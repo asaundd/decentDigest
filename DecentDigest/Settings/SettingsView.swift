@@ -137,7 +137,7 @@ struct SettingsView: View {
         case .todos:
             AgendaSettingsPage(agenda: agenda, preferences: preferences, kind: .todos)
         case .news:
-            SettingsPage(title: "News") {
+            SettingsPage(title: "News", subtitle: "Decent digest reads RSS feeds, which most news sites and blogs publish. Follow sites by topic, or add a site you read.") {
                 ShowSwitch(label: "Show news on the digest", isOn: preferenceBinding(.news))
                 if preferences.isShown(.news) {
                     PlainRule(spacing: 20)
@@ -145,7 +145,7 @@ struct SettingsView: View {
                 }
             }
         case .podcasts:
-            SettingsPage(title: "Podcasts") {
+            SettingsPage(title: "Podcasts", subtitle: "New episodes of the shows you follow show in your digest and open in the Apple Podcasts app.") {
                 ShowSwitch(label: "Show podcasts on the digest", isOn: preferenceBinding(.podcasts))
                 if preferences.isShown(.podcasts) {
                     PlainRule(spacing: 20)
@@ -403,18 +403,20 @@ struct ShowSwitch: View {
     }
 }
 
-/// "Reminders access is off for Decent digest." with a way to turn it on in iOS Settings.
-struct AccessOffNote: View {
+/// "Reminders access is off for Decent digest." with a way to turn it on in iOS Settings, or, once
+/// allowed, "… is on" with a way to turn it off there, as for location.
+struct AccessNote: View {
     var appName: String
+    var isOn: Bool
 
     @Environment(\.openURL) private var openURL
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("\(appName) access is off for Decent digest.")
+            Text("\(appName) access is \(isOn ? "on" : "off") for Decent digest.")
                 .font(.subheadline)
                 .foregroundStyle(Theme.secondary)
-            TextLink("Turn on in the Settings app ↗") {
+            TextLink(isOn ? "Turn off in the Settings app ↗" : "Turn on in the Settings app ↗") {
                 if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
             }
             .accessibilityHint("Opens Decent digest in the Settings app")
@@ -437,15 +439,23 @@ struct AgendaSettingsPage: View {
     private var isOn: Bool { preferences.isShown(section) && access == .granted }
 
     var body: some View {
-        SettingsPage(title: kind == .calendar ? "Calendar" : "To do") {
+        SettingsPage(
+            title: kind == .calendar ? "Calendar" : "To do",
+            subtitle: kind == .calendar
+                ? "Show your upcoming events from the Apple Calendar app."
+                : "Show your to-dos from the Apple Reminders app."
+        ) {
             ShowSwitch(
                 label: kind == .calendar ? "Show calendar on the digest" : "Show to-dos on the digest",
                 isOn: Binding(get: { isOn }, set: { turnOn in setShown(turnOn) })
             )
             .disabled(access == .denied)
             if access == .denied {
-                AccessOffNote(appName: kind == .calendar ? "Calendar" : "Reminders")
-            } else if isOn {
+                AccessNote(appName: kind == .calendar ? "Calendar" : "Reminders", isOn: false)
+            } else if access == .granted {
+                AccessNote(appName: kind == .calendar ? "Calendar" : "Reminders", isOn: true)
+            }
+            if isOn {
                 PlainRule(spacing: 20)
                 if kind == .calendar {
                     AgendaListPicker(lists: agenda.calendars, excluded: agenda.excludedCalendarIDs, noun: "calendar", grouped: true) { id, included in
@@ -506,7 +516,7 @@ struct ICloudSyncPage: View {
                 DashLine("Your saved items")
                 DashLine("Your reading history")
             }
-            Text("Your events and to-dos sync through Calendar and Reminders, as they always have. Each device fetches headlines and episodes fresh.")
+            Text("Your events and to-dos sync through the Apple Calendar and Reminders apps, not the Decent digest app. Each device fetches news items and episodes fresh.")
                 .font(.footnote)
                 .foregroundStyle(Theme.secondary)
                 .fixedSize(horizontal: false, vertical: true)
