@@ -113,7 +113,7 @@ private struct LeaveSwipe: ViewModifier {
             .sensoryFeedback(.impact(weight: .light), trigger: commitHaptic)
             .onAppear { swipeGuard.closeStrip = { close() } }
             .onChange(of: request, initial: true) { _, action in
-                if let action { commit(action, fromCard: true) }
+                if let action { commit(action) }
             }
             .accessibilityActions {
                 ForEach(Array(stripActions.reversed()), id: \.self) { action in
@@ -207,9 +207,7 @@ private struct LeaveSwipe: ViewModifier {
 
     // MARK: Once an action is chosen
 
-    /// - Parameter fromCard: true when chosen on the card or the panel, away from the finger: the action
-    ///   rests a little longer at the left, so the reader sees what they chose before the row closes.
-    private func commit(_ action: RowAction, fromCard: Bool = false) {
+    private func commit(_ action: RowAction) {
         guard committed == nil else { return }
         swipeGuard.restsOpen = false
         commitHaptic += 1
@@ -230,8 +228,8 @@ private struct LeaveSwipe: ViewModifier {
                 labelAtLeading = true
             }
             try? await Task.sleep(for: .seconds(0.18))
-            // 2. A beat to see what was done.
-            try? await Task.sleep(for: .seconds(fromCard ? 0.3 : 0.08))
+            // 2. A beat to see what was done, the same however it was chosen.
+            try? await Task.sleep(for: .seconds(0.18))
             // 3. The gap closes and the rows below slide up. The page holds its place meanwhile.
             scrollHold?.hold()
             withAnimation(.easeOut(duration: 0.16)) {
