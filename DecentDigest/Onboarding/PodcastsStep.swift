@@ -127,18 +127,20 @@ struct PodcastPicker: View {
     /// one; the show then appears under Following.
     private func row(title: String, subtitle: String?, feed: Following.Feed, clearsSearch: Bool = false) -> some View {
         let following = Following.isFollowing(feed.feedURL, in: followed)
-        return ChoiceRow(title: title, subtitle: subtitle, emphasized: following && !inSettings) {
-            FollowLink(title: title, isFollowing: following) {
-                if following {
-                    Following.unfollow(feed.feedURL, kind: .podcast, in: context)
-                } else {
-                    Following.follow(feed, in: context)
-                    if clearsSearch {
-                        text = ""
-                        searchFocused = false
-                    }
+        let toggle = {
+            if following {
+                Following.unfollow(feed.feedURL, kind: .podcast, in: context)
+            } else {
+                Following.follow(feed, in: context)
+                if clearsSearch {
+                    text = ""
+                    searchFocused = false
                 }
             }
+        }
+        // In search results the whole row follows the show too.
+        return ChoiceRow(title: title, subtitle: subtitle, emphasized: following && !inSettings, onTap: clearsSearch ? toggle : nil) {
+            FollowLink(title: title, isFollowing: following, toggle: toggle)
         }
     }
 

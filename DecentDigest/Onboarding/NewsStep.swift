@@ -224,20 +224,21 @@ struct NewsPicker: View {
         let isAddress = FeedFinder.looksLikeAddress(query)
         VStack(alignment: .leading, spacing: 0) {
             ForEach(matches) { feed in
-                libraryRow(feed, subtitle: Self.host(feed.siteUrl))
+                libraryRow(feed, subtitle: Self.host(feed.siteUrl), tapsToFollow: true)
             }
             if isAddress {
                 if let found {
-                    ChoiceRow(title: found.title, subtitle: [Self.host(found.siteURL ?? found.feedURL), "Feed found"].compactMap { $0 }.joined(separator: " · "), emphasized: !inSettings && isFollowing(found.feedURL)) {
-                        FollowLink(title: found.title, isFollowing: isFollowing(found.feedURL)) {
-                            if isFollowing(found.feedURL) {
-                                Following.unfollow(found.feedURL, kind: .news, in: context)
-                            } else {
-                                Following.follow(.init(kind: .news, feedURL: found.feedURL, title: found.title, siteURL: found.siteURL), in: context)
-                                // Ready for the next one; the site now shows under Added by you.
-                                clearSearch()
-                            }
+                    let toggle = {
+                        if isFollowing(found.feedURL) {
+                            Following.unfollow(found.feedURL, kind: .news, in: context)
+                        } else {
+                            Following.follow(.init(kind: .news, feedURL: found.feedURL, title: found.title, siteURL: found.siteURL), in: context)
+                            // Ready for the next one; the site now shows under Added by you.
+                            clearSearch()
                         }
+                    }
+                    ChoiceRow(title: found.title, subtitle: [Self.host(found.siteURL ?? found.feedURL), "Feed found"].compactMap { $0 }.joined(separator: " · "), emphasized: !inSettings && isFollowing(found.feedURL), onTap: toggle) {
+                        FollowLink(title: found.title, isFollowing: isFollowing(found.feedURL), toggle: toggle)
                     }
                 } else if isLooking {
                     quiet("Looking for a feed…")
@@ -272,16 +273,18 @@ struct NewsPicker: View {
 
     // MARK: Rows
 
-    private func libraryRow(_ feed: FeedLibrary.Feed, subtitle: String?, dashed: Bool = false) -> some View {
-        ChoiceRow(title: feed.title, subtitle: subtitle, emphasized: !inSettings && isFollowing(feed.feedUrl), dashed: dashed) {
-            FollowLink(title: feed.title, isFollowing: isFollowing(feed.feedUrl)) {
-                if isFollowing(feed.feedUrl) {
-                    Following.unfollow(feed.feedUrl, kind: .news, in: context)
-                } else {
-                    follow(feed)
-                    if !query.isEmpty { clearSearch() }
-                }
+    /// A library site with Follow or Unfollow. In search results the whole row follows it too.
+    private func libraryRow(_ feed: FeedLibrary.Feed, subtitle: String?, dashed: Bool = false, tapsToFollow: Bool = false) -> some View {
+        let toggle = {
+            if isFollowing(feed.feedUrl) {
+                Following.unfollow(feed.feedUrl, kind: .news, in: context)
+            } else {
+                follow(feed)
+                if !query.isEmpty { clearSearch() }
             }
+        }
+        return ChoiceRow(title: feed.title, subtitle: subtitle, emphasized: !inSettings && isFollowing(feed.feedUrl), dashed: dashed, onTap: tapsToFollow ? toggle : nil) {
+            FollowLink(title: feed.title, isFollowing: isFollowing(feed.feedUrl), toggle: toggle)
         }
     }
 

@@ -114,14 +114,18 @@ struct RevealingScrollView<Content: View>: View {
     @ViewBuilder var content: Content
 
     @State private var searchReveal = SearchReveal()
+    @State private var viewHeight: CGFloat = 0
 
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
                 content
-                    // Room to scroll the search box up to the top while the keyboard is open.
-                    .padding(.bottom, keyboardShown ? 400 : 0)
+                    // Room to keep the search box at the top while the keyboard is open: a full
+                    // screen's worth, so the page never runs short and slides back down when the
+                    // results below the box change (as with the first letter typed).
+                    .padding(.bottom, keyboardShown ? max(viewHeight, 400) : 0)
             }
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { viewHeight = $0 }
             .scrollDismissesKeyboard(.interactively)
             .environment(searchReveal)
             .onChange(of: searchReveal.requests) { _, _ in
@@ -224,6 +228,8 @@ struct ChoiceRow<Trailing: View>: View {
     var emphasized = false
     /// A gray dash before the name, in a slightly smaller, lighter type, for sites listed under a topic.
     var dashed = false
+    /// Makes the whole row a tap target for the same action as its link, as in search results.
+    var onTap: (() -> Void)? = nil
     @ViewBuilder var trailing: Trailing
 
     var body: some View {
@@ -242,6 +248,7 @@ struct ChoiceRow<Trailing: View>: View {
         }
         // Dashed rows sit as close as the calendar and Reminders lists.
         .padding(.vertical, dashed ? 4 : 6)
+        .modifier(RowTap(action: onTap))
     }
 
     private var choiceText: some View {
@@ -256,6 +263,22 @@ struct ChoiceRow<Trailing: View>: View {
                     .foregroundStyle(Theme.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
+        }
+    }
+}
+
+/// A tap anywhere on a row, only when the row has an action, so rows inside a button (a topic)
+/// still pass their taps to it.
+private struct RowTap: ViewModifier {
+    var action: (() -> Void)?
+
+    func body(content: Content) -> some View {
+        if let action {
+            content
+                .contentShape(Rectangle())
+                .onTapGesture(perform: action)
+        } else {
+            content
         }
     }
 }
@@ -340,7 +363,8 @@ struct SearchBox: View {
     var body: some View {
         HStack(spacing: 12) {
             field
-            if isFocused.wrappedValue {
+            // Stays while there's a search, even after the keyboard is swiped away.
+            if isFocused.wrappedValue || !text.isEmpty {
                 Button {
                     text = ""
                     isFocused.wrappedValue = false
@@ -362,7 +386,7 @@ struct SearchBox: View {
                 ))
             }
         }
-        .animation(.easeOut(duration: 0.2), value: isFocused.wrappedValue)
+        .animation(.easeOut(duration: 0.2), value: isFocused.wrappedValue || !text.isEmpty)
         .id(Self.scrollID)
         .onChange(of: isFocused.wrappedValue) { _, focused in
             if focused { reveal?.request() }
