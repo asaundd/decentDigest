@@ -8,6 +8,7 @@ struct CalendarSectionView: View {
     var model: AgendaModel
 
     @Environment(\.openURL) private var openURL
+    @Environment(\.scrollHold) private var scrollHold
     @State private var expandedDays: Set<Date> = []
     @State private var showsAll = false
     @State private var openIDs: Set<String> = []
@@ -89,7 +90,10 @@ struct CalendarSectionView: View {
     }
 
     private func toggle(_ id: String) {
-        if openIDs.remove(id) == nil {
+        if openIDs.contains(id) {
+            scrollHold?.hold()
+            openIDs.remove(id)
+        } else {
             openIDs.insert(id)
         }
     }

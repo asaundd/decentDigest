@@ -11,6 +11,7 @@ struct SavedSectionView: View {
 
     @Environment(\.modelContext) private var context
     @Environment(\.openURL) private var openURL
+    @Environment(\.scrollHold) private var scrollHold
 
     @Query private var items: [FeedItem]
     @Query private var states: [ItemState]
@@ -120,7 +121,10 @@ struct SavedSectionView: View {
             ReadingState.markOpened(itemID: seen.itemID, sourceID: seen.sourceID, in: context)
         }
         // No animation, so the title stays put while the details appear under it.
-        if expandedIDs.remove(item.itemID) == nil {
+        if expandedIDs.contains(item.itemID) {
+            scrollHold?.hold()
+            expandedIDs.remove(item.itemID)
+        } else {
             expandedIDs.insert(item.itemID)
             pendingReveal = item.itemID
         }

@@ -37,6 +37,12 @@ struct DigestView: View {
     @State private var logoProgress: Double = 0
     @State private var logoOpacity: Double = 1
     @State private var showsLogo = false
+    /// Empty space held at the foot of the page after a row near the bottom closes, so the page stays
+    /// where it is instead of scrolling back. It goes once it is out of view.
+    @State private var bottomSlack: CGFloat = 0
+    @State private var contentHeight: CGFloat = 0
+    /// A row closing asks the page to hold its place for a moment.
+    @State private var scrollHold = ScrollHold()
 
     var body: some View {
         // A plain scrolling page. (A List re-measured expanded rows late, which made titles jump.)
@@ -60,7 +66,18 @@ struct DigestView: View {
                         .digestRow()
                 }
                 .opacity(revealed ? 1 : 0)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+                    keepPlace(newHeight: height)
+                }
+                .padding(.bottom, bottomSlack)
             }
+            // The held space goes as soon as it can't be seen, so it never shows as a gap.
+            .onScrollGeometryChange(for: Bool.self) { geometry in
+                geometry.visibleRect.maxY < geometry.contentSize.height - bottomSlack
+            } action: { _, slackHidden in
+                if slackHidden, bottomSlack > 0 { bottomSlack = 0 }
+            }
+            .environment(\.scrollHold, scrollHold)
             // Pull to refresh on the digest only. Set here, on the page's own scroll view, so it
             // doesn't reach the scroll views in Settings and setup, where a pull down closes the sheet.
             .refreshable {
@@ -95,6 +112,11 @@ struct DigestView: View {
             }
         }
         .task { await playLaunch() }
+        // On first launch the page stays hidden under setup, then fades in when setup is done.
+        .onChange(of: preferences.hasFinishedSetup) { _, finished in
+            guard finished, !revealed else { return }
+            withAnimation(.easeOut(duration: 0.25)) { revealed = true }
+        }
         .blur(radius: panel == nil ? 0 : 2)
         .overlay { ArticlePanelHost(panel: $panel) }
         .sheet(isPresented: $showsSettings, onDismiss: {
@@ -147,10 +169,11 @@ struct DigestView: View {
     /// (Calendar and Reminders; stored news and the cached forecast are already there), then the logo
     /// fades as the page fades in, whole (about 0.25s). A read still going after 0.6s shows placeholder
     /// bars in its section. With Reduce Motion on, the page just fades in. On first launch the welcome
-    /// page plays its own version, so the page shows at once underneath it.
+    /// page plays its own version, and the page stays hidden under setup until it is done, so nothing
+    /// shows while setup slides up.
     private func playLaunch() async {
-        guard !revealed else { return }
-        guard preferences.hasFinishedSetup, !LaunchIntro.hasPlayed else {
+        guard !revealed, preferences.hasFinishedSetup else { return }
+        guard !LaunchIntro.hasPlayed else {
             revealed = true
             return
         }
@@ -170,6 +193,18 @@ struct DigestView: View {
         }
         try? await Task.sleep(for: .seconds(0.25))
         showsLogo = false
+    }
+
+    /// When an open row closes near the foot of the page, the page would get shorter and scroll back.
+    /// Holding the lost height as empty space keeps it still; the space goes once it is out of view.
+    private func keepPlace(newHeight: CGFloat) {
+        let change = newHeight - contentHeight
+        contentHeight = newHeight
+        if change < 0, scrollHold.isHolding {
+            bottomSlack -= change
+        } else if change > 0, bottomSlack > 0 {
+            bottomSlack = max(0, bottomSlack - change)
+        }
     }
 
     private func reloadAgenda() async {

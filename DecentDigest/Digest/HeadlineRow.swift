@@ -73,7 +73,7 @@ struct Headline: Identifiable {
 /// The actions a headline offers. A nil action is left out.
 struct HeadlineActions {
     var save: (() -> Void)?
-    /// ↑ Relevant and ↓ Not relevant, or ✓ Read alone when reading history is off.
+    /// ↓ Not relevant and ↑ Relevant, in the swipe's order, or ✓ Read alone when reading history is off.
     var choices: [RowAction] = RowAction.choices(keepsHistory: true)
     /// Plays the row's leaving animation, then records the action.
     var choose: (RowAction) -> Void
@@ -178,7 +178,7 @@ struct HeadlineRow: View {
             .foregroundStyle(Theme.secondary)
     }
 
-    /// The card: byline with Save, ↑ and ↓ at the top right where the thumb is, then the text,
+    /// The card: byline with Save, ↓ and ↑ at the top right where the thumb is, then the text,
     /// then the way to read it.
     private var expandedDetail: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -277,8 +277,8 @@ struct ActionLinks: View {
     }
 }
 
-/// Small square buttons for Save (when offered), then ↑ Relevant and ↓ Not relevant, or ✓ Read when
-/// reading history is off.
+/// Small square buttons for Save (when offered), then ↓ Not relevant and ↑ Relevant (the same order as
+/// the swipe), or ✓ Read when reading history is off.
 struct JudgmentButtons: View {
     var actions: HeadlineActions
 

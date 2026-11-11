@@ -49,8 +49,23 @@ final class SwipeGuard: @unchecked Sendable {
     }
 }
 
+/// Lets a closing row ask the digest to hold its scroll position for a moment.
+/// Taps and layout both run on the main thread.
+final class ScrollHold: @unchecked Sendable {
+    private(set) var until = Date.distantPast
+
+    func hold() {
+        until = .now.addingTimeInterval(0.5)
+    }
+
+    var isHolding: Bool { Date.now < until }
+}
+
 extension EnvironmentValues {
     @Entry var swipeGuard: SwipeGuard? = nil
+    /// Told just before an open row closes, so the page keeps its place instead of scrolling back
+    /// when a row near its bottom gets shorter.
+    @Entry var scrollHold: ScrollHold? = nil
     /// How far a to-do's swipe has gone toward checking it off, from 0 to 1. Draws the strike on its title.
     @Entry var swipeProgress: Double = 0
 }

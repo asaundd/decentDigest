@@ -30,10 +30,11 @@ enum RowAction: String, Hashable, Sendable {
         }
     }
 
-    /// The card's and panel's buttons after Save: ↑ Relevant and ↓ Not relevant, or one ✓ Read when
-    /// reading history is off.
+    /// The actions in the order they show, left to right, on the card, the panel and the open swipe:
+    /// ↓ Not relevant then ↑ Relevant, or one ✓ Read when reading history is off. The last one is what
+    /// a full swipe does.
     static func choices(keepsHistory: Bool) -> [RowAction] {
-        keepsHistory ? [.relevant, .notRelevant] : [.read]
+        keepsHistory ? [.notRelevant, .relevant] : [.read]
     }
 }
 
@@ -43,7 +44,7 @@ extension View {
     /// panel (`request`), the row slides off to the left with the action riding out at its edge, rests
     /// a beat, then closes up and the rows below slide up. `perform` records the action at the end.
     func leaveSwipe(_ choices: [RowAction], request: RowAction?, perform: @escaping (RowAction) -> Void) -> some View {
-        modifier(LeaveSwipe(stripActions: Array(choices.reversed()), request: request, perform: perform))
+        modifier(LeaveSwipe(stripActions: choices, request: request, perform: perform))
     }
 }
 

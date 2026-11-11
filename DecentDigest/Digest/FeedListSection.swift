@@ -17,6 +17,7 @@ struct FeedListSection: View {
 
     @Environment(\.modelContext) private var context
     @Environment(\.openURL) private var openURL
+    @Environment(\.scrollHold) private var scrollHold
 
     @Query(sort: \FeedItem.publishedAt, order: .reverse) private var items: [FeedItem]
     @Query private var sources: [Source]
@@ -232,7 +233,10 @@ struct FeedListSection: View {
         // Rows already open count as seen once another row is tapped, but stay open.
         for other in expandedIDs { markSeen(other) }
         // No animation, so the title stays put while the details appear under it.
-        if expandedIDs.remove(id) == nil {
+        if expandedIDs.contains(id) {
+            scrollHold?.hold()
+            expandedIDs.remove(id)
+        } else {
             expandedIDs.insert(id)
             pendingReveal = id
         }

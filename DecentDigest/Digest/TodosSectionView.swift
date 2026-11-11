@@ -7,6 +7,7 @@ struct TodosSectionView: View {
     var model: AgendaModel
 
     @Environment(\.openURL) private var openURL
+    @Environment(\.scrollHold) private var scrollHold
     @State private var expandedDays: Set<Date> = []
     @State private var anytimeExpanded = false
     @State private var showsAll = false
@@ -132,6 +133,7 @@ struct TodosSectionView: View {
 
     /// Opens or closes a to-do's card. A checked-off to-do leaves when its card closes.
     private func tap(_ todo: TodoEntry) {
+        if openIDs.contains(todo.id) { scrollHold?.hold() }
         if openIDs.remove(todo.id) == nil {
             openIDs.insert(todo.id)
         } else if model.checkedIDs.contains(todo.id) {
