@@ -318,8 +318,9 @@ struct QuietLink: View {
     }
 }
 
-/// A filled search box, so it's clear it can be typed in. An ✕ clears it while it holds text, and
-/// the keyboard's return key (or a drag down on the page) puts the keyboard away. When tapped, it asks
+/// A filled search box, so it's clear it can be typed in. An ✕ clears it while it holds text. While
+/// it's being typed in, Cancel to its right clears it and puts the keyboard away, as do the return
+/// key and a drag down on the page. When tapped, it asks
 /// its page to scroll it to the top, so results have room above the keyboard.
 struct SearchBox: View {
     static let scrollID = "searchBox"
@@ -336,6 +337,32 @@ struct SearchBox: View {
     @Environment(SearchReveal.self) private var reveal: SearchReveal?
 
     var body: some View {
+        HStack(spacing: 12) {
+            field
+            if isFocused.wrappedValue {
+                Button {
+                    text = ""
+                    isFocused.wrappedValue = false
+                } label: {
+                    Text("Cancel")
+                        .font(.body)
+                        .foregroundStyle(Theme.accent)
+                        .fixedSize()
+                        .frame(minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.borderless)
+                .accessibilityHint("Clears the search and closes the keyboard")
+            }
+        }
+        .animation(.easeOut(duration: 0.2), value: isFocused.wrappedValue)
+        .id(Self.scrollID)
+        .onChange(of: isFocused.wrappedValue) { _, focused in
+            if focused { reveal?.request() }
+        }
+    }
+
+    private var field: some View {
         HStack(spacing: 8) {
             TextField(placeholder, text: $text)
                 .keyboardType(keyboard)
@@ -363,10 +390,6 @@ struct SearchBox: View {
         .padding(.vertical, text.isEmpty ? 10 : 6)
         .frame(minHeight: 44)
         .background(Theme.fieldFill, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .id(Self.scrollID)
-        .onChange(of: isFocused.wrappedValue) { _, focused in
-            if focused { reveal?.request() }
-        }
     }
 }
 
