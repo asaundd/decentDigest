@@ -4,8 +4,8 @@ import UIKit
 
 /// The weather under the date, in words: the temperature now with today in a few words, then a
 /// gray line on what changes over the next two days and anything notable later in the week.
-/// Show week, at the bottom, lists the rest of the week, then one footer line: the place (which opens
-/// Weather settings), Show less and Weather ↗.
+/// Show week, at the bottom, lists the rest of the week under it and becomes Show less in the same
+/// place; under the week, one line: the place (which opens Weather settings) and Weather ↗.
 struct WeatherLines: View {
     var model: WeatherModel
     /// Opens Settings › Weather.
@@ -53,16 +53,16 @@ struct WeatherLines: View {
                     .padding(.top, 4)
             }
 
-            if showsWeek {
-                week(report.days, unit: unit)
-                    .padding(.top, 12)
-                // One footer line, like the other sections': the place, Show less, Weather ↗.
-                openFooter(place)
-                    .padding(.top, 8)
-            } else if !report.days.isEmpty {
-                // At the bottom, like Show all under News and the agenda.
+            if !report.days.isEmpty {
+                // Show week, then Show less in the same place once the week is open.
                 weekToggle
                     .padding(.top, 4)
+            }
+            if showsWeek {
+                week(report.days, unit: unit)
+                    .padding(.top, 6)
+                openFooter(place)
+                    .padding(.top, 8)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -95,9 +95,9 @@ struct WeatherLines: View {
         .monospacedDigit()
     }
 
-    /// Show week, or Show less once the week is open. A gray quiet link, like the other footers.
+    /// Show week, or Show less once the week is open. A footer link, like Show all.
     private var weekToggle: some View {
-        QuietLink(showsWeek ? "Show less" : "Show week", still: true) {
+        FooterLink(showsWeek ? "Show less" : "Show week", still: true) {
             // A clean swap: the label and the week change at once, with no fade or slide.
             var instant = Transaction()
             instant.disablesAnimations = true
@@ -111,19 +111,18 @@ struct WeatherLines: View {
         .accessibilityHint(showsWeek ? "Hides the week" : "Lists the rest of the week")
     }
 
-    /// Under the open week, on one gray line like the other sections' footers: "For Brooklyn, NY"
-    /// (the city opens Weather settings, with a small location arrow when it comes from the device's
-    /// location), Show less, then Weather ↗. On a narrow screen the links drop under the place.
+    /// Under the open week, on one line like the other sections' footers: "For Brooklyn, NY" (the
+    /// city opens Weather settings, with a small location arrow when it comes from the device's
+    /// location), then Weather ↗. On a narrow screen Weather ↗ drops under the place.
     private func openFooter(_ place: WeatherPlace) -> some View {
         ViewThatFits(in: .horizontal) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 placeLink(place)
-                dot
-                footerLinks
+                appLink(afterDot: true)
             }
             VStack(alignment: .leading, spacing: 0) {
                 placeLink(place)
-                HStack(alignment: .firstTextBaseline, spacing: 6) { footerLinks }
+                appLink(afterDot: false)
             }
         }
         .font(.subheadline)
@@ -131,12 +130,13 @@ struct WeatherLines: View {
     }
 
     @ViewBuilder
-    private var footerLinks: some View {
-        weekToggle
+    private func appLink(afterDot: Bool) -> some View {
         if WeatherApp.canOpen {
-            dot
-            QuietLink("Weather ↗", still: true) { openURL(WeatherApp.url) }
-                .accessibilityLabel("Open Weather")
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                if afterDot { dot }
+                FooterLink("Weather ↗", still: true) { openURL(WeatherApp.url) }
+                    .accessibilityLabel("Open Weather")
+            }
         }
     }
 
@@ -151,7 +151,7 @@ struct WeatherLines: View {
             Text("For")
                 .foregroundStyle(Theme.secondary)
                 .accessibilityHidden(true)
-            QuietLink(place.name, still: true, action: openSettings)
+            FooterLink(place.name, still: true, action: openSettings)
                 .accessibilityLabel(place.isCurrentLocation ? "For \(place.name), current location" : "For \(place.name)")
                 .accessibilityHint("Changes where the weather is for")
             if place.isCurrentLocation {

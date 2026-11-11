@@ -352,6 +352,35 @@ struct QuietLink: View {
     }
 }
 
+/// A link at the foot of a section (Show all, Show less, Calendar ↗, Weather's Show week): slate and
+/// semibold with no underline, so the only line near a section's end is the rule. Links inside cards
+/// and the panel keep their underline (`TextLink`).
+struct FooterLink: View {
+    var title: String
+    /// True for a link whose label changes when tapped (Show all / Show less): it skips the pressed
+    /// dimming, which otherwise fades back in on the new label.
+    var still = false
+    var action: () -> Void
+
+    init(_ title: String, still: Bool = false, action: @escaping () -> Void) {
+        self.title = title
+        self.still = still
+        self.action = action
+    }
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(Theme.actionFont)
+                .foregroundStyle(Theme.accent)
+                .fixedSize()
+                .padding(.vertical, 4)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(QuietLinkStyle(still: still))
+    }
+}
+
 /// The borderless look, optionally without the pressed dimming.
 private struct QuietLinkStyle: PrimitiveButtonStyle {
     var still: Bool
