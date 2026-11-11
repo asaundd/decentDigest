@@ -53,6 +53,13 @@ struct DigestView: View {
                         .digestRow()
                 }
             }
+            // Pull to refresh on the digest only. Set here, on the page's own scroll view, so it
+            // doesn't reach the scroll views in Settings and setup, where a pull down closes the sheet.
+            .refreshable {
+                await agenda.reload()
+                await weather.reload(force: true)
+                await runRefresh(force: true)
+            }
             .foregroundStyle(Theme.ink)
             .tint(Theme.accent)
             .background(
@@ -97,11 +104,6 @@ struct DigestView: View {
             NavigationStack {
                 WeatherSettingsView(model: weather, preferences: preferences)
             }
-        }
-        .refreshable {
-            await agenda.reload()
-            await weather.reload(force: true)
-            await runRefresh(force: true)
         }
         .onChange(of: preferences.appearance, initial: true) { _, appearance in
             AppearanceStyle.apply(appearance)
