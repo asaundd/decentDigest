@@ -86,33 +86,59 @@ struct OnboardingFlow: View {
 }
 
 /// The first page: the logo, the name, what the app is, and three promises.
+/// On first launch the logo draws itself at the center as on every launch, then shrinks and glides up
+/// into its place at the top while the words and Get started fade in. With Reduce Motion on, the page
+/// just fades in.
 struct WelcomePage: View {
     var start: () -> Void
+
+    private enum Intro {
+        /// The lines draw in at the center.
+        case drawing
+        /// The logo glides up to the top of the page.
+        case gliding
+        case done
+    }
+
+    /// The logo's width at the top of the page.
+    private static let logoWidth: CGFloat = 64
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var intro: Intro = LaunchIntro.hasPlayed ? .done : .drawing
+    @State private var wordsShown = LaunchIntro.hasPlayed
+    @State private var logoProgress: Double = 0
+    /// Where the logo at the top of the page sits on screen.
+    @State private var logoFrame: CGRect = .zero
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 LogoMark()
-                    .frame(width: 64)
+                    .frame(width: Self.logoWidth)
+                    .opacity(intro == .done && wordsShown ? 1 : 0)
+                    .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { logoFrame = $0 }
                     .padding(.top, 48)
-                Text("Decent digest")
-                    .font(Theme.wordmarkFont)
-                    .foregroundStyle(Theme.secondary)
-                    .padding(.top, 20)
-                Text("Your personal digest starts here.")
-                    .font(Theme.dateFont)
-                    .accessibilityAddTraits(.isHeader)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 6)
-                Text("Decent digest can show your weather, calendar, reminders, news, and more from the Apple apps you already use, all in one clean view.")
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 12)
-                SectionRule()
-                VStack(alignment: .leading, spacing: 8) {
-                    DashLine("No account, no ads, and no tracking.")
-                    DashLine("What you follow, save, and read stays on your device and in your own iCloud. It's never shared with developers.")
-                    DashLine("Each step is optional and can be changed later.")
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("Decent digest")
+                        .font(Theme.wordmarkFont)
+                        .foregroundStyle(Theme.secondary)
+                        .padding(.top, 20)
+                    Text("Your personal digest starts here.")
+                        .font(Theme.dateFont)
+                        .accessibilityAddTraits(.isHeader)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 6)
+                    Text("Decent digest can show your weather, calendar, reminders, news, and more from the Apple apps you already use, all in one clean view.")
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 12)
+                    SectionRule()
+                    VStack(alignment: .leading, spacing: 8) {
+                        DashLine("Privacy first: no tracking, no ads, and no account required.")
+                        DashLine("What you follow, save, and read stays on your device and in your own iCloud. It's never shared with developers.")
+                        DashLine("Each step is optional and can be changed later.")
+                    }
                 }
+                .opacity(wordsShown ? 1 : 0)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, Theme.margin)
@@ -123,9 +149,50 @@ struct WelcomePage: View {
                 .padding(.horizontal, Theme.margin)
                 .padding(.top, 8)
                 .padding(.bottom, 12)
-                .background(Theme.page)
+                .background(Theme.bottomBarFill)
+                .opacity(wordsShown ? 1 : 0)
         }
+        .overlay { introLogo }
         .onboardingPage()
+        .task { await playIntro() }
+    }
+
+    /// The logo while it draws at the center, then glides up into its place.
+    @ViewBuilder
+    private var introLogo: some View {
+        if intro != .done {
+            GeometryReader { proxy in
+                let page = proxy.frame(in: .global)
+                let centered = intro == .drawing
+                let width = centered ? LaunchLogo.width : Self.logoWidth
+                let position = centered
+                    ? CGPoint(x: proxy.size.width / 2, y: proxy.size.height / 2)
+                    : CGPoint(x: logoFrame.midX - page.minX, y: logoFrame.midY - page.minY)
+                LogoMark(progress: logoProgress)
+                    .frame(width: width)
+                    .position(position)
+            }
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+        }
+    }
+
+    private func playIntro() async {
+        guard intro != .done else { return }
+        LaunchIntro.hasPlayed = true
+        if reduceMotion {
+            intro = .done
+            withAnimation(.easeOut(duration: 0.25)) { wordsShown = true }
+            return
+        }
+        withAnimation(.easeInOut(duration: LaunchLogo.drawDuration)) { logoProgress = 1 }
+        try? await Task.sleep(for: .seconds(LaunchLogo.drawDuration))
+        withAnimation(.easeInOut(duration: 0.35)) {
+            intro = .gliding
+            wordsShown = true
+        }
+        try? await Task.sleep(for: .seconds(0.35))
+        intro = .done
     }
 }
 
@@ -211,7 +278,7 @@ struct ReadyPage: View {
                 .padding(.horizontal, Theme.margin)
                 .padding(.top, 8)
                 .padding(.bottom, 12)
-                .background(Theme.page)
+                .background(Theme.bottomBarFill)
         }
         .onboardingPage()
     }

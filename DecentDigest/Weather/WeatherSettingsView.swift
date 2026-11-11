@@ -27,7 +27,6 @@ struct WeatherSettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .presentationBackground(Theme.page)
     }
 }
 

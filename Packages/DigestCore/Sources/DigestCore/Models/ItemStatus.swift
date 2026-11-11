@@ -5,11 +5,11 @@ import Foundation
 public enum ItemStatus: String, Codable, Sendable, CaseIterable {
     /// Arrived and not yet seen.
     case new
-    /// Opened.
+    /// Opened, or marked Read (when reading history is off).
     case read
-    /// Marked useful (swipe right).
+    /// Marked relevant (↑, or a full swipe left).
     case useful
-    /// Marked not relevant (swipe left).
+    /// Marked not relevant (↓).
     case notRelevant
     /// Expired without being touched.
     case ignored

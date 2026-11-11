@@ -11,14 +11,18 @@ struct SavedSectionView: View {
 
     @Environment(\.modelContext) private var context
     @Environment(\.openURL) private var openURL
+    @Environment(\.scrollHold) private var scrollHold
 
     @Query private var items: [FeedItem]
     @Query private var states: [ItemState]
     @Query private var sources: [Source]
+    @AppStorage(DigestPreferences.readingHistoryOffKey) private var historyOff = false
 
     /// Open rows stay open until the reader closes them.
     @State private var expandedIDs: Set<String> = []
     @State private var pendingReveal: String?
+    /// Rows playing their leaving animation, and what was chosen for each.
+    @State private var leaving: [String: RowAction] = [:]
 
     var body: some View {
         Text(DigestSection.saved.title)
@@ -47,7 +51,9 @@ struct SavedSectionView: View {
             // A row that leaves is gone at once. One that joins waits for the slide, then fades in,
             // so it never overlaps the rows still moving.
             .transition(HeadlineMotion.transition)
-            .judgmentSwipes(useful: { resolve(item, as: .useful) }, notUseful: { resolve(item, as: .notRelevant) })
+            .leaveSwipe(choices, request: leaving[item.itemID]) { choice in
+                finish(item, as: choice)
+            }
         }
     }
 
@@ -91,11 +97,13 @@ struct SavedSectionView: View {
             openAction = nil
         }
         var actions = HeadlineActions(
-            useful: { resolve(item, as: .useful) },
-            notUseful: { resolve(item, as: .notRelevant) },
+            choices: choices,
+            choose: { leaving[item.itemID] = $0 },
             open: openAction,
             readLabel: headline.readLabel,
-            openLabel: item.isEpisode ? "Open in Podcasts" : "Open the site"
+            openLabel: item.isEpisode ? "Open in Podcasts" : "Open the site",
+            share: item.isEpisode ? nil : headline.link,
+            shareTitle: headline.title
         )
         if headline.opensPanel {
             let panelActions = actions
@@ -113,7 +121,10 @@ struct SavedSectionView: View {
             ReadingState.markOpened(itemID: seen.itemID, sourceID: seen.sourceID, in: context)
         }
         // No animation, so the title stays put while the details appear under it.
-        if expandedIDs.remove(item.itemID) == nil {
+        if expandedIDs.contains(item.itemID) {
+            scrollHold?.hold()
+            expandedIDs.remove(item.itemID)
+        } else {
             expandedIDs.insert(item.itemID)
             pendingReveal = item.itemID
         }
@@ -132,12 +143,16 @@ struct SavedSectionView: View {
         EpisodeLink.open(showID: showID, guid: item.guid, title: item.title, fallback: item.linkURL, with: openURL)
     }
 
-    private func resolve(_ item: SavedItem, as status: ItemStatus) {
+    private var choices: [RowAction] { RowAction.choices(keepsHistory: !historyOff) }
+
+    /// Records the action once the row has played its leaving animation and closed up.
+    private func finish(_ item: SavedItem, as choice: RowAction) {
         let itemID = item.itemID
         let sourceID = item.sourceID
-        // The row is gone at once; the rows below slide up briefly to close the gap.
+        leaving[itemID] = nil
+        expandedIDs.remove(itemID)
         withAnimation(HeadlineMotion.close) {
-            ReadingState.resolve(itemID: itemID, sourceID: sourceID, as: status, in: context)
+            ReadingState.resolve(itemID: itemID, sourceID: sourceID, as: choice.status, in: context)
         }
     }
 }

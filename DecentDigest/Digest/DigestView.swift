@@ -18,6 +18,7 @@ struct DigestView: View {
     var sectionOrder: [DigestSection] = DigestSection.allCases
 
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query(sort: \SavedItem.savedAt, order: .reverse) private var saved: [SavedItem]
     @State private var panel: PanelRequest?
     @State private var showsWeatherSettings = false
@@ -30,10 +31,32 @@ struct DigestView: View {
     @State private var isRefreshing = false
     /// Where the visible list ends on screen.
     @State private var listBottom: CGFloat = .infinity
+    /// False until the launch animation lets the page show, whole.
+    @State private var revealed = false
+    /// How much of the launch logo is drawn, and whether it is still on screen.
+    @State private var logoProgress: Double = 0
+    @State private var logoOpacity: Double = 1
+    @State private var showsLogo = false
+    /// Empty space held at the foot of the page after a row near the bottom closes, so the page stays
+    /// where it is instead of scrolling back. It goes once it is out of view.
+    @State private var bottomSlack: CGFloat = 0
+    /// A row closing asks the page to hold its place for a moment. It also keeps the last scroll
+    /// position seen, outside of view state, so scrolling never redraws the page.
+    @State private var scrollHold = ScrollHold()
+    /// Set only to scroll an opened row into view, by offset. (Scrolling to a row by id made iOS keep
+    /// that row's bottom pinned, so closing it later pulled the page back.)
+    @State private var scrollPosition = ScrollPosition(idType: String.self)
+    /// When the app last went to the background.
+    @State private var leftAt: Date?
+    /// Bumped to open the page fresh after a long time away: every section starts over, cards closed.
+    @State private var pageEdition = 0
+    /// Back sooner than this, the page is just as it was left, and new items wait for a pull to
+    /// refresh. Away longer, it opens fresh, at the top, with new items in place.
+    private static let freshAfter: TimeInterval = 30 * 60
 
     var body: some View {
         // A plain scrolling page. (A List re-measured expanded rows late, which made titles jump.)
-        ScrollViewReader { proxy in
+        ScrollViewReader { _ in
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     header
@@ -43,7 +66,7 @@ struct DigestView: View {
                         if isShown(section) {
                             SectionRule()
                                 .digestRow()
-                            sectionView(section) { id, bottom in reveal(id, bottom: bottom, with: proxy) }
+                            sectionView(section) { _, bottom in reveal(bottom: bottom) }
                         }
                     }
                     SectionRule()
@@ -52,12 +75,31 @@ struct DigestView: View {
                         .padding(.bottom, Theme.margin)
                         .digestRow()
                 }
+                .id(pageEdition)
+                .opacity(revealed ? 1 : 0)
+                .padding(.bottom, bottomSlack)
             }
+            // The held space shrinks as soon as less of it is needed, so it never shows as a gap.
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                geometry.contentOffset.y + geometry.containerSize.height
+                    - geometry.contentInsets.bottom - geometry.contentSize.height
+            } action: { _, overhang in
+                scrollHold.overhang = overhang
+                trimSlack()
+            }
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                geometry.contentOffset.y
+            } action: { _, offset in
+                scrollHold.offset = offset
+            }
+            .scrollPosition($scrollPosition)
+            .environment(\.scrollHold, scrollHold)
+            .onAppear { scrollHold.onHold = { holdPlace() } }
             // Pull to refresh on the digest only. Set here, on the page's own scroll view, so it
             // doesn't reach the scroll views in Settings and setup, where a pull down closes the sheet.
             .refreshable {
-                await agenda.reload()
-                await weather.reload(force: true)
+                await reloadAgenda()
+                await reloadWeather(force: true)
                 await runRefresh(force: true)
             }
             .foregroundStyle(Theme.ink)
@@ -77,6 +119,20 @@ struct DigestView: View {
             SettingsButton { showsSettings = true }
                 .padding(.trailing, 16)
                 .padding(.top, 4)
+                .opacity(revealed ? 1 : 0)
+        }
+        // The launch logo draws itself at the center, then fades as the page fades in.
+        .overlay {
+            if showsLogo {
+                LaunchLogo(progress: logoProgress)
+                    .opacity(logoOpacity)
+            }
+        }
+        .task { await playLaunch() }
+        // On first launch the page stays hidden under setup, then fades in when setup is done.
+        .onChange(of: preferences.hasFinishedSetup) { _, finished in
+            guard finished, !revealed else { return }
+            withAnimation(.easeOut(duration: 0.25)) { revealed = true }
         }
         .blur(radius: panel == nil ? 0 : 2)
         .overlay { ArticlePanelHost(panel: $panel) }
@@ -94,8 +150,8 @@ struct DigestView: View {
         .fullScreenCover(isPresented: setupBinding) {
             OnboardingFlow(agenda: agenda, weather: weather, preferences: preferences) {
                 showsSetup = false
-                Task { await agenda.reload() }
-                Task { await weather.reload() }
+                Task { await reloadAgenda() }
+                Task { await reloadWeather() }
                 Task { await runRefresh(force: false) }
             }
         }
@@ -110,20 +166,112 @@ struct DigestView: View {
         }
         .onChange(of: scenePhase, initial: true) { _, phase in
             // Checked-off to-dos still showing leave when the app goes away.
-            if phase == .background { agenda.finishAllChecked() }
+            if phase == .background {
+                agenda.finishAllChecked()
+                leftAt = .now
+            }
             guard phase == .active else { return }
-            Task { await agenda.reload() }
-            Task { await weather.reload() }
+            Task { await reloadAgenda() }
+            Task { await reloadWeather() }
+            // Nothing moves on a page the reader is in the middle of: back soon, new items wait for
+            // a pull to refresh; back after a long time, the page opens fresh with them in place.
+            if let left = leftAt {
+                leftAt = nil
+                guard Date.now.timeIntervalSince(left) >= Self.freshAfter else { return }
+                startFresh()
+            }
             Task { await runRefresh(force: false) }
         }
         // Edits made in Calendar or Reminders, or checking off here, show within moments.
         .onReceive(NotificationCenter.default.publisher(for: .EKEventStoreChanged).receive(on: RunLoop.main)) { _ in
-            Task { await agenda.reload() }
+            Task { await reloadAgenda() }
         }
         // A new day, or a time zone change.
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification).receive(on: RunLoop.main)) { _ in
-            Task { await agenda.reload() }
+            Task { await reloadAgenda() }
         }
+    }
+
+    /// On a cold launch: the logo draws itself (about 0.5s) while the phone's own reads finish
+    /// (Calendar and Reminders; stored news and the cached forecast are already there), then the logo
+    /// fades as the page fades in, whole (about 0.25s). A read still going after 0.6s shows placeholder
+    /// bars in its section. With Reduce Motion on, the page just fades in. On first launch the welcome
+    /// page plays its own version, and the page stays hidden under setup until it is done, so nothing
+    /// shows while setup slides up.
+    private func playLaunch() async {
+        guard !revealed, preferences.hasFinishedSetup else { return }
+        guard !LaunchIntro.hasPlayed else {
+            revealed = true
+            return
+        }
+        LaunchIntro.hasPlayed = true
+        let start = ContinuousClock.now
+        if !reduceMotion {
+            showsLogo = true
+            withAnimation(.easeInOut(duration: LaunchLogo.drawDuration)) { logoProgress = 1 }
+            try? await Task.sleep(for: .seconds(LaunchLogo.drawDuration))
+        }
+        while !agenda.hasLoaded, ContinuousClock.now - start < .milliseconds(600) {
+            try? await Task.sleep(for: .milliseconds(30))
+        }
+        withAnimation(.easeOut(duration: 0.25)) {
+            revealed = true
+            logoOpacity = 0
+        }
+        try? await Task.sleep(for: .seconds(0.25))
+        showsLogo = false
+    }
+
+    /// When a row near the foot of the page closes or leaves, the page gets shorter and iOS would
+    /// scroll it back. Before the change lands, plenty of empty space goes at the foot of the page, in
+    /// the same update, so the page can't move; once the row has settled, the space shrinks to just
+    /// what keeps the screen where it is, and it goes as the reader scrolls up.
+    private func holdPlace() {
+        scrollHold.holdsUntil = .now.addingTimeInterval(0.6)
+        // Never animated, even when the row's own change is, so the space is there before the row
+        // gets shorter.
+        setSlack(bottomSlack + 2_000)
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.65))
+            trimSlack()
+        }
+    }
+
+    private func trimSlack() {
+        guard bottomSlack > 0, Date.now >= scrollHold.holdsUntil else { return }
+        let needed = max(0, (bottomSlack + scrollHold.overhang).rounded(.up))
+        // Only when it changes by a point or more, so scrolling through the space doesn't redraw
+        // the page on every frame.
+        if needed < bottomSlack - 0.5 { setSlack(needed) }
+    }
+
+    /// Back after a long time away: the page starts over at the top, every card closed and every
+    /// list folded, like a cold launch.
+    private func startFresh() {
+        var still = Transaction()
+        still.disablesAnimations = true
+        withTransaction(still) {
+            panel = nil
+            bottomSlack = 0
+            pageEdition += 1
+            scrollPosition.scrollTo(edge: .top)
+        }
+    }
+
+    private func setSlack(_ slack: CGFloat) {
+        var still = Transaction()
+        still.disablesAnimations = true
+        withTransaction(still) { bottomSlack = slack }
+    }
+
+    private func reloadAgenda() async {
+        await SlowLoading.pause()
+        await agenda.reload()
+    }
+
+    private func reloadWeather(force: Bool = false) async {
+        await SlowLoading.pause()
+        await weather.reload(force: force)
     }
 
     private var header: some View {
@@ -166,15 +314,17 @@ struct DigestView: View {
     private func runRefresh(force: Bool) async {
         guard !isRefreshing else { return }
         isRefreshing = true
+        await SlowLoading.pause()
         await refresh(force)
         isRefreshing = false
     }
 
     /// Scrolls an expanded row up only when its bottom is hidden, so rows higher on the screen stay put.
-    private func reveal(_ id: String, bottom: CGFloat, with proxy: ScrollViewProxy) {
+    private func reveal(bottom: CGFloat) {
         guard bottom > listBottom - 8 else { return }
+        let target = scrollHold.offset + bottom - listBottom
         withAnimation(.easeInOut(duration: 0.25)) {
-            proxy.scrollTo(id, anchor: .bottom)
+            scrollPosition.scrollTo(y: target)
         }
     }
 

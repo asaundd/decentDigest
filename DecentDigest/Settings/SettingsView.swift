@@ -205,6 +205,19 @@ struct SettingsView: View {
                     #endif
                 }
             }
+            #if DEBUG
+            // A test-only page for trying designs on the phone.
+            NavigationLink {
+                DesignLabView()
+            } label: {
+                Text("Design lab")
+                    .font(Theme.actionFont)
+                    .underline()
+                    .foregroundStyle(Theme.accent)
+                    .padding(.vertical, 4)
+            }
+            .buttonStyle(.borderless)
+            #endif
         }
     }
 }
@@ -263,7 +276,10 @@ struct SettingsHeader: View {
         VStack(alignment: .leading, spacing: 0) {
             Group {
                 if closes {
+                    // Pulled toward the sheet's corner, so the space to its left matches the space
+                    // above it (about 14pt each). The title below stays on the page margin.
                     CloseButton { dismiss() }
+                        .offset(x: -10, y: 2)
                 } else {
                     BackLink(title: "Settings") { dismiss() }
                 }

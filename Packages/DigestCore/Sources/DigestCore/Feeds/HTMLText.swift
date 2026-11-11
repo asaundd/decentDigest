@@ -129,11 +129,15 @@ public enum FeedDate {
         "EEE, d MMM yy HH:mm:ss zzz",
         "yyyy-MM-dd HH:mm:ss Z",
         "yyyy-MM-dd HH:mm:ss",
+        // Some sites write "Nov 10, 2026 4:09pm".
+        "MMM d, yyyy h:mma",
     ].map { format in
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.timeZone = TimeZone(secondsFromGMT: 0)
         formatter.dateFormat = format
+        formatter.amSymbol = "am"
+        formatter.pmSymbol = "pm"
         return formatter
     }
 

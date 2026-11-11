@@ -24,10 +24,12 @@ struct Headline: Identifiable {
     /// The whole post is in the feed.
     var readsHere: Bool { !isEpisode && kind == .fullPost }
 
-    /// Full posts, excerpts and long show notes open in the panel; summaries and link-only rows go to the site.
+    /// Full posts, and excerpts and show notes too long for the card, open in the panel.
+    /// An excerpt or notes that fit on the card don't, since the panel would add nothing.
     var opensPanel: Bool {
-        if isEpisode { return (notes?.count ?? 0) > PostKind.rowTextLimit }
-        return kind == .fullPost || kind == .excerpt
+        if readsHere { return true }
+        guard isEpisode || kind == .excerpt else { return false }
+        return (notes?.count ?? 0) > PostKind.rowTextLimit
     }
 
     /// The ribbon's label for opening the panel. It also says what the feed sent.
@@ -71,8 +73,10 @@ struct Headline: Identifiable {
 /// The actions a headline offers. A nil action is left out.
 struct HeadlineActions {
     var save: (() -> Void)?
-    var useful: () -> Void
-    var notUseful: () -> Void
+    /// ↓ Not relevant and ↑ Relevant, in the swipe's order, or ✓ Read alone when reading history is off.
+    var choices: [RowAction] = RowAction.choices(keepsHistory: true)
+    /// Plays the row's leaving animation, then records the action.
+    var choose: (RowAction) -> Void
     /// Opens the panel. When present it is the ribbon's first action.
     var readFull: (() -> Void)?
     /// Open ↗: the site in the browser, or an episode in Podcasts.
@@ -81,17 +85,19 @@ struct HeadlineActions {
     var readLabel = "Read full post"
     /// What VoiceOver says for Open ↗.
     var openLabel = "Open the site"
+    /// The link Share hands to the iOS share sheet. News items only.
+    var share: URL?
+    /// The title the share sheet shows with the link.
+    var shareTitle = ""
 }
 
 /// One headline or episode: gray dash, title (semibold while unread, regular once opened), then the
 /// feed name and age, or the show's name.
-/// Title-only rows end in ↗. A tap expands any row: under the title, a lighter card holds the byline
-/// and up to 320 characters of text over a ribbon of actions. Another tap, on the title or the card, closes it.
+/// Title-only rows end in ↗. A tap opens any row: a lighter card rises behind the title and holds the
+/// byline and up to 320 characters of text over the actions. A tap anywhere on the open row, away from
+/// its buttons and links, closes it.
 struct HeadlineRow: View {
     static let verticalPadding: CGFloat = 5
-    /// How far the open card reaches past the text on the right. On the left it starts under the dash,
-    /// so it reads as indented under its title.
-    static let cardInset: CGFloat = 12
 
     var headline: Headline
     var isExpanded: Bool
@@ -101,13 +107,12 @@ struct HeadlineRow: View {
     var onTap: () -> Void
 
     @Environment(\.swipeGuard) private var swipeGuard
-    @Environment(\.swipeProgress) private var swipeProgress
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // A swipe let go near where it began is ignored, not taken as a tap.
+            // A tap that ends a swipe, or closes a row resting open on its actions, does nothing more.
             Button {
-                guard swipeGuard?.justSwiped != true else { return }
+                guard swipeGuard?.takesTap() != true else { return }
                 onTap()
             } label: {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -118,9 +123,7 @@ struct HeadlineRow: View {
                             .fontWeight(headline.isUnread ? .semibold : .regular)
                             // Bold to regular is an instant change, never animated.
                             .animation(nil, value: headline.isUnread)
-                            // A swipe strikes the title through; once far enough to act, it goes gray.
-                            .textRenderer(StrikeRenderer(progress: swipeProgress, color: Theme.ink))
-                            .foregroundStyle(swipeProgress >= 1 ? Theme.secondary : Theme.ink)
+                            .foregroundStyle(Theme.ink)
                         Text(headline.detail)
                             .font(.subheadline)
                             .foregroundStyle(Theme.secondary)
@@ -148,29 +151,19 @@ struct HeadlineRow: View {
             }
 
             if isExpanded {
-                // Only the details sit on the card, so the title stays where it was.
                 expandedDetail
-                    .padding(.top, 4)
-                    .background {
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .fill(Theme.expandedFill)
-                            .shadow(color: Theme.expandedShadow, radius: 4, x: 0, y: 2)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .strokeBorder(Theme.expandedRing, lineWidth: 1)
-                            )
-                            .padding(.trailing, -Self.cardInset)
-                    }
                     .padding(.top, 2)
-                    // A tap anywhere on the card, away from its buttons and links, closes it like a tap on the title.
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        guard swipeGuard?.justSwiped != true else { return }
-                        onTap()
-                    }
-                    .padding(.bottom, 10)
             }
         }
+        // One card holds the title and the details, so nothing moves when the row opens.
+        .openCard(isExpanded)
+        // A tap anywhere on the open row, away from its buttons and links, closes it like a tap on the title.
+        .contentShape(Rectangle())
+        .onTapGesture {
+            guard isExpanded, swipeGuard?.takesTap() != true else { return }
+            onTap()
+        }
+        .padding(.bottom, isExpanded ? 10 : 0)
         .onGeometryChange(for: CGFloat.self) { proxy in
             proxy.frame(in: .global).maxY
         } action: { bottom in
@@ -185,7 +178,7 @@ struct HeadlineRow: View {
             .foregroundStyle(Theme.secondary)
     }
 
-    /// The card: byline with Save, ✓ and ✕ at the top right where the thumb is, then the text,
+    /// The card: byline with Save, ↓ and ↑ at the top right where the thumb is, then the text,
     /// then the way to read it.
     private var expandedDetail: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -206,25 +199,11 @@ struct HeadlineRow: View {
 
             Group {
                 if let text = headline.expandedText {
-                    if let readFull = actions.readFull {
-                        // Tapping the text opens the rest in the panel.
-                        Button {
-                            guard swipeGuard?.justSwiped != true else { return }
-                            readFull()
-                        } label: {
-                            Text(text)
-                                .font(.callout)
-                                .multilineTextAlignment(.leading)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(StillButtonStyle())
-                        .accessibilityHint("Opens the rest in a panel")
-                    } else {
-                        Text(text)
-                            .font(.callout)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
+                    // Only Read full post, Read excerpt and Read notes open the panel. Press and hold to copy.
+                    Text(text)
+                        .font(.callout)
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 } else if let byline = headline.byline {
                     Text(byline)
                         .font(.subheadline)
@@ -244,8 +223,8 @@ struct HeadlineRow: View {
     }
 }
 
-/// The actions pinned at the bottom of the panel: the way to read it first, then small square
-/// buttons for Save, ✓ (useful) and ✕ (not useful).
+/// The actions pinned at the bottom of the panel: Open ↗ and Share first, then small square
+/// buttons for Save, ↑ (relevant) and ↓ (not relevant), or ✓ Read.
 struct ActionRibbon: View {
     var actions: HeadlineActions
     /// Space before the first action.
@@ -276,7 +255,7 @@ struct ActionRibbon: View {
     }
 }
 
-/// The text actions: read in the panel first when the post opens there, then Open ↗.
+/// The text actions: read in the panel first when the post opens there, then Open ↗, then Share.
 struct ActionLinks: View {
     var actions: HeadlineActions
 
@@ -288,10 +267,18 @@ struct ActionLinks: View {
             TextLink("Open ↗", action: open)
                 .accessibilityLabel(actions.openLabel)
         }
+        if let url = actions.share {
+            ShareLink(item: url, preview: SharePreview(actions.shareTitle)) {
+                TextLinkLabel(title: "Share")
+            }
+            .buttonStyle(.borderless)
+            .accessibilityLabel("Share the link")
+        }
     }
 }
 
-/// Small square buttons for Save (when offered), ✓ (useful) and ✕ (not useful).
+/// Small square buttons for Save (when offered), then ↓ Not relevant and ↑ Relevant (the same order as
+/// the swipe), or ✓ Read when reading history is off.
 struct JudgmentButtons: View {
     var actions: HeadlineActions
 
@@ -300,8 +287,9 @@ struct JudgmentButtons: View {
             if let save = actions.save {
                 RibbonButton(systemImage: "bookmark", label: "Save", action: save)
             }
-            RibbonButton(systemImage: "checkmark", label: "Relevant", action: actions.useful)
-            RibbonButton(systemImage: "xmark", label: "Not relevant", action: actions.notUseful)
+            ForEach(actions.choices, id: \.self) { choice in
+                RibbonButton(systemImage: choice.symbol, label: choice.label) { actions.choose(choice) }
+            }
         }
     }
 }
@@ -341,10 +329,10 @@ struct StillButtonStyle: ButtonStyle {
     }
 }
 
-/// How headlines leave and join the list.
+/// How headlines and to-dos leave and join their lists.
 @MainActor
 enum HeadlineMotion {
-    /// The rows below slide up to close the gap a row leaves.
+    /// The rows below slide up to close the gap a row leaves (Save, a checked-off to-do).
     static let close = Animation.easeOut(duration: 0.2)
     /// Leaving is instant; joining fades in after the slide has finished.
     static let transition = AnyTransition.asymmetric(
@@ -356,6 +344,33 @@ enum HeadlineMotion {
 /// The width of the gray dash plus its gap, so expanded text lines up with titles.
 enum DashColumn {
     static let width: CGFloat = 16
+}
+
+/// The card an open row sits on, in every section: a shade lighter than the page, 8pt corners, a faint
+/// edge and shadow. It reaches up behind the title and 12pt past the content on both sides, so nothing
+/// moves when a row opens.
+enum OpenCard {
+    static let inset: CGFloat = 12
+    /// How far the card rises above the row's first line.
+    static let rise: CGFloat = 2
+}
+
+extension View {
+    func openCard(_ isOpen: Bool) -> some View {
+        background {
+            if isOpen {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(Theme.expandedFill)
+                    .shadow(color: Theme.expandedShadow, radius: 4, x: 0, y: 2)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .strokeBorder(Theme.expandedRing, lineWidth: 1)
+                    )
+                    .padding(.horizontal, -OpenCard.inset)
+                    .padding(.top, -OpenCard.rise)
+            }
+        }
+    }
 }
 
 /// An action shown as a plain link: slate, semibold, underlined. No outline or fill.
@@ -374,15 +389,24 @@ struct TextLink: View {
 
     var body: some View {
         Button(action: action) {
-            Text(title)
-                .font(Theme.actionFont)
-                .underline()
-                .foregroundStyle(Theme.accent)
-                .fixedSize()
-                .padding(.vertical, 4)
-                .contentShape(Rectangle())
+            TextLinkLabel(title: title)
         }
         .buttonStyle(LinkButtonStyle(still: still))
+    }
+}
+
+/// A text link's look: slate, semibold, underlined. Shared by `TextLink` and Share.
+struct TextLinkLabel: View {
+    var title: String
+
+    var body: some View {
+        Text(title)
+            .font(Theme.actionFont)
+            .underline()
+            .foregroundStyle(Theme.accent)
+            .fixedSize()
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
     }
 }
 

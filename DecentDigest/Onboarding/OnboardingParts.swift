@@ -103,7 +103,7 @@ struct OnboardingStep<Content: View>: View {
             .padding(.horizontal, Theme.margin)
             .padding(.top, 8)
             .padding(.bottom, 4)
-            .background(Theme.page)
+            .background(Theme.bottomBarFill)
     }
 }
 
@@ -322,10 +322,14 @@ struct FollowLink: View {
 /// A link that undoes a choice (Unfollow, Hide): gray, with a faint underline a little below the text.
 struct QuietLink: View {
     var title: String
+    /// True for a link whose label changes when tapped (Show week / Show less): it skips the pressed
+    /// dimming, which otherwise fades back in on the new label.
+    var still = false
     var action: () -> Void
 
-    init(_ title: String, action: @escaping () -> Void) {
+    init(_ title: String, still: Bool = false, action: @escaping () -> Void) {
         self.title = title
+        self.still = still
         self.action = action
     }
 
@@ -344,7 +348,51 @@ struct QuietLink: View {
                 .padding(.vertical, 4)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.borderless)
+        .buttonStyle(QuietLinkStyle(still: still))
+    }
+}
+
+/// A link at the foot of a section (Show all, Show less, Calendar ↗, Weather's Show week): slate and
+/// semibold with no underline, so the only line near a section's end is the rule. Links inside cards
+/// and the panel keep their underline (`TextLink`).
+struct FooterLink: View {
+    var title: String
+    /// True for a link whose label changes when tapped (Show all / Show less): it skips the pressed
+    /// dimming, which otherwise fades back in on the new label.
+    var still = false
+    var action: () -> Void
+
+    init(_ title: String, still: Bool = false, action: @escaping () -> Void) {
+        self.title = title
+        self.still = still
+        self.action = action
+    }
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(Theme.actionFont)
+                .foregroundStyle(Theme.accent)
+                .fixedSize()
+                .padding(.vertical, 4)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(QuietLinkStyle(still: still))
+    }
+}
+
+/// The borderless look, optionally without the pressed dimming.
+private struct QuietLinkStyle: PrimitiveButtonStyle {
+    var still: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        if still {
+            Button(role: configuration.role, action: configuration.trigger) { configuration.label }
+                .buttonStyle(StillButtonStyle())
+        } else {
+            Button(role: configuration.role, action: configuration.trigger) { configuration.label }
+                .buttonStyle(.borderless)
+        }
     }
 }
 

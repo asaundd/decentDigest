@@ -1,12 +1,13 @@
 import DigestCore
 import SwiftUI
 
-/// Open reminders, read live, grouped by day like Calendar, then Anytime for those with no date.
+/// Open reminders, read live: Past due first, then by day like Calendar, then Anytime for those with no date.
 /// A to-do is checked off with the ✓ on its card or by swiping its row right; either writes back to Reminders.
 struct TodosSectionView: View {
     var model: AgendaModel
 
     @Environment(\.openURL) private var openURL
+    @Environment(\.scrollHold) private var scrollHold
     @State private var expandedDays: Set<Date> = []
     @State private var anytimeExpanded = false
     @State private var showsAll = false
@@ -14,17 +15,18 @@ struct TodosSectionView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SectionHeader(title: DigestSection.todos.title) {
-                if model.remindersAccess == .granted {
-                    TextLink("Reminders ↗") { openURL(AgendaLinks.reminders) }
-                        .accessibilityLabel("Open Reminders")
-                }
-            }
-            .padding(.bottom, Theme.titleToFirstItem - DayHeader.firstTopPadding)
-            .digestRow()
+            // Reminders ↗ sits on the footer line.
+            SectionHeader(title: DigestSection.todos.title) { EmptyView() }
+                .padding(.bottom, Theme.titleToFirstItem - DayHeader.firstTopPadding)
+                .digestRow()
 
             // The digest shows this section only once Reminders access is on.
-            if model.remindersAccess == .granted {
+            if model.remindersAccess == .granted, !model.hasLoaded {
+                // Only when the first read is slow; the rows replace the bars in place.
+                PlaceholderBars()
+                    .padding(.top, DayHeader.firstTopPadding)
+                    .digestRow()
+            } else if model.remindersAccess == .granted {
                 list(now: .now)
             }
         }
@@ -34,12 +36,19 @@ struct TodosSectionView: View {
         let plan = TodoRules.plan(model.todos, now: now, expanded: expandedDays, anytimeExpanded: anytimeExpanded, showAll: showsAll)
         let days = plan.days.filter { !$0.items.isEmpty }
         return VStack(alignment: .leading, spacing: 0) {
-            if days.isEmpty && plan.anytime.isEmpty && model.hasLoaded {
+            if isEmpty(plan, days: days) {
                 QuietLine("Nothing to do.")
                     .digestRow()
             }
+            if !plan.pastDue.isEmpty {
+                DayHeader(title: "Past due", isFirst: true)
+                    .digestRow()
+                ForEach(plan.pastDue) { todo in
+                    row(todo, now: now)
+                }
+            }
             ForEach(days) { group in
-                DayHeader(title: AgendaFormat.dayName(group.day, now: now), isFirst: group.id == days.first?.id)
+                DayHeader(title: AgendaFormat.dayName(group.day, now: now), isFirst: plan.pastDue.isEmpty && group.id == days.first?.id)
                     .digestRow()
                 ForEach(group.items) { todo in
                     row(todo, now: now)
@@ -52,7 +61,7 @@ struct TodosSectionView: View {
                 }
             }
             if !plan.anytime.isEmpty {
-                DayHeader(title: "Anytime", isFirst: days.isEmpty)
+                DayHeader(title: "Anytime", isFirst: plan.pastDue.isEmpty && days.isEmpty)
                     .digestRow()
                 ForEach(plan.anytime) { todo in
                     row(todo, now: now)
@@ -64,21 +73,22 @@ struct TodosSectionView: View {
                     .digestRow()
                 }
             }
-            if model.hasLoaded && !(days.isEmpty && plan.anytime.isEmpty) {
-                AgendaFooter(
-                    hidden: plan.hiddenCount,
-                    phrase: { $0 == 1 ? "more item" : "more items" },
-                    empty: "No other items this week",
-                    showsAll: showsAll
-                ) {
-                    showsAll.toggle()
-                    if !showsAll {
-                        expandedDays = []
-                        anytimeExpanded = false
-                    }
+            // Always shown, for Reminders ↗.
+            ListFooter(
+                hidden: plan.hiddenCount,
+                phrase: { $0 == 1 ? "more item" : "more items" },
+                empty: isEmpty(plan, days: days) ? nil : "No other items this week",
+                showsAll: showsAll,
+                app: ListFooter.Link(title: "Reminders ↗", spoken: "Open Reminders") { openURL(AgendaLinks.reminders) }
+            ) {
+                showsAll.toggle()
+                if !showsAll {
+                    expandedDays = []
+                    anytimeExpanded = false
                 }
-                .digestRow()
             }
+            .padding(.top, 10)
+            .digestRow()
             if let problem = model.problem {
                 Text(problem)
                     .font(.subheadline)
@@ -93,6 +103,10 @@ struct TodosSectionView: View {
         .sensoryFeedback(.impact(weight: .light), trigger: model.checkedIDs) { old, new in
             new.count > old.count
         }
+    }
+
+    private func isEmpty(_ plan: TodoPlan, days: [DayGroup<TodoEntry>]) -> Bool {
+        plan.pastDue.isEmpty && days.isEmpty && plan.anytime.isEmpty
     }
 
     private func row(_ todo: TodoEntry, now: Date) -> some View {
@@ -119,6 +133,7 @@ struct TodosSectionView: View {
 
     /// Opens or closes a to-do's card. A checked-off to-do leaves when its card closes.
     private func tap(_ todo: TodoEntry) {
+        if openIDs.contains(todo.id) { scrollHold?.hold() }
         if openIDs.remove(todo.id) == nil {
             openIDs.insert(todo.id)
         } else if model.checkedIDs.contains(todo.id) {
@@ -140,6 +155,7 @@ struct TodosSectionView: View {
     /// A swipe checks the to-do off and it leaves at once.
     private func swipeCheck(_ todo: TodoEntry) {
         guard model.check(todo) else { return }
+        scrollHold?.hold()
         openIDs.remove(todo.id)
         withAnimation(HeadlineMotion.close) {
             model.finishChecking(todo.id)
@@ -157,9 +173,9 @@ struct TodosSectionView: View {
     }
 }
 
-/// A to-do: its title, with "Past due" (or today's time) in gray after it.
-/// A tap makes the title semibold and opens a card: due day and list, notes, ✓ at the top right, Open ↗.
-/// A tap on the title or the card closes it.
+/// A to-do: its title, with its time in gray after it when it is due today or later at a set time.
+/// A tap makes the title semibold and opens a card behind it: due day and list, notes, ✓ at the top
+/// right, Open ↗. A tap anywhere on the open row, away from its buttons and links, closes it.
 struct TodoRow: View {
     var todo: TodoEntry
     var note: String?
@@ -178,7 +194,7 @@ struct TodoRow: View {
         VStack(alignment: .leading, spacing: 0) {
             // A swipe let go near where it began is ignored, not taken as a tap.
             Button {
-                guard swipeGuard?.justSwiped != true else { return }
+                guard swipeGuard?.takesTap() != true else { return }
                 onTap()
             } label: {
                 title
@@ -186,7 +202,8 @@ struct TodoRow: View {
                     // Regular to semibold is an instant change, never animated.
                     .animation(nil, value: isOpen)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.vertical, 2)
+                    // The tap area reaches into the space between rows.
+                    .padding(.vertical, AgendaMetrics.rowPadding)
                     .contentShape(Rectangle())
             }
             .buttonStyle(StillButtonStyle())
@@ -201,6 +218,15 @@ struct TodoRow: View {
                 card
             }
         }
+        // One card holds the row and its details, so nothing moves when it opens.
+        .openCard(isOpen)
+        // A tap anywhere on the open row, away from its buttons and links, closes it.
+        .contentShape(Rectangle())
+        .onTapGesture {
+            guard isOpen, swipeGuard?.takesTap() != true else { return }
+            onTap()
+        }
+        .padding(.bottom, isOpen ? 6 : 0)
     }
 
     /// The strike draws when checked from the card, or follows the finger during a swipe.
@@ -231,6 +257,7 @@ struct TodoRow: View {
                     if let notes = todo.notes {
                         Text(notes)
                             .lineLimit(3)
+                            .textSelection(.enabled)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -240,21 +267,17 @@ struct TodoRow: View {
                     label: isChecked ? "Undo check off" : "Check off",
                     action: toggleCheck
                 )
-                .padding(.top, -8)
-                .padding(.trailing, -RibbonButton.gap - 4)
+                .padding(.top, -6)
+                .padding(.trailing, -RibbonButton.gap)
             }
             TextLink("Open ↗", action: open)
                 .accessibilityLabel("Open in Reminders")
                 .padding(.top, 4)
         }
         .font(AgendaMetrics.itemFont)
-        .agendaCard()
-        // A tap on the card, away from its buttons, closes it like a tap on the title.
-        .contentShape(Rectangle())
-        .onTapGesture {
-            guard swipeGuard?.justSwiped != true else { return }
-            onTap()
-        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 2)
+        .padding(.bottom, 10)
     }
 }
 

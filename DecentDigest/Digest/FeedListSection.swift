@@ -17,11 +17,13 @@ struct FeedListSection: View {
 
     @Environment(\.modelContext) private var context
     @Environment(\.openURL) private var openURL
+    @Environment(\.scrollHold) private var scrollHold
 
     @Query(sort: \FeedItem.publishedAt, order: .reverse) private var items: [FeedItem]
     @Query private var sources: [Source]
     @Query private var states: [ItemState]
     @AppStorage(NewsRefresher.listStartedAtKey) private var listStartedAt: Double = 0
+    @AppStorage(DigestPreferences.readingHistoryOffKey) private var historyOff = false
 
     /// Set once the reader has refreshed, so the link can say the list is current.
     @State private var refreshedByReader = false
@@ -29,21 +31,25 @@ struct FeedListSection: View {
     @State private var expandedIDs: Set<String> = []
     @State private var pendingReveal: String?
     @State private var showsAll = false
+    /// Rows playing their leaving animation, and what was chosen for each.
+    @State private var leaving: [String: RowAction] = [:]
+    /// Rows closing up as they leave. They no longer count toward the rows shown, so the next one
+    /// joins while they close and the list below them doesn't move twice.
+    @State private var closing: Set<String> = []
 
     var body: some View {
         let eligible = eligibleEntries
-        let shown = showsAll ? eligible : Array(eligible.prefix(limit))
-        let remaining = eligible.count - shown.count
+        let shown = showsAll ? eligible : visible(eligible)
+        let staying = eligible.count(where: { !closing.contains($0.item.itemID) })
+        let remaining = staying - shown.count(where: { !closing.contains($0.item.itemID) })
 
         HStack(alignment: .firstTextBaseline) {
             Text(isEpisodes ? DigestSection.podcasts.title : DigestSection.news.title)
                 .font(Theme.sectionTitleFont)
                 .accessibilityAddTraits(.isHeader)
             Spacer()
-            if isEpisodes {
-                TextLink("Podcasts ↗") { openURL(ApplePodcasts.app) }
-                    .accessibilityLabel("Open Podcasts")
-            } else {
+            // Podcasts ↗ sits on the footer line.
+            if !isEpisodes {
                 TextLink(isRefreshing ? "Checking…" : (refreshedByReader ? "Up to date" : "Refresh")) {
                     Task {
                         await refresh()
@@ -91,29 +97,29 @@ struct FeedListSection: View {
             // A row that leaves is gone at once. One that joins waits for the slide, then fades in,
             // so it never overlaps the rows still moving.
             .transition(HeadlineMotion.transition)
-            .judgmentSwipes(useful: { resolve(entry.item, as: .useful) }, notUseful: { resolve(entry.item, as: .notRelevant) })
+            .leaveSwipe(choices, request: leaving[entry.item.itemID], closing: {
+                closing.insert(entry.item.itemID)
+            }) { choice in
+                finish(entry.item, as: choice)
+            }
             .onAppear {
                 ReadingState.markShown(itemID: entry.item.itemID, sourceID: entry.item.sourceID, in: context)
             }
         }
 
-        if remaining > 0 || showsAll && eligible.count > limit {
-            HStack(spacing: 6) {
-                if remaining > 0 {
-                    Text("\(remaining) more")
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.secondary)
-                    Text("·")
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.secondary)
-                        .accessibilityHidden(true)
-                }
-                TextLink(showsAll ? "Show less" : "Show all") {
-                    withAnimation { showsAll.toggle() }
-                }
+        // News shows its line only when more wait; Podcasts always does, for Podcasts ↗.
+        let toggles = remaining > 0 || showsAll && staying > limit
+        if toggles || isEpisodes {
+            ListFooter(
+                hidden: remaining,
+                phrase: { _ in "more" },
+                empty: nil,
+                showsAll: showsAll && staying > limit,
+                app: isEpisodes ? ListFooter.Link(title: "Podcasts ↗", spoken: "Open Podcasts") { openURL(ApplePodcasts.app) } : nil
+            ) {
+                showsAll.toggle()
             }
             .padding(.top, 4)
-            .frame(maxWidth: .infinity, alignment: .leading)
             .digestRow()
         }
     }
@@ -122,7 +128,19 @@ struct FeedListSection: View {
 
     private var isEpisodes: Bool { kind == .podcast }
 
+    /// The first rows up to the limit, plus any closing up among them, which don't count.
+    private func visible(_ eligible: [Entry]) -> [Entry] {
+        var counted = 0
+        return eligible.filter { entry in
+            guard counted < limit else { return false }
+            if !closing.contains(entry.item.itemID) { counted += 1 }
+            return true
+        }
+    }
+
     private var limit: Int { isEpisodes ? PodcastRules.itemsShown : NewsRules.itemsShown }
+
+    private var choices: [RowAction] { RowAction.choices(keepsHistory: !historyOff) }
 
     private var emptyText: String {
         switch (isEpisodes, isRefreshing) {
@@ -146,7 +164,7 @@ struct FeedListSection: View {
             uniquingKeysWith: { first, _ in first }
         )
         let readings = Dictionary(
-            states.map { ($0.itemID, NewsRules.Reading(status: $0.status, openedAt: $0.openedAt)) },
+            states.map { ($0.itemID, NewsRules.Reading(status: $0.status, openedAt: $0.openedAt, resolvedAt: $0.resolvedAt)) },
             uniquingKeysWith: { first, _ in first }
         )
         let byID = Dictionary(items.map { ($0.itemID, $0) }, uniquingKeysWith: { first, _ in first })
@@ -206,11 +224,13 @@ struct FeedListSection: View {
         }
         var actions = HeadlineActions(
             save: { save(item, sourceName: entry.sourceName) },
-            useful: { resolve(item, as: .useful) },
-            notUseful: { resolve(item, as: .notRelevant) },
+            choices: choices,
+            choose: { leaving[item.itemID] = $0 },
             open: openAction,
             readLabel: row.readLabel,
-            openLabel: isEpisodes ? "Open in Podcasts" : "Open the site"
+            openLabel: isEpisodes ? "Open in Podcasts" : "Open the site",
+            share: isEpisodes ? nil : row.link,
+            shareTitle: row.title
         )
         if row.opensPanel {
             let panelActions = actions
@@ -229,7 +249,10 @@ struct FeedListSection: View {
         // Rows already open count as seen once another row is tapped, but stay open.
         for other in expandedIDs { markSeen(other) }
         // No animation, so the title stays put while the details appear under it.
-        if expandedIDs.remove(id) == nil {
+        if expandedIDs.contains(id) {
+            scrollHold?.hold()
+            expandedIDs.remove(id)
+        } else {
             expandedIDs.insert(id)
             pendingReveal = id
         }
@@ -254,16 +277,19 @@ struct FeedListSection: View {
     }
 
     private func save(_ item: FeedItem, sourceName: String) {
+        scrollHold?.hold()
         // The row is gone at once; the rows below slide up briefly to close the gap.
         withAnimation(HeadlineMotion.close) {
             ReadingState.save(item, sourceTitle: sourceName, kind: kind, in: context)
         }
     }
 
-    private func resolve(_ item: FeedItem, as status: ItemStatus) {
-        // The row is gone at once; the rows below slide up briefly to close the gap.
+    /// Records the action once the row has played its leaving animation and closed up.
+    private func finish(_ item: FeedItem, as choice: RowAction) {
+        leaving[item.itemID] = nil
+        expandedIDs.remove(item.itemID)
         withAnimation(HeadlineMotion.close) {
-            ReadingState.resolve(itemID: item.itemID, sourceID: item.sourceID, as: status, in: context)
+            ReadingState.resolve(itemID: item.itemID, sourceID: item.sourceID, as: choice.status, in: context)
         }
     }
 }

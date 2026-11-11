@@ -2,20 +2,10 @@ import SwiftUI
 import UIKit
 
 extension View {
-    /// Swipe right for useful (✓), left for not useful (✕). The system swipe actions draw buttons,
-    /// so this is drawn by hand: the symbol and a small gray word on the page, pinned to the edge
-    /// the row is leaving, while a strike draws across the title. Letting go past the threshold,
-    /// where the strike is complete, acts on the row.
-    func judgmentSwipes(useful: @escaping () -> Void, notUseful: @escaping () -> Void) -> some View {
-        modifier(JudgmentSwipe(
-            leading: SwipeAction(symbol: "checkmark", label: "Relevant", action: useful),
-            trailing: SwipeAction(symbol: "xmark", label: "Not relevant", action: notUseful)
-        ))
-        .accessibilityAction(named: "Relevant", useful)
-        .accessibilityAction(named: "Not relevant", notUseful)
-    }
-
-    /// Swipe right to check a to-do off, drawn the same way as the headline swipes. There is no left swipe.
+    /// Swipe right to check a to-do off. The system swipe actions draw buttons, so this is drawn by
+    /// hand: the symbol and a small gray word on the page, pinned to the edge the row is leaving,
+    /// while a strike draws across the title. Letting go past the threshold, where the strike is
+    /// complete, checks it off. There is no left swipe.
     func checkOffSwipe(_ action: @escaping () -> Void) -> some View {
         modifier(JudgmentSwipe(
             leading: SwipeAction(symbol: "checkmark", label: "Done", action: action),
@@ -32,18 +22,57 @@ struct SwipeAction {
 }
 
 /// Remembers when a row last moved sideways, so a swipe that is let go near where it began
-/// isn't taken as a tap.
+/// isn't taken as a tap, and whether a row rests open on its actions.
 /// Gestures and taps both run on the main thread.
 final class SwipeGuard: @unchecked Sendable {
-    fileprivate var lastMove = Date.distantPast
+    /// A finger that moves less than this sideways is tapping, not swiping.
+    static let tapTolerance: CGFloat = 10
+
+    var lastMove = Date.distantPast
+    /// True while a short swipe has left the row open on its actions.
+    var restsOpen = false
+    /// Slides an open row back.
+    var closeStrip: (() -> Void)?
 
     /// True right after a swipe, when the finger lifting would otherwise count as a tap.
     var justSwiped: Bool { Date.now.timeIntervalSince(lastMove) < 0.4 }
+
+    /// Call first when a row is tapped. True when the tap is used up: it ended a swipe, or it
+    /// closed a row resting open on its actions.
+    func takesTap() -> Bool {
+        if justSwiped { return true }
+        if restsOpen {
+            closeStrip?()
+            return true
+        }
+        return false
+    }
+}
+
+/// Lets a closing row ask the digest to hold its scroll position for a moment.
+/// Taps and layout both run on the main thread.
+final class ScrollHold: @unchecked Sendable {
+    /// Set by the digest: holds the page's place while a row closes or leaves.
+    var onHold: (() -> Void)?
+    /// How far the bottom of the screen reaches past the end of the page, last seen (negative while
+    /// more of the page lies below). Kept here, not in view state, so scrolling never redraws the page.
+    var overhang: CGFloat = 0
+    /// While a row closes or leaves, the held space is kept whole.
+    var holdsUntil = Date.distantPast
+    /// The page's scroll offset, last seen.
+    var offset: CGFloat = 0
+
+    func hold() {
+        onHold?()
+    }
 }
 
 extension EnvironmentValues {
     @Entry var swipeGuard: SwipeGuard? = nil
-    /// How far a swipe has gone toward acting on the row, from 0 to 1. Draws the strike on its title.
+    /// Told just before an open row closes, so the page keeps its place instead of scrolling back
+    /// when a row near its bottom gets shorter.
+    @Entry var scrollHold: ScrollHold? = nil
+    /// How far a to-do's swipe has gone toward checking it off, from 0 to 1. Draws the strike on its title.
     @Entry var swipeProgress: Double = 0
 }
 
@@ -79,7 +108,7 @@ private struct JudgmentSwipe: ViewModifier {
     @ViewBuilder
     private var band: some View {
         if offset != 0, let swipe = offset > 0 ? leading : trailing {
-            let isUseful = offset > 0
+            let isLeading = offset > 0
             // Only the strip the row has moved off is drawn, so the page color never changes
             // and the label never sits under the row's text.
             VStack(spacing: 3) {
@@ -92,22 +121,28 @@ private struct JudgmentSwipe: ViewModifier {
             // Gray while dragging; ink once letting go would act on the row.
             .foregroundStyle(isArmed ? Theme.ink : Theme.secondary)
             .padding(.horizontal, Theme.margin)
-            .frame(width: abs(offset), alignment: isUseful ? .leading : .trailing)
+            .frame(width: abs(offset), alignment: isLeading ? .leading : .trailing)
             .frame(maxHeight: .infinity)
             .clipped()
-            .frame(maxWidth: .infinity, alignment: isUseful ? .leading : .trailing)
+            .frame(maxWidth: .infinity, alignment: isLeading ? .leading : .trailing)
             .accessibilityHidden(true)
         }
     }
 
     private func dragChanged(_ x: CGFloat) {
         guard exit == nil else { return }
+        // A finger that drifts a little while tapping is still a tap.
+        guard abs(x) >= SwipeGuard.tapTolerance else { return }
         // A direction with no action doesn't move.
         dragX = (x > 0 && leading == nil) || (x < 0 && trailing == nil) ? 0 : x
         swipeGuard.lastMove = .now
     }
 
     private func dragEnded(_ x: CGFloat, cancelled: Bool) {
+        guard abs(x) >= SwipeGuard.tapTolerance else {
+            dragX = 0
+            return
+        }
         swipeGuard.lastMove = .now
         let swipe = x > 0 ? leading : trailing
         guard exit == nil, !cancelled, abs(x) >= Self.threshold, let swipe else {
@@ -127,7 +162,7 @@ private struct JudgmentSwipe: ViewModifier {
 
 /// A sideways pan that only starts when the finger is moving mostly sideways, so it never
 /// competes with scrolling the page up and down.
-private struct HorizontalPan: UIGestureRecognizerRepresentable {
+struct HorizontalPan: UIGestureRecognizerRepresentable {
     var onChange: (CGFloat) -> Void
     var onEnd: (CGFloat, _ cancelled: Bool) -> Void
 
@@ -138,6 +173,8 @@ private struct HorizontalPan: UIGestureRecognizerRepresentable {
     func makeUIGestureRecognizer(context: Context) -> UIPanGestureRecognizer {
         let pan = UIPanGestureRecognizer()
         pan.delegate = context.coordinator
+        // Let a tap that drifts a little reach the row; the swipe guard drops the taps that end a swipe.
+        pan.cancelsTouchesInView = false
         return pan
     }
 

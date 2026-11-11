@@ -148,6 +148,12 @@ private func event(_ id: String, _ start: Date, _ end: Date, allDay: Bool = fals
     #expect(AgendaFormat.people(["Sam", "Maya", "Leo", "Ana", "Ben"]) == "Sam, Maya, Leo and 2 others")
 }
 
+@Test func placesFitOnOneLine() {
+    #expect(AgendaFormat.oneLinePlace("Blue Bottle\n 450 W 15th St\n\nNew York, NY") == "Blue Bottle, 450 W 15th St, New York, NY")
+    #expect(AgendaFormat.oneLinePlace(" \n ") == nil)
+    #expect(AgendaFormat.oneLinePlace(nil) == nil)
+}
+
 @Test func videoCallLinksLeaveTheNotes() {
     let notes = "Bring the draft.\nJoin: https://zoom.us/j/123\nhttps://meet.google.com/abc"
     #expect(AgendaFormat.notesWithoutCallLinks(notes) == "Bring the draft.")
@@ -167,7 +173,7 @@ private func todo(_ id: String, due: Date? = nil, timed: Bool = false, order: In
     TodoEntry(id: id, title: id, listName: "Home", due: due, dueIncludesTime: timed, listOrder: order)
 }
 
-@Test func earlierTodosFoldIntoTodayAndLaterOnesWait() {
+@Test func earlierTodosGoToPastDueAndLaterOnesWait() {
     let todos = [
         todo("today", due: at(17), timed: true),
         todo("lastWeek", due: at(0, day: -7)),
@@ -178,7 +184,8 @@ private func todo(_ id: String, due: Date? = nil, timed: Bool = false, order: In
     ]
     let plan = TodoRules.plan(todos, now: at(8), calendar: utc)
     let days = plan.days.filter { !$0.items.isEmpty }
-    #expect(days.map { $0.items.map(\.id) } == [["lastWeek", "today"], ["tomorrow"]])
+    #expect(plan.pastDue.map(\.id) == ["lastWeek"])
+    #expect(days.map { $0.items.map(\.id) } == [["today"], ["tomorrow"]])
     #expect(plan.anytime.map(\.id) == ["anytime"])
     #expect(plan.hiddenCount == 0)
 }
@@ -200,11 +207,24 @@ private func todo(_ id: String, due: Date? = nil, timed: Bool = false, order: In
     #expect(plan.hiddenCount == 0)
 }
 
-@Test func todoNotesSayPastDueForEarlierOnes() {
+@Test func pastDueOldestFirstAndCountsTowardTheLimit() {
+    let past = (1...6).map { todo("p\($0)", due: at(9, day: -$0)) }
+    let today = (0..<3).map { todo("t\($0)", due: at(10 + $0), timed: true) }
+    let tomorrow = (0..<4).map { todo("m\($0)", due: at(9 + $0, day: 1), timed: true) }
+    let plan = TodoRules.plan(past + today + tomorrow, now: at(8), calendar: utc)
+    #expect(plan.pastDue.map(\.id) == ["p6", "p5", "p4", "p3", "p2", "p1"])
+    let days = plan.days.filter { !$0.items.isEmpty }
+    // 6 past due + 3 today leave room for one of tomorrow's four.
+    #expect(days.map { $0.items.count } == [3, 1])
+    #expect(plan.hiddenCount == 3)
+}
+
+@Test func todoNotesGiveTimesOnlyForTodayOrLater() {
     let us = Locale(identifier: "en_US")
-    #expect(TodoRules.note(for: todo("a", due: at(9, day: -1)), now: at(8), calendar: utc, locale: us) == "Past due")
-    #expect(TodoRules.note(for: todo("a2", due: at(9, day: -9)), now: at(8), calendar: utc, locale: us) == "Past due")
+    #expect(TodoRules.note(for: todo("a", due: at(9, day: -1)), now: at(8), calendar: utc, locale: us) == nil)
+    #expect(TodoRules.note(for: todo("a2", due: at(9, day: -9), timed: true), now: at(8), calendar: utc, locale: us) == nil)
     #expect(TodoRules.note(for: todo("b", due: at(17), timed: true), now: at(8), calendar: utc, locale: us) == "5:00p")
+    #expect(TodoRules.note(for: todo("b2", due: at(9, day: 1), timed: true), now: at(8), calendar: utc, locale: us) == "9:00a")
     #expect(TodoRules.note(for: todo("c", due: at(0)), now: at(8), calendar: utc, locale: us) == nil)
 }
 

@@ -20,6 +20,10 @@ enum Theme {
     /// A faint edge and shadow that lift the expanded card off the page.
     static let expandedRing = Color(light: 0x1A1D1E, dark: 0x000000).opacity(0.06)
     static let expandedShadow = Color(light: 0x1A1D1E, dark: 0x000000).opacity(0.06)
+    /// A pale slate tint behind the event happening now.
+    static let nowTint = Color(light: 0xE8E8EE, dark: 0x2A2C33)
+    /// Faint, still bars that stand in for rows while a slow read finishes.
+    static let placeholder = Color(light: 0xEDEDE9, dark: 0x232826)
     /// The small square buttons on the ribbon, a shade darker than the card.
     static let ribbonButtonFill = Color(light: 0xF2F1EC, dark: 0x151817)
     /// The panel matches the expanded card, so the post reads the same in both.
@@ -41,9 +45,12 @@ enum Theme {
     /// The Paste control beside a search box. iOS draws its label white, so the fill is a warm gray
     /// dark enough for white text to read.
     static let pasteFill = Color(light: 0x7A7266, dark: 0x5E574C)
-    /// The filled search boxes in setup.
-    /// Lighter than the page in dark mode (the button fill there matches the page), so the box shows.
-    static let fieldFill = Color(light: 0xF2F1EC, dark: 0x272C2A)
+    /// The filled search boxes in setup: a shade darker than the page in light mode, lighter in dark
+    /// mode (the button fill there matches the page), so the box shows.
+    static let fieldFill = Color(light: 0xE9E8E2, dark: 0x272C2A)
+    /// Behind the buttons pinned at the foot of setup pages: the color the page tint reaches there,
+    /// so the bar doesn't show as a band.
+    static let bottomBarFill = pageTintBottom
 
     // Spacing
     static let margin: CGFloat = 24

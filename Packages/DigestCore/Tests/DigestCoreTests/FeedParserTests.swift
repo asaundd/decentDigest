@@ -117,7 +117,35 @@ private func data(_ string: String) -> Data { Data(string.utf8) }
     #expect(FeedDate.parse("2026-11-03T14:30:00Z") == Date(timeIntervalSince1970: 1_793_716_200))
     #expect(FeedDate.parse("2026-11-03T14:30:00.000Z") == Date(timeIntervalSince1970: 1_793_716_200))
     #expect(FeedDate.parse("2026-11-03T09:30:00-05:00") == Date(timeIntervalSince1970: 1_793_716_200))
+    #expect(FeedDate.parse("Nov 3, 2026 2:30pm") == Date(timeIntervalSince1970: 1_793_716_200))
     #expect(FeedDate.parse("not a date") == nil)
+}
+
+@Test func titlesWrappedInLinksKeepTheirWords() throws {
+    let xml = """
+    <?xml version="1.0" encoding="UTF-8"?>
+    <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xml:base="https://example.com/">
+      <channel>
+        <title>Example</title>
+        <item>
+          <title><a href="/finance/q3-results" hreflang="en">Hims &amp; Hers reports Q3 revenue</a></title>
+          <link>https://example.com/finance/q3-results</link>
+          <dc:creator><a href="/person/jane">Jane Doe</a></dc:creator>
+          <description>Net loss widened.</description>
+        </item>
+      </channel>
+    </rss>
+    """
+    let feed = try FeedParser.parse(data(xml))
+    #expect(feed.items.first?.title == "Hims & Hers reports Q3 revenue")
+    #expect(feed.items.first?.author == "Jane Doe")
+}
+
+@Test func untitledItemsShowAShortLink() {
+    #expect(FeedParser.shortLink("https://www.example.com/news/") == "example.com/news")
+    let long = FeedParser.shortLink("https://www.example.com/" + String(repeating: "a", count: 100))
+    #expect(long.count == 60)
+    #expect(long.hasSuffix("…"))
 }
 
 @Test func itemIdentityFallsBackToTitleAndDate() {

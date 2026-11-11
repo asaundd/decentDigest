@@ -88,11 +88,20 @@ struct ArticlePanel: View {
         let actions = actions
         return HeadlineActions(
             save: actions.save.map { save -> () -> Void in { close(); save() } },
-            useful: { close(); actions.useful() },
-            notUseful: { close(); actions.notUseful() },
+            choices: actions.choices,
+            choose: { choice in
+                close()
+                // The row leaves once the panel has slid away, so the reader sees it go.
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(0.25))
+                    actions.choose(choice)
+                }
+            },
             readFull: nil,
             open: actions.open.map { open -> () -> Void in { close(); open() } },
-            openLabel: actions.openLabel
+            openLabel: actions.openLabel,
+            share: actions.share,
+            shareTitle: actions.shareTitle
         )
     }
 }
