@@ -46,6 +46,13 @@ struct DigestView: View {
     /// Set only to scroll an opened row into view, by offset. (Scrolling to a row by id made iOS keep
     /// that row's bottom pinned, so closing it later pulled the page back.)
     @State private var scrollPosition = ScrollPosition(idType: String.self)
+    /// When the app last went to the background.
+    @State private var leftAt: Date?
+    /// Bumped to open the page fresh after a long time away: every section starts over, cards closed.
+    @State private var pageEdition = 0
+    /// Back sooner than this, the page is just as it was left, and new items wait for a pull to
+    /// refresh. Away longer, it opens fresh, at the top, with new items in place.
+    private static let freshAfter: TimeInterval = 30 * 60
 
     var body: some View {
         // A plain scrolling page. (A List re-measured expanded rows late, which made titles jump.)
@@ -68,6 +75,7 @@ struct DigestView: View {
                         .padding(.bottom, Theme.margin)
                         .digestRow()
                 }
+                .id(pageEdition)
                 .opacity(revealed ? 1 : 0)
                 .padding(.bottom, bottomSlack)
             }
@@ -158,10 +166,20 @@ struct DigestView: View {
         }
         .onChange(of: scenePhase, initial: true) { _, phase in
             // Checked-off to-dos still showing leave when the app goes away.
-            if phase == .background { agenda.finishAllChecked() }
+            if phase == .background {
+                agenda.finishAllChecked()
+                leftAt = .now
+            }
             guard phase == .active else { return }
             Task { await reloadAgenda() }
             Task { await reloadWeather() }
+            // Nothing moves on a page the reader is in the middle of: back soon, new items wait for
+            // a pull to refresh; back after a long time, the page opens fresh with them in place.
+            if let left = leftAt {
+                leftAt = nil
+                guard Date.now.timeIntervalSince(left) >= Self.freshAfter else { return }
+                startFresh()
+            }
             Task { await runRefresh(force: false) }
         }
         // Edits made in Calendar or Reminders, or checking off here, show within moments.
@@ -225,6 +243,19 @@ struct DigestView: View {
         // Only when it changes by a point or more, so scrolling through the space doesn't redraw
         // the page on every frame.
         if needed < bottomSlack - 0.5 { setSlack(needed) }
+    }
+
+    /// Back after a long time away: the page starts over at the top, every card closed and every
+    /// list folded, like a cold launch.
+    private func startFresh() {
+        var still = Transaction()
+        still.disablesAnimations = true
+        withTransaction(still) {
+            panel = nil
+            bottomSlack = 0
+            pageEdition += 1
+            scrollPosition.scrollTo(edge: .top)
+        }
     }
 
     private func setSlack(_ slack: CGFloat) {
