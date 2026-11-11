@@ -54,6 +54,11 @@ final class SwipeGuard: @unchecked Sendable {
 final class ScrollHold: @unchecked Sendable {
     /// Set by the digest: holds the page's place while a row closes or leaves.
     var onHold: (() -> Void)?
+    /// How far the bottom of the screen reaches past the end of the page, last seen (negative while
+    /// more of the page lies below). Kept here, not in view state, so scrolling never redraws the page.
+    var overhang: CGFloat = 0
+    /// While a row closes or leaves, the held space is kept whole.
+    var holdsUntil = Date.distantPast
 
     func hold() {
         onHold?()

@@ -40,12 +40,8 @@ struct DigestView: View {
     /// Empty space held at the foot of the page after a row near the bottom closes, so the page stays
     /// where it is instead of scrolling back. It goes once it is out of view.
     @State private var bottomSlack: CGFloat = 0
-    /// How far the bottom of the screen reaches past the end of the page, last seen (negative while
-    /// more of the page lies below).
-    @State private var overhang: CGFloat = 0
-    /// While a row closes or leaves, the held space is kept whole.
-    @State private var holdsUntil = Date.distantPast
-    /// A row closing asks the page to hold its place for a moment.
+    /// A row closing asks the page to hold its place for a moment. It also keeps the last scroll
+    /// position seen, outside of view state, so scrolling never redraws the page.
     @State private var scrollHold = ScrollHold()
 
     var body: some View {
@@ -74,9 +70,10 @@ struct DigestView: View {
             }
             // The held space shrinks as soon as less of it is needed, so it never shows as a gap.
             .onScrollGeometryChange(for: CGFloat.self) { geometry in
-                geometry.visibleRect.maxY - geometry.contentInsets.bottom - geometry.contentSize.height
-            } action: { _, newOverhang in
-                overhang = newOverhang
+                geometry.contentOffset.y + geometry.containerSize.height
+                    - geometry.contentInsets.bottom - geometry.contentSize.height
+            } action: { _, overhang in
+                scrollHold.overhang = overhang
                 trimSlack()
             }
             .environment(\.scrollHold, scrollHold)
@@ -203,8 +200,10 @@ struct DigestView: View {
     /// the same update, so the page can't move; once the row has settled, the space shrinks to just
     /// what keeps the screen where it is, and it goes as the reader scrolls up.
     private func holdPlace() {
-        bottomSlack += 2_000
-        holdsUntil = .now.addingTimeInterval(0.6)
+        scrollHold.holdsUntil = .now.addingTimeInterval(0.6)
+        // Never animated, even when the row's own change is, so the space is there before the row
+        // gets shorter.
+        setSlack(bottomSlack + 2_000)
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(0.65))
             trimSlack()
@@ -212,9 +211,17 @@ struct DigestView: View {
     }
 
     private func trimSlack() {
-        guard bottomSlack > 0, Date.now >= holdsUntil else { return }
-        let needed = max(0, bottomSlack + overhang)
-        if needed < bottomSlack { bottomSlack = needed }
+        guard bottomSlack > 0, Date.now >= scrollHold.holdsUntil else { return }
+        let needed = max(0, (bottomSlack + scrollHold.overhang).rounded(.up))
+        // Only when it changes by a point or more, so scrolling through the space doesn't redraw
+        // the page on every frame.
+        if needed < bottomSlack - 0.5 { setSlack(needed) }
+    }
+
+    private func setSlack(_ slack: CGFloat) {
+        var still = Transaction()
+        still.disablesAnimations = true
+        withTransaction(still) { bottomSlack = slack }
     }
 
     private func reloadAgenda() async {
