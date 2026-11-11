@@ -89,7 +89,12 @@ struct NewsPicker: View {
                 notFound = false
             }
 
-            if query.isEmpty {
+            // Search mode starts with the tap, not the first letter: the lists step aside for a
+            // short hint, then results.
+            if searchFocused && query.isEmpty {
+                quiet("Type a site's name, or paste its address.")
+                    .padding(.top, 6)
+            } else if query.isEmpty {
                 if inSettings && !followed.isEmpty {
                     followingList(followed, heading: "Following", limit: showsAllFollowed ? nil : 4)
                 } else if !inSettings && !addedByYou.isEmpty {

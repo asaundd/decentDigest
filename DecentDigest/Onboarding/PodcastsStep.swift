@@ -65,6 +65,9 @@ struct PodcastPicker: View {
 
     private var query: String { text.trimmingCharacters(in: .whitespacesAndNewlines) }
 
+    /// From the tap on the search box until it's cleared and put away.
+    private var searching: Bool { searchFocused || !query.isEmpty }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             SearchBox(placeholder: "Search Apple Podcasts", text: $text, isFocused: $searchFocused) {
@@ -75,7 +78,12 @@ struct PodcastPicker: View {
                 await search(query)
             }
 
-            if !query.isEmpty {
+            // Search mode starts with the tap, not the first letter: the lists step aside for a
+            // short hint, then results.
+            if searchFocused && query.isEmpty {
+                quiet("Type a show's name or its host.")
+                    .padding(.top, 6)
+            } else if !query.isEmpty {
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(results) { show in
                         row(title: show.title, subtitle: show.author, feed: .init(kind: .podcast, feedURL: show.feedURL, title: show.title, appleID: show.id), clearsSearch: true)
@@ -94,7 +102,7 @@ struct PodcastPicker: View {
             let extra = followed.filter { source in
                 inSettings || !Self.suggested.contains { Following.key(for: $0.feedUrl) == Following.key(for: source.feedURL) }
             }
-            if !extra.isEmpty && query.isEmpty {
+            if !searching && !extra.isEmpty {
                 ListHeading("Following")
                 ForEach(extra) { source in
                     row(title: source.title, subtitle: nil, feed: .init(kind: .podcast, feedURL: source.feedURL, title: source.title, appleID: source.appleID))
@@ -104,11 +112,13 @@ struct PodcastPicker: View {
             let suggestions = inSettings
                 ? Self.suggested.filter { !Following.isFollowing($0.feedUrl, in: followed) }
                 : Self.suggested
-            if !suggestions.isEmpty {
-                ListHeading("Suggested")
-            }
-            ForEach(suggestions) { show in
-                row(title: show.title, subtitle: show.description, feed: .init(kind: .podcast, feedURL: show.feedUrl, title: show.title, category: show.category, appleID: show.appleId))
+            if !searching {
+                if !suggestions.isEmpty {
+                    ListHeading("Suggested")
+                }
+                ForEach(suggestions) { show in
+                    row(title: show.title, subtitle: show.description, feed: .init(kind: .podcast, feedURL: show.feedUrl, title: show.title, category: show.category, appleID: show.appleId))
+                }
             }
         }
     }
