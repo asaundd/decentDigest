@@ -193,10 +193,10 @@ struct ReadyPage: View {
                     DashLine("Tap an item to see more. Tap it again to close it.")
                     DashLine("Swipe a to-do right, or open it and tap ✓, to mark it done in Reminders.")
                     DashLine("Tap ↗ to open the app or website an item came from.")
-                    DashLine("In News and Podcasts, swipe right if relevant or left if not to remove it from the list. To keep it for later, save it with the bookmark.")
                     DashLine("Any news or podcast item you don't get to clears after a week to keep the list fresh.")
+                    DashLine("In News and Podcasts, swipe right if relevant or left if not to remove it from the list. To keep it for later, save it with the bookmark.")
                 }
-                Text("What you mark is kept privately, on your device and in your iCloud. A later update will use it to put the items you care about first.")
+                Text("Your reading history is a private record of the news and episodes you open, save, and mark relevant or not relevant. It stays on your device and in your own iCloud, and is never shared with developers. A later update will use it, on your device, to put what you care about most at the top. You can turn it off in Settings.")
                     .font(.footnote)
                     .foregroundStyle(Theme.secondary)
                     .fixedSize(horizontal: false, vertical: true)
