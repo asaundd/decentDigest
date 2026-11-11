@@ -127,7 +127,7 @@ private struct JudgmentSwipe: ViewModifier {
 
 /// A sideways pan that only starts when the finger is moving mostly sideways, so it never
 /// competes with scrolling the page up and down.
-private struct HorizontalPan: UIGestureRecognizerRepresentable {
+struct HorizontalPan: UIGestureRecognizerRepresentable {
     var onChange: (CGFloat) -> Void
     var onEnd: (CGFloat, _ cancelled: Bool) -> Void
 
