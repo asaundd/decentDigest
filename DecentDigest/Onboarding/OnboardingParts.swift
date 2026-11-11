@@ -240,7 +240,8 @@ struct ChoiceRow<Trailing: View>: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             trailing
         }
-        .padding(.vertical, 6)
+        // Dashed rows sit as close as the calendar and Reminders lists.
+        .padding(.vertical, dashed ? 4 : 6)
     }
 
     private var choiceText: some View {
