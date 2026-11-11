@@ -13,6 +13,9 @@ public enum WeatherRules {
     public static let weekDays = 6
     /// A cached forecast is fetched again after this long.
     public static let refreshInterval: TimeInterval = 30 * 60
+    /// A pull to refresh fetches the forecast again only after this long, so pulling over and
+    /// over doesn't spend WeatherKit's monthly quota.
+    public static let pullRefreshInterval: TimeInterval = 10 * 60
 
     // MARK: Today
 
