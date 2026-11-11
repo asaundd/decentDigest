@@ -56,6 +56,9 @@ private struct LeaveSwipe: ViewModifier {
 
     /// Each action's share of the open strip.
     private static let actionWidth: CGFloat = 84
+    /// A short flick this far opens the strip, whether it holds one action or two: the same effort as
+    /// opening ✓ Read alone.
+    private static let opensAt: CGFloat = (actionWidth + Theme.margin) * 0.5
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -180,7 +183,7 @@ private struct LeaveSwipe: ViewModifier {
         let position = min(0, base + x)
         if !cancelled, -position >= fullThreshold {
             commit(primary)
-        } else if !cancelled, -position >= openWidth * 0.5 {
+        } else if !cancelled, -position >= (swipeGuard.restsOpen ? openWidth * 0.5 : Self.opensAt) {
             withAnimation(.easeOut(duration: 0.2)) { dragX = -openWidth }
             swipeGuard.restsOpen = true
         } else {

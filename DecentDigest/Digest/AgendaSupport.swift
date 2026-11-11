@@ -142,8 +142,12 @@ struct ListFooter: View {
     }
 
     private func link(_ link: Link) -> some View {
-        QuietLink(link.title, action: link.action)
+        QuietLink(link.title, still: true, action: link.action)
             .accessibilityLabel(link.spoken ?? link.title)
+            // Show all and Show less are separate links: the underline never slides from one to the other.
+            .id(link.title)
+            .transition(.identity)
+            .animation(nil, value: link.title)
     }
 }
 

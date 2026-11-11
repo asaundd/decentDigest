@@ -111,7 +111,7 @@ struct FeedListSection: View {
                 showsAll: showsAll && eligible.count > limit,
                 app: isEpisodes ? ListFooter.Link(title: "Podcasts ↗", spoken: "Open Podcasts") { openURL(ApplePodcasts.app) } : nil
             ) {
-                withAnimation { showsAll.toggle() }
+                showsAll.toggle()
             }
             .padding(.top, 4)
             .digestRow()

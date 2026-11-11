@@ -55,14 +55,15 @@ struct WeatherLines: View {
 
             if showsWeek {
                 week(report.days, unit: unit)
-                    .padding(.top, 6)
+                    .padding(.top, 12)
                 placeLine(place)
                     .padding(.top, 8)
             }
 
             // At the bottom, like Show all under News and the agenda.
             if !report.days.isEmpty {
-                TextLink(showsWeek ? "Show less" : "Show week", still: true) {
+                // Gray, like the footer links under the other sections.
+                QuietLink(showsWeek ? "Show less" : "Show week", still: true) {
                     // A clean swap: the label and the week change at once, with no fade or slide.
                     var instant = Transaction()
                     instant.disablesAnimations = true
