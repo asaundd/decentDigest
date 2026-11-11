@@ -346,7 +346,7 @@ struct SearchBox: View {
                     isFocused.wrappedValue = false
                 } label: {
                     Text("Cancel")
-                        .font(.body)
+                        .font(.callout)
                         .foregroundStyle(Theme.accent)
                         .fixedSize()
                         .frame(minHeight: 44)
@@ -354,6 +354,12 @@ struct SearchBox: View {
                 }
                 .buttonStyle(.borderless)
                 .accessibilityHint("Clears the search and closes the keyboard")
+                // Fades in only once the field has made room, so it never shows over the field;
+                // leaves quickly before the field widens again.
+                .transition(.asymmetric(
+                    insertion: .opacity.animation(.easeOut(duration: 0.12).delay(0.2)),
+                    removal: .opacity.animation(.easeOut(duration: 0.08))
+                ))
             }
         }
         .animation(.easeOut(duration: 0.2), value: isFocused.wrappedValue)
