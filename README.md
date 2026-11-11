@@ -1,8 +1,8 @@
-# Decent Digest
+# Decent digest
 
 A calm morning digest for iPhone. Weather, calendar, to-dos, news and new podcast episodes on one quiet page.
 
-Decent Digest is a window onto the apps you already use. It reads from Calendar, Reminders and the RSS feeds you follow, and hands off to Safari or Podcasts for anything more. It has no server, no account and no analytics, and it is free.
+Decent digest is a window onto the apps you already use. It reads from Calendar, Reminders and the RSS feeds you follow, and hands off to Safari or Podcasts for anything more. It has no server, no account and no analytics, and it is free.
 
 ## Principles
 

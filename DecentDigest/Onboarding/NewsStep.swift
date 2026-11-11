@@ -60,6 +60,8 @@ struct NewsPicker: View {
     @State private var text = ""
     @State private var found: FoundFeed?
     @State private var isLooking = false
+    /// The last change to the box came in all at once, as a paste does.
+    @State private var arrivedWhole = false
     @State private var notFound = false
     @State private var openTopics: Set<String> = []
     @State private var fullTopics: Set<String> = []
@@ -82,18 +84,36 @@ struct NewsPicker: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             SearchBox(placeholder: "Search, or paste a site or feed address", text: $text, isFocused: $searchFocused, keyboard: .webSearch, submitLabel: .search) {
-                if FeedFinder.looksLikeAddress(query) { lookUp() }
+                searchFocused = false
             }
-            .onChange(of: text) { _, _ in
+            .onChange(of: text) { old, new in
                 found = nil
                 notFound = false
+                // Several characters at once means a paste (or autofill), not typing.
+                arrivedWhole = new.count - old.count > 3
+            }
+            // An address finds its feed on its own once typing pauses (at once when pasted), so
+            // the reader only has to tap Follow.
+            .task(id: query) {
+                await lookUp(query)
             }
 
             // Search mode starts with the tap, not the first letter: the lists step aside for a
-            // short hint, then results.
+            // short hint and a Paste button, then results.
             if searchFocused && query.isEmpty {
-                quiet("Type a site's name, or paste its address.")
-                    .padding(.top, 6)
+                HStack(alignment: .center, spacing: 12) {
+                    quiet("Type a site's name, or paste its address.")
+                    Spacer(minLength: 0)
+                    PasteButton(payloadType: String.self) { strings in
+                        guard let pasted = strings.first else { return }
+                        Task { @MainActor in text = pasted }
+                    }
+                    .labelStyle(.titleOnly)
+                    .buttonBorderShape(.capsule)
+                    .controlSize(.small)
+                    .tint(Theme.accent)
+                }
+                .padding(.top, 6)
             } else if query.isEmpty {
                 if inSettings && !followed.isEmpty {
                     followingList(followed, heading: "Following", limit: showsAllFollowed ? nil : 4)
@@ -105,7 +125,8 @@ struct NewsPicker: View {
                 topics
             } else {
                 results
-                if !followed.isEmpty {
+                // A name search also lists what's followed, to unfollow; an address doesn't.
+                if !FeedFinder.looksLikeAddress(query) && !followed.isEmpty {
                     followingList(followed, heading: "Following", limit: nil)
                 }
             }
@@ -246,9 +267,6 @@ struct NewsPicker: View {
                     quiet("Looking for a feed…")
                 } else if notFound {
                     quiet("No feed found at that address. Try the site's feed address instead.")
-                } else {
-                    TextLink("Find this site's feed", action: lookUp)
-                        .padding(.top, 6)
                 }
             } else if matches.isEmpty {
                 quiet("No sites by that name in the library. Paste a site's address to add it.")
@@ -257,20 +275,27 @@ struct NewsPicker: View {
         .padding(.top, 6)
     }
 
-    private func lookUp() {
-        let address = query
-        guard !isLooking, FeedFinder.looksLikeAddress(address) else { return }
-        isLooking = true
-        notFound = false
-        Task {
-            let result = await FeedFinder.find(address)
+    /// Finds the feed behind an address. Runs for each change to the box; a newer change cancels it.
+    private func lookUp(_ address: String) async {
+        guard FeedFinder.looksLikeAddress(address) else {
             isLooking = false
-            // The reader may have typed something else meanwhile.
-            guard query == address else { return }
-            found = result
-            notFound = result == nil
-            searchFocused = false
+            return
         }
+        isLooking = true
+        // A pasted address is looked up at once; a typed one waits for a pause. (Yield first so
+        // the change handler has marked how the text arrived.)
+        await Task.yield()
+        do {
+            try await Task.sleep(for: .milliseconds(arrivedWhole ? 0 : 700))
+        } catch {
+            return
+        }
+        let result = await FeedFinder.find(address)
+        // The reader may have typed something else meanwhile.
+        guard !Task.isCancelled, query == address else { return }
+        isLooking = false
+        found = result
+        notFound = result == nil
     }
 
     // MARK: Rows
