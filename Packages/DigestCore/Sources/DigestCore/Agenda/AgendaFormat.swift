@@ -64,6 +64,16 @@ public enum AgendaFormat {
     /// Hosts of video call links, which are left out of an event's notes.
     static let videoCallHosts = ["zoom.us", "meet.google.com", "teams.microsoft.com", "teams.live.com", "webex.com", "facetime.apple.com", "whereby.com", "gotomeeting.com", "chime.aws"]
 
+    /// An event's place on one line: an address's lines joined with commas. The card cuts it off with "…".
+    public static func oneLinePlace(_ location: String?) -> String? {
+        guard let location else { return nil }
+        let parts = location
+            .components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        return parts.isEmpty ? nil : parts.joined(separator: ", ")
+    }
+
     /// An event's notes without lines that carry a video call link, or nil when nothing is left.
     public static func notesWithoutCallLinks(_ notes: String?) -> String? {
         guard let notes else { return nil }

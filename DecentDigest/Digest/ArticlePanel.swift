@@ -92,7 +92,9 @@ struct ArticlePanel: View {
             notUseful: { close(); actions.notUseful() },
             readFull: nil,
             open: actions.open.map { open -> () -> Void in { close(); open() } },
-            openLabel: actions.openLabel
+            openLabel: actions.openLabel,
+            share: actions.share,
+            shareTitle: actions.shareTitle
         )
     }
 }

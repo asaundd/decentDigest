@@ -67,6 +67,17 @@ public enum FeedParser {
         return ParsedFeed(title: delegate.feedTitle, items: delegate.items)
     }
 
+    /// A title for an item that has none: its link without the scheme or "www.", cut to fit one line.
+    static func shortLink(_ link: String, limit: Int = 60) -> String {
+        var text = link.trimmingCharacters(in: .whitespacesAndNewlines)
+        for prefix in ["https://", "http://", "www."] where text.lowercased().hasPrefix(prefix) {
+            text.removeFirst(prefix.count)
+        }
+        if text.hasSuffix("/") { text.removeLast() }
+        guard text.count > limit else { return text }
+        return String(text.prefix(limit - 1)) + "…"
+    }
+
     private final class Delegate: NSObject, XMLParserDelegate {
         var sawFeedRoot = false
         var feedTitle: String?
@@ -74,8 +85,11 @@ public enum FeedParser {
 
         private var isAtom = false
         private var current: ItemBuilder?
-        private var text = ""
+        /// The text gathered inside each open element. A child's text also counts toward its parent,
+        /// so a title wrapped in markup, like `<title><a href="…">Story</a></title>`, keeps its words.
+        private var texts: [String] = []
         private var path: [String] = []
+        private static let containers: Set<String> = ["rss", "rdf:rdf", "channel", "feed", "item", "entry"]
 
         func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes: [String: String] = [:]) {
             let name = elementName.lowercased()
@@ -87,7 +101,7 @@ public enum FeedParser {
                 }
             }
             path.append(name)
-            text = ""
+            texts.append("")
 
             if name == "item" || (isAtom && name == "entry") {
                 let item = ItemBuilder()
@@ -103,19 +117,23 @@ public enum FeedParser {
         }
 
         func parser(_ parser: XMLParser, foundCharacters string: String) {
-            text += string
+            if !texts.isEmpty { texts[texts.count - 1] += string }
         }
 
         func parser(_ parser: XMLParser, foundCDATA CDATABlock: Data) {
-            text += String(decoding: CDATABlock, as: UTF8.self)
+            if !texts.isEmpty { texts[texts.count - 1] += String(decoding: CDATABlock, as: UTF8.self) }
         }
 
         func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
             let name = elementName.lowercased()
-            let value = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            let raw = texts.popLast() ?? ""
+            // Pass the text up to a parent that holds text, not to the feed, channel or item around it.
+            if let parent = path.dropLast().last, !Self.containers.contains(parent), !texts.isEmpty {
+                texts[texts.count - 1] += raw
+            }
+            let value = raw.trimmingCharacters(in: .whitespacesAndNewlines)
             defer {
                 if !path.isEmpty { path.removeLast() }
-                text = ""
             }
 
             guard let current else {
@@ -182,7 +200,7 @@ public enum FeedParser {
             return ParsedItem(
                 guid: guid,
                 link: link,
-                title: cleanTitle.isEmpty ? (link ?? "") : cleanTitle,
+                title: cleanTitle.isEmpty ? FeedParser.shortLink(link ?? "") : cleanTitle,
                 summary: (cleanSummary?.isEmpty ?? true) ? nil : cleanSummary,
                 fullText: fullText,
                 author: author.map { HTMLText.plain($0) },

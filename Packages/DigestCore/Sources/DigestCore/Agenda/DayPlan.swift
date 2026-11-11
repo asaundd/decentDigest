@@ -24,15 +24,17 @@ public enum DayPlanner {
 
     /// - Parameters:
     ///   - days: each day's items in order, today first. Days with nothing are skipped.
+    ///   - alreadyShown: items shown above the days (To do's Past due), counted toward `limit`.
     ///   - expanded: days whose "N more" was tapped; they show in full.
     ///   - showAll: true once the footer's Show all was tapped.
     public static func plan<Item: Sendable>(
         _ days: [(day: Date, items: [Item])],
         limit: Int = limit,
+        alreadyShown: Int = 0,
         expanded: Set<Date> = [],
         showAll: Bool = false
     ) -> [DayGroup<Item>] {
-        var shown = 0
+        var shown = alreadyShown
         // Today takes a place whether or not it has anything.
         var daysUsed = 1
         var groups: [DayGroup<Item>] = []

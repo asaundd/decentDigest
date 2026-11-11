@@ -1,7 +1,7 @@
 import DigestCore
 import SwiftUI
 
-/// Open reminders, read live, grouped by day like Calendar, then Anytime for those with no date.
+/// Open reminders, read live: Past due first, then by day like Calendar, then Anytime for those with no date.
 /// A to-do is checked off with the ✓ on its card or by swiping its row right; either writes back to Reminders.
 struct TodosSectionView: View {
     var model: AgendaModel
@@ -34,12 +34,19 @@ struct TodosSectionView: View {
         let plan = TodoRules.plan(model.todos, now: now, expanded: expandedDays, anytimeExpanded: anytimeExpanded, showAll: showsAll)
         let days = plan.days.filter { !$0.items.isEmpty }
         return VStack(alignment: .leading, spacing: 0) {
-            if days.isEmpty && plan.anytime.isEmpty && model.hasLoaded {
+            if isEmpty(plan, days: days) && model.hasLoaded {
                 QuietLine("Nothing to do.")
                     .digestRow()
             }
+            if !plan.pastDue.isEmpty {
+                DayHeader(title: "Past due", isFirst: true)
+                    .digestRow()
+                ForEach(plan.pastDue) { todo in
+                    row(todo, now: now)
+                }
+            }
             ForEach(days) { group in
-                DayHeader(title: AgendaFormat.dayName(group.day, now: now), isFirst: group.id == days.first?.id)
+                DayHeader(title: AgendaFormat.dayName(group.day, now: now), isFirst: plan.pastDue.isEmpty && group.id == days.first?.id)
                     .digestRow()
                 ForEach(group.items) { todo in
                     row(todo, now: now)
@@ -52,7 +59,7 @@ struct TodosSectionView: View {
                 }
             }
             if !plan.anytime.isEmpty {
-                DayHeader(title: "Anytime", isFirst: days.isEmpty)
+                DayHeader(title: "Anytime", isFirst: plan.pastDue.isEmpty && days.isEmpty)
                     .digestRow()
                 ForEach(plan.anytime) { todo in
                     row(todo, now: now)
@@ -64,7 +71,7 @@ struct TodosSectionView: View {
                     .digestRow()
                 }
             }
-            if model.hasLoaded && !(days.isEmpty && plan.anytime.isEmpty) {
+            if model.hasLoaded && !isEmpty(plan, days: days) {
                 AgendaFooter(
                     hidden: plan.hiddenCount,
                     phrase: { $0 == 1 ? "more item" : "more items" },
@@ -93,6 +100,10 @@ struct TodosSectionView: View {
         .sensoryFeedback(.impact(weight: .light), trigger: model.checkedIDs) { old, new in
             new.count > old.count
         }
+    }
+
+    private func isEmpty(_ plan: TodoPlan, days: [DayGroup<TodoEntry>]) -> Bool {
+        plan.pastDue.isEmpty && days.isEmpty && plan.anytime.isEmpty
     }
 
     private func row(_ todo: TodoEntry, now: Date) -> some View {
@@ -157,7 +168,7 @@ struct TodosSectionView: View {
     }
 }
 
-/// A to-do: its title, with "Past due" (or today's time) in gray after it.
+/// A to-do: its title, with its time in gray after it when it is due today or later at a set time.
 /// A tap makes the title semibold and opens a card: due day and list, notes, ✓ at the top right, Open ↗.
 /// A tap on the title or the card closes it.
 struct TodoRow: View {
@@ -231,6 +242,7 @@ struct TodoRow: View {
                     if let notes = todo.notes {
                         Text(notes)
                             .lineLimit(3)
+                            .textSelection(.enabled)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

@@ -24,10 +24,12 @@ struct Headline: Identifiable {
     /// The whole post is in the feed.
     var readsHere: Bool { !isEpisode && kind == .fullPost }
 
-    /// Full posts, excerpts and long show notes open in the panel; summaries and link-only rows go to the site.
+    /// Full posts, and excerpts and show notes too long for the card, open in the panel.
+    /// An excerpt or notes that fit on the card don't, since the panel would add nothing.
     var opensPanel: Bool {
-        if isEpisode { return (notes?.count ?? 0) > PostKind.rowTextLimit }
-        return kind == .fullPost || kind == .excerpt
+        if readsHere { return true }
+        guard isEpisode || kind == .excerpt else { return false }
+        return (notes?.count ?? 0) > PostKind.rowTextLimit
     }
 
     /// The ribbon's label for opening the panel. It also says what the feed sent.
@@ -81,6 +83,10 @@ struct HeadlineActions {
     var readLabel = "Read full post"
     /// What VoiceOver says for Open ↗.
     var openLabel = "Open the site"
+    /// The link Share hands to the iOS share sheet. News items only.
+    var share: URL?
+    /// The title the share sheet shows with the link.
+    var shareTitle = ""
 }
 
 /// One headline or episode: gray dash, title (semibold while unread, regular once opened), then the
@@ -221,8 +227,10 @@ struct HeadlineRow: View {
                         .buttonStyle(StillButtonStyle())
                         .accessibilityHint("Opens the rest in a panel")
                     } else {
+                        // Press and hold to copy, as in the panel.
                         Text(text)
                             .font(.callout)
+                            .textSelection(.enabled)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 } else if let byline = headline.byline {
@@ -276,7 +284,7 @@ struct ActionRibbon: View {
     }
 }
 
-/// The text actions: read in the panel first when the post opens there, then Open ↗.
+/// The text actions: read in the panel first when the post opens there, then Open ↗, then Share.
 struct ActionLinks: View {
     var actions: HeadlineActions
 
@@ -287,6 +295,13 @@ struct ActionLinks: View {
         if let open = actions.open {
             TextLink("Open ↗", action: open)
                 .accessibilityLabel(actions.openLabel)
+        }
+        if let url = actions.share {
+            ShareLink(item: url, preview: SharePreview(actions.shareTitle)) {
+                TextLinkLabel(title: "Share")
+            }
+            .buttonStyle(.borderless)
+            .accessibilityLabel("Share the link")
         }
     }
 }
@@ -374,15 +389,24 @@ struct TextLink: View {
 
     var body: some View {
         Button(action: action) {
-            Text(title)
-                .font(Theme.actionFont)
-                .underline()
-                .foregroundStyle(Theme.accent)
-                .fixedSize()
-                .padding(.vertical, 4)
-                .contentShape(Rectangle())
+            TextLinkLabel(title: title)
         }
         .buttonStyle(LinkButtonStyle(still: still))
+    }
+}
+
+/// A text link's look: slate, semibold, underlined. Shared by `TextLink` and Share.
+struct TextLinkLabel: View {
+    var title: String
+
+    var body: some View {
+        Text(title)
+            .font(Theme.actionFont)
+            .underline()
+            .foregroundStyle(Theme.accent)
+            .fixedSize()
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
     }
 }
 

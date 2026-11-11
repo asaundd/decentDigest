@@ -109,7 +109,7 @@ struct WelcomePage: View {
                     .padding(.top, 12)
                 SectionRule()
                 VStack(alignment: .leading, spacing: 8) {
-                    DashLine("No account, no ads, and no tracking.")
+                    DashLine("Privacy first: no tracking, no ads, and no account required.")
                     DashLine("What you follow, save, and read stays on your device and in your own iCloud. It's never shared with developers.")
                     DashLine("Each step is optional and can be changed later.")
                 }

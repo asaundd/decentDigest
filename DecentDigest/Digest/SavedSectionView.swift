@@ -95,7 +95,9 @@ struct SavedSectionView: View {
             notUseful: { resolve(item, as: .notRelevant) },
             open: openAction,
             readLabel: headline.readLabel,
-            openLabel: item.isEpisode ? "Open in Podcasts" : "Open the site"
+            openLabel: item.isEpisode ? "Open in Podcasts" : "Open the site",
+            share: item.isEpisode ? nil : headline.link,
+            shareTitle: headline.title
         )
         if headline.opensPanel {
             let panelActions = actions

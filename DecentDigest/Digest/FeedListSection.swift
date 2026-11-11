@@ -210,7 +210,9 @@ struct FeedListSection: View {
             notUseful: { resolve(item, as: .notRelevant) },
             open: openAction,
             readLabel: row.readLabel,
-            openLabel: isEpisodes ? "Open in Podcasts" : "Open the site"
+            openLabel: isEpisodes ? "Open in Podcasts" : "Open the site",
+            share: isEpisodes ? nil : row.link,
+            shareTitle: row.title
         )
         if row.opensPanel {
             let panelActions = actions

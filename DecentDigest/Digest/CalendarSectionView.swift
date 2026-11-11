@@ -166,8 +166,11 @@ struct EventRow: View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 1) {
                 Text(lengthLine)
-                if let location = event.entry.location {
-                    Text(location)
+                // A long place, such as a meeting link, stays on one line.
+                if let place = AgendaFormat.oneLinePlace(event.entry.location) {
+                    Text(place)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
                 }
                 if let people = AgendaFormat.people(event.entry.attendees) {
                     Text(people)
@@ -181,6 +184,7 @@ struct EventRow: View {
             if let notes = AgendaFormat.notesWithoutCallLinks(event.entry.notes) {
                 Text(notes)
                     .lineLimit(3)
+                    .textSelection(.enabled)
                     .padding(.top, 6)
             }
 
