@@ -36,7 +36,8 @@ enum Theme {
     /// The faint underline under links that undo a choice (Unfollow, Hide).
     static let faintUnderline = Color(light: 0xC9CBC7, dark: 0x4A504D)
     /// The filled search boxes in setup.
-    static let fieldFill = ribbonButtonFill
+    /// Lighter than the page in dark mode (the button fill there matches the page), so the box shows.
+    static let fieldFill = Color(light: 0xF2F1EC, dark: 0x272C2A)
 
     // Spacing
     static let margin: CGFloat = 24
