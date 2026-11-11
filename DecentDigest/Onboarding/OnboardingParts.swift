@@ -379,13 +379,12 @@ struct SearchBox: View {
                     Task { @MainActor in text = pasted.trimmingCharacters(in: .whitespacesAndNewlines) }
                 }
                 .labelStyle(.titleOnly)
-                // iOS always fills this control: a light warm pill with dark gray text.
-                // (iOS checks the label stays readable.)
+                // iOS always fills this control and draws its label white; only the fill can be
+                // chosen, so it's a warm gray pill.
                 .buttonBorderShape(.capsule)
                 .controlSize(.small)
                 .font(.callout)
                 .tint(Theme.pasteFill)
-                .foregroundStyle(Theme.itemInk)
                 .fixedSize()
                 .transition(.opacity.animation(.easeOut(duration: 0.12).delay(0.2)))
             }

@@ -38,8 +38,9 @@ enum Theme {
     /// The "on" track of every switch. In dark mode a muted slate rather than gray, so on is plain to see
     /// against the dark off track.
     static let switchOn = Color(light: 0x6F7573, dark: 0x7A7A94)
-    /// The Paste control beside a search box: a light warm fill (a deeper warm shade in dark mode).
-    static let pasteFill = Color(light: 0xEDE6D9, dark: 0x3A352D)
+    /// The Paste control beside a search box. iOS draws its label white, so the fill is a warm gray
+    /// dark enough for white text to read.
+    static let pasteFill = Color(light: 0x7A7266, dark: 0x5E574C)
     /// The filled search boxes in setup.
     /// Lighter than the page in dark mode (the button fill there matches the page), so the box shows.
     static let fieldFill = Color(light: 0xF2F1EC, dark: 0x272C2A)
