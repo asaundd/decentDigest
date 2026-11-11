@@ -20,11 +20,9 @@ public final class NewsRefresher {
         defer { isRefreshing = false }
 
         let store = await feedStore()
-        if let library = try? FeedLibrary.bundled() {
-            try? await store.addStarterSourcesIfNeeded(library: library)
-        }
         let started = Date.now
-        let fetched = await store.refresh(force: force)
+        let keepsHistory = !UserDefaults.standard.bool(forKey: DigestPreferences.readingHistoryOffKey)
+        let fetched = await store.refresh(force: force, keepsHistory: keepsHistory)
         // Headlines opened before this refresh leave the News list.
         if fetched > 0 {
             UserDefaults.standard.set(started.timeIntervalSince1970, forKey: Self.listStartedAtKey)

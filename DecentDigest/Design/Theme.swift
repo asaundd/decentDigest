@@ -28,6 +28,23 @@ enum Theme {
     /// The faint wash over the digest while the panel is open.
     static let scrim = Color.black.opacity(0.12)
 
+    /// The Dd logo on the Settings button: quiet, but still easy to find.
+    static let logoButton = Color(light: 0x8C918F, dark: 0x6F7573)
+    /// A button that can't be used yet: a fill one shade darker than the page, with gray text.
+    static let buttonDimmedFill = Color(light: 0xECEBE6, dark: 0x232826)
+    static let buttonDimmedText = Color(light: 0xA7ABA9, dark: 0x6F7573)
+    /// The faint underline under links that undo a choice (Unfollow, Hide).
+    static let faintUnderline = Color(light: 0xC9CBC7, dark: 0x4A504D)
+    /// The "on" track of every switch. In dark mode a muted slate rather than gray, so on is plain to see
+    /// against the dark off track.
+    static let switchOn = Color(light: 0x6F7573, dark: 0x7A7A94)
+    /// The Paste control beside a search box. iOS draws its label white, so the fill is a warm gray
+    /// dark enough for white text to read.
+    static let pasteFill = Color(light: 0x7A7266, dark: 0x5E574C)
+    /// The filled search boxes in setup.
+    /// Lighter than the page in dark mode (the button fill there matches the page), so the box shows.
+    static let fieldFill = Color(light: 0xF2F1EC, dark: 0x272C2A)
+
     // Spacing
     static let margin: CGFloat = 24
     static let ruleSpacing: CGFloat = 24
@@ -71,6 +88,19 @@ struct SectionRule: View {
             .fill(Theme.rule)
             .frame(height: 1)
             .padding(.vertical, Theme.ruleSpacing)
+            .accessibilityHidden(true)
+    }
+}
+
+/// A thin 1pt rule with the given space above and below, for pages other than the digest.
+struct PlainRule: View {
+    var spacing: CGFloat
+
+    var body: some View {
+        Rectangle()
+            .fill(Theme.rule)
+            .frame(height: 1)
+            .padding(.vertical, spacing)
             .accessibilityHidden(true)
     }
 }

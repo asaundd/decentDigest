@@ -1,7 +1,7 @@
 import DigestCore
 import SwiftUI
 
-/// The week ahead from every calendar on the phone, read live, as a bulleted list of days.
+/// The week ahead from the calendars the reader keeps on the page, read live, as a bulleted list of days.
 /// All of today shows, past events gray and struck; the next day shows at least its first event;
 /// later days fill in up to the limit. Nothing here is stored.
 struct CalendarSectionView: View {
@@ -21,17 +21,12 @@ struct CalendarSectionView: View {
                 }
             }
 
+            // The digest shows this section only once Calendar access is on.
             if model.calendarAccess == .granted {
                 // Redrawn each minute, so past and happening-now events change on their own.
                 TimelineView(.everyMinute) { context in
                     days(now: context.date)
                 }
-            } else {
-                AccessNote(
-                    appName: "Calendar",
-                    shows: "today's events",
-                    request: { await model.requestCalendarAccess() }
-                )
             }
         }
     }

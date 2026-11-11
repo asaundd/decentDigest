@@ -233,6 +233,8 @@ private final class FakeSource: AgendaSource {
     func remindersAccess() -> AccessState { access }
     func requestCalendarAccess() async -> AccessState { access }
     func requestRemindersAccess() async -> AccessState { access }
+    func calendars() -> [AgendaList] { [AgendaList(id: "work", title: "Work"), AgendaList(id: "home", title: "Home")] }
+    func reminderLists() -> [AgendaList] { [AgendaList(id: "Home", title: "Home")] }
     func events(in range: ClosedRange<Date>) -> [CalendarEntry] { events }
     func incompleteReminders() async -> [TodoEntry] { todos.filter { !$0.isCompleted } }
 
@@ -315,4 +317,35 @@ private func threeTodos() -> [TodoEntry] {
     #expect(model.calendarAccess == .denied)
     #expect(model.events.isEmpty)
     #expect(model.todos.isEmpty)
+}
+
+@MainActor @Test func leftOutCalendarsAndListsStayOffThePage() async {
+    let defaults = UserDefaults(suiteName: "agenda-\(UUID().uuidString)")!
+    let source = FakeSource(todos: threeTodos().enumerated().map { index, todo in
+        var todo = todo
+        todo.listID = index == 1 ? "errands" : "home"
+        return todo
+    })
+    source.events = [
+        CalendarEntry(id: "x", title: "Standup", start: at(9), end: at(10), calendarName: "Work", calendarID: "work"),
+        CalendarEntry(id: "y", title: "Dinner", start: at(18), end: at(19), calendarName: "Home", calendarID: "home"),
+    ]
+    let model = AgendaModel(source: source, defaults: defaults, now: { at(8) })
+    await model.reload()
+    #expect(model.calendars.map(\.id) == ["work", "home"])
+    #expect(model.events.count == 2)
+
+    await model.setIncluded(false, calendar: "work")
+    await model.setIncluded(false, list: "errands")
+    #expect(model.events.map(\.id) == ["y"])
+    #expect(model.todos.map(\.id) == ["a", "c"])
+
+    // Remembered on this device.
+    let reopened = AgendaModel(source: source, defaults: defaults, now: { at(8) })
+    await reopened.reload()
+    #expect(reopened.excludedCalendarIDs == ["work"])
+    #expect(reopened.events.map(\.id) == ["y"])
+
+    await reopened.setIncluded(true, calendar: "work")
+    #expect(reopened.events.count == 2)
 }

@@ -55,8 +55,21 @@ public struct FeedLibrary: Decodable, Sendable {
             .sorted { ($0.popularityRank ?? .max) < ($1.popularityRank ?? .max) }
     }
 
-    /// The shows followed before the reader has chosen any: verified, https only.
-    public func defaultPodcasts() -> [Podcast] {
-        (podcasts ?? []).filter { $0.defaultFollow == true && $0.verified == true && $0.feedUrl.hasPrefix("https://") }
+    /// The shows suggested in setup: verified, https only, in library order. None is followed until picked.
+    public func suggestedPodcasts() -> [Podcast] {
+        (podcasts ?? []).filter { $0.verified == true && $0.feedUrl.hasPrefix("https://") }
+    }
+
+    /// Library feeds whose name or site matches what the reader typed, best first.
+    public func searchFeeds(_ text: String, limit: Int = 5) -> [Feed] {
+        let query = text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !query.isEmpty else { return [] }
+        let offered = feeds.filter { $0.verified == true && $0.feedUrl.hasPrefix("https://") }
+        let starts = offered.filter { $0.title.lowercased().hasPrefix(query) }
+        let contains = offered.filter {
+            !$0.title.lowercased().hasPrefix(query)
+                && ($0.title.lowercased().contains(query) || $0.siteUrl.lowercased().contains(query))
+        }
+        return Array((starts + contains).prefix(limit))
     }
 }

@@ -10,7 +10,7 @@ public enum NewsRules {
     public static let refreshInterval: TimeInterval = 15 * 60
     /// Feeds fetched at the same time.
     public static let maxConcurrentFetches = 6
-    /// Starter feeds followed per library category when the reader has no sources.
+    /// Sites followed when the reader chooses a topic in setup.
     public static let starterFeedsPerCategory = 2
 
     public static func expiryCutoff(now: Date, calendar: Calendar = .current) -> Date {
@@ -69,10 +69,8 @@ public enum NewsRules {
 }
 
 extension FeedLibrary {
-    /// The feeds followed before the reader has chosen any: the most popular starters in each category.
-    public func defaultFeeds(perCategory: Int = NewsRules.starterFeedsPerCategory) -> [Feed] {
-        categories.flatMap { category in
-            starterFeeds(in: category.id).filter { $0.defaultFollow != false }.prefix(perCategory)
-        }
+    /// What choosing a topic in setup follows: its most popular sites.
+    public func topicPicks(in categoryID: String, count: Int = NewsRules.starterFeedsPerCategory) -> [Feed] {
+        Array(starterFeeds(in: categoryID).filter { $0.defaultFollow != false }.prefix(count))
     }
 }

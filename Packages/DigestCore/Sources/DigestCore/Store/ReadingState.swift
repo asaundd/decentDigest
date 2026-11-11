@@ -56,6 +56,24 @@ public enum ReadingState {
         try? context.save()
     }
 
+    /// Clears the reading history. Saved items stay, with their state. Headlines and episodes the
+    /// reader already dealt with leave the device's cache too, so they don't come back as new.
+    public static func clearHistory(in context: ModelContext) {
+        let saved = Set(((try? context.fetch(FetchDescriptor<SavedItem>())) ?? []).map(\.itemID))
+        let states = (try? context.fetch(FetchDescriptor<ItemState>())) ?? []
+        var dealtWith: Set<String> = []
+        for state in states where !saved.contains(state.itemID) {
+            if !state.status.isActive || state.openedAt != nil { dealtWith.insert(state.itemID) }
+            context.delete(state)
+        }
+        if !dealtWith.isEmpty {
+            for item in (try? context.fetch(FetchDescriptor<FeedItem>())) ?? [] where dealtWith.contains(item.itemID) {
+                context.delete(item)
+            }
+        }
+        try? context.save()
+    }
+
     public static func state(for itemID: String, in context: ModelContext) -> ItemState? {
         var descriptor = FetchDescriptor<ItemState>(predicate: #Predicate { $0.itemID == itemID })
         descriptor.fetchLimit = 1

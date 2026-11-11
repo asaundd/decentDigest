@@ -86,7 +86,7 @@ struct HeadlineActions {
 /// One headline or episode: gray dash, title (semibold while unread, regular once opened), then the
 /// feed name and age, or the show's name.
 /// Title-only rows end in ↗. A tap expands any row: under the title, a lighter card holds the byline
-/// and up to 320 characters of text over a ribbon of actions.
+/// and up to 320 characters of text over a ribbon of actions. Another tap, on the title or the card, closes it.
 struct HeadlineRow: View {
     static let verticalPadding: CGFloat = 5
     /// How far the open card reaches past the text on the right. On the left it starts under the dash,
@@ -162,6 +162,12 @@ struct HeadlineRow: View {
                             .padding(.trailing, -Self.cardInset)
                     }
                     .padding(.top, 2)
+                    // A tap anywhere on the card, away from its buttons and links, closes it like a tap on the title.
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        guard swipeGuard?.justSwiped != true else { return }
+                        onTap()
+                    }
                     .padding(.bottom, 10)
             }
         }

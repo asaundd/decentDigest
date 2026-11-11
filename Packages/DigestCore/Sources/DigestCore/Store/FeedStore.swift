@@ -5,45 +5,13 @@ import SwiftData
 /// The one place that writes fetched feeds into SwiftData, off the main thread.
 @ModelActor
 public actor FeedStore {
-    /// Follows the default starter feeds when the reader has no news sources yet,
-    /// and the default shows when the reader follows no podcasts yet.
-    public func addStarterSourcesIfNeeded(library: FeedLibrary) throws {
-        let news = SourceKind.news.rawValue
-        let podcast = SourceKind.podcast.rawValue
-        let newsCount = try modelContext.fetchCount(FetchDescriptor<Source>(predicate: #Predicate { $0.kind == news }))
-        let podcastCount = try modelContext.fetchCount(FetchDescriptor<Source>(predicate: #Predicate { $0.kind == podcast }))
-        if newsCount == 0 {
-            for (index, feed) in library.defaultFeeds().enumerated() {
-                modelContext.insert(Source(
-                    kind: .news,
-                    feedURL: feed.feedUrl,
-                    siteURL: feed.siteUrl,
-                    title: feed.title,
-                    category: feed.category,
-                    sortOrder: index
-                ))
-            }
-        }
-        if podcastCount == 0 {
-            for (index, show) in library.defaultPodcasts().enumerated() {
-                modelContext.insert(Source(
-                    kind: .podcast,
-                    feedURL: show.feedUrl,
-                    title: show.title,
-                    category: show.category,
-                    sortOrder: index,
-                    appleID: show.appleId
-                ))
-            }
-        }
-        try modelContext.save()
-    }
-
     /// Fetches every followed feed and show that is due, stores new items and prunes expired ones.
-    /// - Parameter force: fetch every source now, even if it was fetched recently.
+    /// - Parameters:
+    ///   - force: fetch every source now, even if it was fetched recently.
+    ///   - keepsHistory: false when reading history is off, so expired items leave no record.
     /// - Returns: how many feeds were fetched.
     @discardableResult
-    public func refresh(force: Bool = false, now: Date = .now, fetcher: FeedFetcher = FeedFetcher()) async -> Int {
+    public func refresh(force: Bool = false, keepsHistory: Bool = true, now: Date = .now, fetcher: FeedFetcher = FeedFetcher()) async -> Int {
         let jobs: [Job]
         do {
             jobs = try dueJobs(force: force, now: now)
@@ -68,17 +36,29 @@ public actor FeedStore {
             }
         }
 
-        try? prune(now: now)
+        try? prune(now: now, keepsHistory: keepsHistory)
         try? modelContext.save()
         return jobs.count
     }
 
-    /// Deletes cached items past the expiry window. Items shown but never touched are recorded as ignored.
-    public func prune(now: Date = .now) throws {
+    /// Deletes cached items past the expiry window. Items shown but never touched are recorded as ignored,
+    /// unless reading history is off: then the record of an expired item goes too (saved items keep theirs).
+    /// An expired item is never fetched again, so nothing comes back.
+    public func prune(now: Date = .now, keepsHistory: Bool = true) throws {
         let cutoff = NewsRules.expiryCutoff(now: now)
         let expired = try modelContext.fetch(FetchDescriptor<FeedItem>(predicate: #Predicate { $0.publishedAt < cutoff }))
         guard !expired.isEmpty else { return }
         let expiredIDs = Set(expired.map(\.itemID))
+        if !keepsHistory {
+            let saved = Set(try modelContext.fetch(FetchDescriptor<SavedItem>()).map(\.itemID))
+            for state in try modelContext.fetch(FetchDescriptor<ItemState>())
+            where expiredIDs.contains(state.itemID) && !saved.contains(state.itemID) {
+                modelContext.delete(state)
+            }
+            for item in expired { modelContext.delete(item) }
+            try modelContext.save()
+            return
+        }
         let states = try modelContext.fetch(FetchDescriptor<ItemState>(predicate: #Predicate { $0.resolvedAt == nil }))
         for state in states where expiredIDs.contains(state.itemID) && state.status.isUnread {
             state.status = .ignored

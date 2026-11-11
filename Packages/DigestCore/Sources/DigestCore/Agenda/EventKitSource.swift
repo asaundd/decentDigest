@@ -38,6 +38,16 @@ public final class EventKitSource: AgendaSource {
 
     // MARK: Reading
 
+    public func calendars() -> [AgendaList] {
+        guard calendarAccess() == .granted else { return [] }
+        return Self.lists(store.calendars(for: .event))
+    }
+
+    public func reminderLists() -> [AgendaList] {
+        guard remindersAccess() == .granted else { return [] }
+        return Self.lists(store.calendars(for: .reminder))
+    }
+
     public func events(in range: ClosedRange<Date>) -> [CalendarEntry] {
         guard calendarAccess() == .granted else { return [] }
         // nil reads every calendar: the user's own, shared iCloud calendars and subscriptions.
@@ -53,6 +63,7 @@ public final class EventKitSource: AgendaSource {
                 end: event.endDate,
                 isAllDay: event.isAllDay,
                 calendarName: event.calendar?.title ?? "",
+                calendarID: event.calendar?.calendarIdentifier ?? "",
                 location: Self.cleaned(event.location),
                 mapPoint: event.structuredLocation?.geoLocation.map {
                     MapPoint(latitude: $0.coordinate.latitude, longitude: $0.coordinate.longitude)
@@ -99,6 +110,33 @@ public final class EventKitSource: AgendaSource {
         }
     }
 
+    /// Calendars or lists grouped by account, then by name.
+    private static func lists(_ calendars: [EKCalendar]) -> [AgendaList] {
+        calendars
+            .sorted { ($0.source?.title ?? "", $0.title) < ($1.source?.title ?? "", $1.title) }
+            .map { AgendaList(id: $0.calendarIdentifier, title: $0.title, note: note(for: $0)) }
+    }
+
+    /// Where a calendar comes from, in a word or two, so a work or holiday calendar is easy to spot.
+    private static func note(for calendar: EKCalendar) -> String? {
+        switch calendar.type {
+        case .subscription: return "Subscribed"
+        case .birthday: return "Contacts"
+        default: break
+        }
+        guard let source = calendar.source else { return nil }
+        let title = source.title
+        let lowered = title.lowercased()
+        if lowered.contains("gmail") || lowered.contains("google") { return "Google" }
+        switch source.sourceType {
+        case .exchange: return "Exchange"
+        case .local: return "On this device"
+        default: break
+        }
+        // An account named by its email address says nothing useful here.
+        return title.isEmpty || title.contains("@") ? nil : title
+    }
+
     private static func wasDeclined(_ event: EKEvent) -> Bool {
         event.attendees?.contains { $0.isCurrentUser && $0.participantStatus == .declined } ?? false
     }
@@ -137,6 +175,7 @@ public final class EventKitSource: AgendaSource {
                     id: reminder.calendarItemIdentifier,
                     title: cleaned(reminder.title) ?? "Untitled to-do",
                     listName: reminder.calendar?.title ?? "",
+                    listID: reminder.calendar?.calendarIdentifier ?? "",
                     due: components.flatMap { calendar.date(from: $0) },
                     dueIncludesTime: components?.hour != nil,
                     notes: cleaned(reminder.notes),

@@ -1,189 +1,43 @@
 import DigestCore
 import SwiftUI
-import UIKit
 
-/// Settings › Weather: use the device's location, or type a city. Opened from the place under the
-/// week, or from "Set up weather". Kept on the same paper page as the digest.
+/// Weather settings: whether the weather shows on the digest, and where the forecast is for.
+/// Opened from Settings, or on its own from the place under the week (with ✕ to close). Uses the
+/// same place picker as the Weather step in setup.
 struct WeatherSettingsView: View {
     var model: WeatherModel
-
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.openURL) private var openURL
-    @State private var city = ""
-    @State private var isLooking = false
-    @State private var notFound = false
-    @State private var search = CitySearch()
-    @FocusState private var cityFocused: Bool
+    var preferences: DigestPreferences
+    /// True when opened from Settings: ‹ Settings at the top instead of ✕.
+    var inSettings = false
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text("Weather")
-                        .font(Theme.dateFont)
-                        .accessibilityAddTraits(.isHeader)
-                    Spacer()
-                    TextLink("Done") { dismiss() }
-                }
+        SettingsPage(title: "Weather", subtitle: "Show the forecast for where you are, or for a city you choose.", closes: !inSettings) {
+            ShowSwitch(label: "Show weather on the digest", isOn: Binding(
+                get: { preferences.isShown(.weather) },
+                set: { preferences.setShown($0, .weather) }
+            ))
 
-                if let place = model.place, model.report != nil {
-                    HStack(alignment: .firstTextBaseline, spacing: 4) {
-                        Text("Showing the weather for \(place.name)")
-                        if place.isCurrentLocation {
-                            Image(systemName: "location")
-                                .font(.caption2)
-                                .accessibilityLabel("Current location")
-                        }
-                    }
-                    .foregroundStyle(Theme.secondary)
-                    .padding(.top, 8)
-                }
-
-                SectionRule()
-
-                Text("Your location")
-                    .font(Theme.sectionTitleFont)
-                    .accessibilityAddTraits(.isHeader)
-                locationOptions
-                    .padding(.top, Theme.titleToList)
-
-                SectionRule()
-
-                Text("A city")
-                    .font(Theme.sectionTitleFont)
-                    .accessibilityAddTraits(.isHeader)
-                cityOptions
-                    .padding(.top, Theme.titleToList)
-
-                SectionRule()
-
-                Text("Your location is used only to name your city and get its forecast from Apple Weather. It stays on this device and is never shared with the developer.")
+            if preferences.isShown(.weather) {
+                PlainRule(spacing: 20)
+                WeatherPlacePicker(model: model, cityNote: "Select a city instead.")
+                PlainRule(spacing: 20)
+                Text(WeatherCopy.locationNote)
                     .font(.footnote)
                     .foregroundStyle(Theme.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(Theme.margin)
         }
-        .foregroundStyle(Theme.ink)
-        .tint(Theme.accent)
-        .background(Theme.page.ignoresSafeArea())
         .presentationBackground(Theme.page)
-    }
-
-    @ViewBuilder
-    private var locationOptions: some View {
-        switch model.locationAccess {
-        case .granted where model.typedCity == nil:
-            Text("Using your location.")
-                .foregroundStyle(Theme.secondary)
-        case .granted, .notAsked:
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Show the weather wherever you are.")
-                    .foregroundStyle(Theme.secondary)
-                TextLink("Use my location") {
-                    Task { await model.useCurrentLocation() }
-                }
-                .accessibilityHint("Asks for your location if needed")
-            }
-        case .denied:
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Location is off for Decent digest. You can turn it on in Settings, or type a city below.")
-                    .foregroundStyle(Theme.secondary)
-                TextLink("Open Settings ↗") {
-                    if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
-                }
-            }
-        }
-    }
-
-    private var cityOptions: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            if let typed = model.typedCity {
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text("Using \(typed.name).")
-                        .foregroundStyle(Theme.secondary)
-                    Text("·")
-                        .foregroundStyle(Theme.secondary)
-                        .accessibilityHidden(true)
-                    TextLink("Stop using it") {
-                        Task { await model.clearCity() }
-                    }
-                    .accessibilityLabel("Stop using \(typed.name)")
-                }
-            }
-            HStack(alignment: .firstTextBaseline, spacing: 12) {
-                TextField("Type a city", text: $city)
-                    .textContentType(.addressCity)
-                    .autocorrectionDisabled()
-                    .submitLabel(.search)
-                    .focused($cityFocused)
-                    .onSubmit { lookUp(city) }
-                    // Suggestions follow each letter typed.
-                    .onChange(of: city) { _, text in
-                        notFound = false
-                        search.update(text)
-                    }
-                    .padding(.vertical, 6)
-                    .overlay(alignment: .bottom) {
-                        Rectangle().fill(Theme.rule).frame(height: 1)
-                    }
-                TextLink(isLooking ? "Looking…" : "Use this city") { lookUp(city) }
-                    .disabled(isLooking || city.trimmingCharacters(in: .whitespaces).isEmpty)
-            }
-            // Pick a suggestion instead of typing the whole name.
-            if !search.suggestions.isEmpty {
-                VStack(alignment: .leading, spacing: 0) {
-                    ForEach(search.suggestions) { suggestion in
-                        Button {
-                            lookUp(suggestion.query)
-                        } label: {
-                            HStack(alignment: .firstTextBaseline, spacing: 0) {
-                                Text("–")
-                                    .foregroundStyle(Theme.secondary)
-                                    .frame(width: DashColumn.width, alignment: .leading)
-                                    .accessibilityHidden(true)
-                                Text(suggestion.title)
-                                if !suggestion.subtitle.isEmpty {
-                                    Text("  \(suggestion.subtitle)")
-                                        .font(.subheadline)
-                                        .foregroundStyle(Theme.secondary)
-                                }
-                                Spacer(minLength: 0)
-                            }
-                            .padding(.vertical, 6)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(StillButtonStyle())
-                        .accessibilityLabel(suggestion.subtitle.isEmpty ? suggestion.title : "\(suggestion.title), \(suggestion.subtitle)")
-                        .accessibilityHint("Shows the weather for this city")
-                    }
-                }
-                .padding(.top, 2)
-            }
-            if notFound {
-                Text("No city found by that name.")
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.secondary)
-            }
-        }
-    }
-
-    private func lookUp(_ text: String) {
-        guard !isLooking, !text.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-        isLooking = true
-        notFound = false
-        Task {
-            let found = await model.setCity(text)
-            isLooking = false
-            notFound = !found
-            if found {
-                city = ""
-                search.clear()
-                cityFocused = false
-            }
-        }
     }
 }
 
+enum WeatherCopy {
+    static let locationNote = "Your location is used only to find the forecast from Apple Weather. It stays on this device."
+}
+
 #Preview {
-    WeatherSettingsView(model: WeatherModel(provider: SampleWeatherProvider(), places: SamplePlaces()))
+    WeatherSettingsView(
+        model: WeatherModel(provider: SampleWeatherProvider(), places: SamplePlaces()),
+        preferences: DigestPreferences(defaults: UserDefaults(suiteName: "preview-weather")!)
+    )
 }

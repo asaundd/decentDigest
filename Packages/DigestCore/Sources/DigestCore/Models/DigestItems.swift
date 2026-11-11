@@ -38,6 +38,8 @@ public struct CalendarEntry: Sendable, Identifiable, Hashable {
     public var end: Date
     public var isAllDay: Bool
     public var calendarName: String
+    /// The calendar's identifier, so a calendar the reader left out stays off the page.
+    public var calendarID: String
     public var location: String?
     /// Set when the place is an address Maps can route to.
     public var mapPoint: MapPoint?
@@ -45,13 +47,14 @@ public struct CalendarEntry: Sendable, Identifiable, Hashable {
     public var attendees: [String]
     public var notes: String?
 
-    public init(id: String, title: String, start: Date, end: Date, isAllDay: Bool = false, calendarName: String, location: String? = nil, mapPoint: MapPoint? = nil, attendees: [String] = [], notes: String? = nil) {
+    public init(id: String, title: String, start: Date, end: Date, isAllDay: Bool = false, calendarName: String, calendarID: String = "", location: String? = nil, mapPoint: MapPoint? = nil, attendees: [String] = [], notes: String? = nil) {
         self.id = id
         self.title = title
         self.start = start
         self.end = end
         self.isAllDay = isAllDay
         self.calendarName = calendarName
+        self.calendarID = calendarID
         self.location = location
         self.mapPoint = mapPoint
         self.attendees = attendees
@@ -65,6 +68,8 @@ public struct TodoEntry: Sendable, Identifiable, Hashable {
     public var id: String
     public var title: String
     public var listName: String
+    /// The Reminders list's identifier, so a list the reader left out stays off the page.
+    public var listID: String
     public var due: Date?
     /// False when the reminder has a due day but no time.
     public var dueIncludesTime: Bool
@@ -73,10 +78,11 @@ public struct TodoEntry: Sendable, Identifiable, Hashable {
     public var listOrder: Int
     public var isCompleted: Bool
 
-    public init(id: String, title: String, listName: String, due: Date? = nil, dueIncludesTime: Bool = false, notes: String? = nil, listOrder: Int = 0, isCompleted: Bool = false) {
+    public init(id: String, title: String, listName: String, listID: String = "", due: Date? = nil, dueIncludesTime: Bool = false, notes: String? = nil, listOrder: Int = 0, isCompleted: Bool = false) {
         self.id = id
         self.title = title
         self.listName = listName
+        self.listID = listID
         self.due = due
         self.dueIncludesTime = dueIncludesTime
         self.notes = notes

@@ -1,8 +1,8 @@
-# Decent Digest
+# Decent digest
 
 A calm morning digest for iPhone. Weather, calendar, to-dos, news and new podcast episodes on one quiet page.
 
-Decent Digest is a window onto the apps you already use. It reads from Calendar, Reminders and the RSS feeds you follow, and hands off to Safari or Podcasts for anything more. It has no server, no account and no analytics, and it is free.
+Decent digest is a window onto the apps you already use. It reads from Calendar, Reminders and the RSS feeds you follow, and hands off to Safari or Podcasts for anything more. It has no server, no account and no analytics, and it is free.
 
 ## Principles
 
@@ -22,7 +22,7 @@ Decent Digest is a window onto the apps you already use. It reads from Calendar,
 2. Create `Config/Local.xcconfig` containing one line, `DEVELOPMENT_TEAM = YOURTEAMID`, with your Apple developer team ID. Git ignores this file, so your team stays out of the project. If the bundle ID is taken, change it to something unique to you.
 3. Pick an iPhone simulator or a connected iPhone and press **Run** (⌘R).
 
-News comes live from a starter set of RSS feeds, and new episodes from a few starter podcasts. Calendar and to-dos come live from Calendar and Reminders on the device, once you allow access; checking off a to-do checks it off in Reminders. Weather comes from Apple's WeatherKit, for your location or a city you type in.
+A short setup on first launch picks what the page shows; every step can be skipped. News comes live from the RSS feeds you follow, picked by topic from a starter library, by name, or by pasting a site's address, and new episodes from the shows you follow, found with Apple's podcast search. Calendar and to-dos come live from Calendar and Reminders on the device, once you allow access, and you can leave out any calendar or list; checking off a to-do checks it off in Reminders. Weather comes from Apple's WeatherKit, for your location or a city you pick.
 
 WeatherKit needs a paid Apple Developer Program team. Turn on WeatherKit for your bundle ID in the developer portal (under both Capabilities and App Services), then add `CODE_SIGN_ENTITLEMENTS = Config/WeatherKit.entitlements` to `Config/Local.xcconfig`. Until then the app still runs, and debug builds show sample weather.
 

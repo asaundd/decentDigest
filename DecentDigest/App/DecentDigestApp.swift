@@ -1,6 +1,7 @@
 import DigestCore
 import SwiftData
 import SwiftUI
+import UIKit
 
 @main
 struct DecentDigestApp: App {
@@ -8,6 +9,7 @@ struct DecentDigestApp: App {
     private let refresher: NewsRefresher
     private let agenda: AgendaModel
     private let weather: WeatherModel
+    private let preferences = DigestPreferences()
 
     init() {
         let container: ModelContainer
@@ -32,8 +34,26 @@ struct DecentDigestApp: App {
 
     var body: some Scene {
         WindowGroup {
-            DigestView(agenda: agenda, weather: weather, refresh: { [refresher] force in await refresher.refresh(force: force) })
+            DigestView(agenda: agenda, weather: weather, preferences: preferences, refresh: { [refresher] force in await refresher.refresh(force: force) })
         }
         .modelContainer(container)
+    }
+}
+
+/// Light, dark, or the device's setting, from Settings › Appearance. Set on the window, so sheets and
+/// setup follow it too.
+@MainActor
+enum AppearanceStyle {
+    static func apply(_ appearance: DigestPreferences.Appearance) {
+        let style: UIUserInterfaceStyle = switch appearance {
+        case .automatic: .unspecified
+        case .light: .light
+        case .dark: .dark
+        }
+        for case let scene as UIWindowScene in UIApplication.shared.connectedScenes {
+            for window in scene.windows {
+                window.overrideUserInterfaceStyle = style
+            }
+        }
     }
 }
