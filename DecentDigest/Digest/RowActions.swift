@@ -239,7 +239,9 @@ private struct LeaveSwipe: ViewModifier {
                 labelOpacity = 0
                 closing?()
             }
-            try? await Task.sleep(for: .seconds(0.16))
+            // Recorded only once the gap has fully closed on screen, a little after the animation's
+            // own end: removing the row while it still shows a sliver of height snaps the rows below.
+            try? await Task.sleep(for: .seconds(0.26))
             perform(action)
         }
     }
