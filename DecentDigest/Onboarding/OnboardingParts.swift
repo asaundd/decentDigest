@@ -103,7 +103,7 @@ struct OnboardingStep<Content: View>: View {
             .padding(.horizontal, Theme.margin)
             .padding(.top, 8)
             .padding(.bottom, 4)
-            .background(Theme.page)
+            .background(Theme.bottomBarFill)
     }
 }
 

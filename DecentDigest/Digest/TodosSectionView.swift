@@ -155,6 +155,7 @@ struct TodosSectionView: View {
     /// A swipe checks the to-do off and it leaves at once.
     private func swipeCheck(_ todo: TodoEntry) {
         guard model.check(todo) else { return }
+        scrollHold?.hold()
         openIDs.remove(todo.id)
         withAnimation(HeadlineMotion.close) {
             model.finishChecking(todo.id)

@@ -40,7 +40,11 @@ struct DigestView: View {
     /// Empty space held at the foot of the page after a row near the bottom closes, so the page stays
     /// where it is instead of scrolling back. It goes once it is out of view.
     @State private var bottomSlack: CGFloat = 0
-    @State private var contentHeight: CGFloat = 0
+    /// How far the bottom of the screen reaches past the end of the page, last seen (negative while
+    /// more of the page lies below).
+    @State private var overhang: CGFloat = 0
+    /// While a row closes or leaves, the held space is kept whole.
+    @State private var holdsUntil = Date.distantPast
     /// A row closing asks the page to hold its place for a moment.
     @State private var scrollHold = ScrollHold()
 
@@ -66,18 +70,17 @@ struct DigestView: View {
                         .digestRow()
                 }
                 .opacity(revealed ? 1 : 0)
-                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
-                    keepPlace(newHeight: height)
-                }
                 .padding(.bottom, bottomSlack)
             }
-            // The held space goes as soon as it can't be seen, so it never shows as a gap.
-            .onScrollGeometryChange(for: Bool.self) { geometry in
-                geometry.visibleRect.maxY < geometry.contentSize.height - bottomSlack
-            } action: { _, slackHidden in
-                if slackHidden, bottomSlack > 0 { bottomSlack = 0 }
+            // The held space shrinks as soon as less of it is needed, so it never shows as a gap.
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                geometry.visibleRect.maxY - geometry.contentInsets.bottom - geometry.contentSize.height
+            } action: { _, newOverhang in
+                overhang = newOverhang
+                trimSlack()
             }
             .environment(\.scrollHold, scrollHold)
+            .onAppear { scrollHold.onHold = { holdPlace() } }
             // Pull to refresh on the digest only. Set here, on the page's own scroll view, so it
             // doesn't reach the scroll views in Settings and setup, where a pull down closes the sheet.
             .refreshable {
@@ -195,16 +198,23 @@ struct DigestView: View {
         showsLogo = false
     }
 
-    /// When an open row closes near the foot of the page, the page would get shorter and scroll back.
-    /// Holding the lost height as empty space keeps it still; the space goes once it is out of view.
-    private func keepPlace(newHeight: CGFloat) {
-        let change = newHeight - contentHeight
-        contentHeight = newHeight
-        if change < 0, scrollHold.isHolding {
-            bottomSlack -= change
-        } else if change > 0, bottomSlack > 0 {
-            bottomSlack = max(0, bottomSlack - change)
+    /// When a row near the foot of the page closes or leaves, the page gets shorter and iOS would
+    /// scroll it back. Before the change lands, plenty of empty space goes at the foot of the page, in
+    /// the same update, so the page can't move; once the row has settled, the space shrinks to just
+    /// what keeps the screen where it is, and it goes as the reader scrolls up.
+    private func holdPlace() {
+        bottomSlack += 2_000
+        holdsUntil = .now.addingTimeInterval(0.6)
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.65))
+            trimSlack()
         }
+    }
+
+    private func trimSlack() {
+        guard bottomSlack > 0, Date.now >= holdsUntil else { return }
+        let needed = max(0, bottomSlack + overhang)
+        if needed < bottomSlack { bottomSlack = needed }
     }
 
     private func reloadAgenda() async {

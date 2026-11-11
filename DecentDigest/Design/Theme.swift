@@ -45,9 +45,12 @@ enum Theme {
     /// The Paste control beside a search box. iOS draws its label white, so the fill is a warm gray
     /// dark enough for white text to read.
     static let pasteFill = Color(light: 0x7A7266, dark: 0x5E574C)
-    /// The filled search boxes in setup.
-    /// Lighter than the page in dark mode (the button fill there matches the page), so the box shows.
-    static let fieldFill = Color(light: 0xF2F1EC, dark: 0x272C2A)
+    /// The filled search boxes in setup: a shade darker than the page in light mode, lighter in dark
+    /// mode (the button fill there matches the page), so the box shows.
+    static let fieldFill = Color(light: 0xE9E8E2, dark: 0x272C2A)
+    /// Behind the buttons pinned at the foot of setup pages: the color the page tint reaches there,
+    /// so the bar doesn't show as a band.
+    static let bottomBarFill = pageTintBottom
 
     // Spacing
     static let margin: CGFloat = 24

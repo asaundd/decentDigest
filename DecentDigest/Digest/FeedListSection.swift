@@ -261,6 +261,7 @@ struct FeedListSection: View {
     }
 
     private func save(_ item: FeedItem, sourceName: String) {
+        scrollHold?.hold()
         // The row is gone at once; the rows below slide up briefly to close the gap.
         withAnimation(HeadlineMotion.close) {
             ReadingState.save(item, sourceTitle: sourceName, kind: kind, in: context)

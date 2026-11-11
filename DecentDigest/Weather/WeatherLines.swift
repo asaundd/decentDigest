@@ -4,8 +4,8 @@ import UIKit
 
 /// The weather under the date, in words: the temperature now with today in a few words, then a
 /// gray line on what changes over the next two days and anything notable later in the week.
-/// Show week, at the bottom, lists the rest of the week, then the place (which opens Weather
-/// settings) and Weather ↗.
+/// Show week, at the bottom, lists the rest of the week, then one footer line: the place (which opens
+/// Weather settings), Show less and Weather ↗.
 struct WeatherLines: View {
     var model: WeatherModel
     /// Opens Settings › Weather.
@@ -56,26 +56,13 @@ struct WeatherLines: View {
             if showsWeek {
                 week(report.days, unit: unit)
                     .padding(.top, 12)
-                placeLine(place)
+                // One footer line, like the other sections': the place, Show less, Weather ↗.
+                openFooter(place)
                     .padding(.top, 8)
-            }
-
-            // At the bottom, like Show all under News and the agenda.
-            if !report.days.isEmpty {
-                // Gray, like the footer links under the other sections.
-                QuietLink(showsWeek ? "Show less" : "Show week", still: true) {
-                    // A clean swap: the label and the week change at once, with no fade or slide.
-                    var instant = Transaction()
-                    instant.disablesAnimations = true
-                    withTransaction(instant) { showsWeek.toggle() }
-                }
-                .contentTransition(.identity)
-                .animation(nil, value: showsWeek)
-                // A fresh link each time, so nothing from the tap carries over to the new label.
-                .id(showsWeek)
-                .transition(.identity)
-                .accessibilityHint(showsWeek ? "Hides the week" : "Lists the rest of the week")
-                .padding(.top, 4)
+            } else if !report.days.isEmpty {
+                // At the bottom, like Show all under News and the agenda.
+                weekToggle
+                    .padding(.top, 4)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -108,36 +95,73 @@ struct WeatherLines: View {
         .monospacedDigit()
     }
 
-    /// "For Brooklyn, NY" on the left, with a small location arrow when it comes from the device's
-    /// location, and Weather ↗ on the right. The city is the link to Weather settings.
-    private func placeLine(_ place: WeatherPlace) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
-            Button(action: openSettings) {
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    Text("For \(Text(place.name).underline(color: Theme.secondary.opacity(0.35)))")
-                    if place.isCurrentLocation {
-                        Image(systemName: "location")
-                            .font(.caption2)
-                    }
-                }
-                .font(.subheadline)
-                .foregroundStyle(Theme.secondary)
-                .multilineTextAlignment(.leading)
-                .contentShape(Rectangle())
+    /// Show week, or Show less once the week is open. A gray quiet link, like the other footers.
+    private var weekToggle: some View {
+        QuietLink(showsWeek ? "Show less" : "Show week", still: true) {
+            // A clean swap: the label and the week change at once, with no fade or slide.
+            var instant = Transaction()
+            instant.disablesAnimations = true
+            withTransaction(instant) { showsWeek.toggle() }
+        }
+        .contentTransition(.identity)
+        .animation(nil, value: showsWeek)
+        // A fresh link each time, so nothing from the tap carries over to the new label.
+        .id(showsWeek)
+        .transition(.identity)
+        .accessibilityHint(showsWeek ? "Hides the week" : "Lists the rest of the week")
+    }
+
+    /// Under the open week, on one gray line like the other sections' footers: "For Brooklyn, NY"
+    /// (the city opens Weather settings, with a small location arrow when it comes from the device's
+    /// location), Show less, then Weather ↗. On a narrow screen the links drop under the place.
+    private func openFooter(_ place: WeatherPlace) -> some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                placeLink(place)
+                dot
+                footerLinks
             }
-            .buttonStyle(StillButtonStyle())
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(place.isCurrentLocation ? "For \(place.name), current location" : "For \(place.name)")
-            .accessibilityHint("Changes where the weather is for")
-            .accessibilityAddTraits(.isButton)
-
-            Spacer(minLength: 0)
-
-            if WeatherApp.canOpen {
-                TextLink("Weather ↗") { openURL(WeatherApp.url) }
-                    .accessibilityLabel("Open Weather")
+            VStack(alignment: .leading, spacing: 0) {
+                placeLink(place)
+                HStack(alignment: .firstTextBaseline, spacing: 6) { footerLinks }
             }
         }
+        .font(.subheadline)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private var footerLinks: some View {
+        weekToggle
+        if WeatherApp.canOpen {
+            dot
+            QuietLink("Weather ↗", still: true) { openURL(WeatherApp.url) }
+                .accessibilityLabel("Open Weather")
+        }
+    }
+
+    private var dot: some View {
+        Text("·")
+            .foregroundStyle(Theme.secondary)
+            .accessibilityHidden(true)
+    }
+
+    private func placeLink(_ place: WeatherPlace) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 4) {
+            Text("For")
+                .foregroundStyle(Theme.secondary)
+                .accessibilityHidden(true)
+            QuietLink(place.name, still: true, action: openSettings)
+                .accessibilityLabel(place.isCurrentLocation ? "For \(place.name), current location" : "For \(place.name)")
+                .accessibilityHint("Changes where the weather is for")
+            if place.isCurrentLocation {
+                Image(systemName: "location")
+                    .font(.caption2)
+                    .foregroundStyle(Theme.secondary)
+                    .accessibilityHidden(true)
+            }
+        }
+        .fixedSize()
     }
 }
 

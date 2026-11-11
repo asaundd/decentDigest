@@ -61,6 +61,7 @@ private struct LeaveSwipe: ViewModifier {
     private static let opensAt: CGFloat = (actionWidth + Theme.margin) * 0.5
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scrollHold) private var scrollHold
 
     @State private var dragX: CGFloat = 0
     @State private var width: CGFloat = 393
@@ -104,7 +105,7 @@ private struct LeaveSwipe: ViewModifier {
             .sensoryFeedback(.impact(weight: .light), trigger: commitHaptic)
             .onAppear { swipeGuard.closeStrip = { close() } }
             .onChange(of: request, initial: true) { _, action in
-                if let action { commit(action) }
+                if let action { commit(action, fromCard: true) }
             }
             .accessibilityActions {
                 ForEach(Array(stripActions.reversed()), id: \.self) { action in
@@ -198,11 +199,14 @@ private struct LeaveSwipe: ViewModifier {
 
     // MARK: Once an action is chosen
 
-    private func commit(_ action: RowAction) {
+    /// - Parameter fromCard: true when chosen on the card or the panel, away from the finger: the action
+    ///   rests a little longer at the left, so the reader sees what they chose before the row closes.
+    private func commit(_ action: RowAction, fromCard: Bool = false) {
         guard committed == nil else { return }
         swipeGuard.restsOpen = false
         commitHaptic += 1
         if reduceMotion {
+            scrollHold?.hold()
             perform(action)
             return
         }
@@ -219,8 +223,9 @@ private struct LeaveSwipe: ViewModifier {
             }
             try? await Task.sleep(for: .seconds(0.18))
             // 2. A beat to see what was done.
-            try? await Task.sleep(for: .seconds(0.08))
-            // 3. The gap closes and the rows below slide up.
+            try? await Task.sleep(for: .seconds(fromCard ? 0.3 : 0.08))
+            // 3. The gap closes and the rows below slide up. The page holds its place meanwhile.
+            scrollHold?.hold()
             withAnimation(.easeOut(duration: 0.16)) {
                 frozenHeight = 0
                 labelOpacity = 0

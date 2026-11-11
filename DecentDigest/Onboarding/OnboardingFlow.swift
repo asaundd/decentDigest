@@ -149,7 +149,7 @@ struct WelcomePage: View {
                 .padding(.horizontal, Theme.margin)
                 .padding(.top, 8)
                 .padding(.bottom, 12)
-                .background(Theme.page)
+                .background(Theme.bottomBarFill)
                 .opacity(wordsShown ? 1 : 0)
         }
         .overlay { introLogo }
@@ -278,7 +278,7 @@ struct ReadyPage: View {
                 .padding(.horizontal, Theme.margin)
                 .padding(.top, 8)
                 .padding(.bottom, 12)
-                .background(Theme.page)
+                .background(Theme.bottomBarFill)
         }
         .onboardingPage()
     }
