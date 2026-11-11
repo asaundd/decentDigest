@@ -496,7 +496,7 @@ struct ICloudSyncPage: View {
     @Environment(\.openURL) private var openURL
 
     var body: some View {
-        SettingsPage(title: "Cloud sync", subtitle: "Keeps what you follow, save, and read in your own iCloud, so it's the same on each device you use and comes back on a new one.") {
+        SettingsPage(title: "Cloud sync", subtitle: "Decent digest keeps what you follow, save, and read in your own iCloud, so it's the same on each device you use and comes back on a new one.") {
             ChoiceRow(title: "Sync", subtitle: "On when you're signed in to iCloud.") {
                 Text(ICloudStatus.isSignedIn ? "On" : "Off")
                     .foregroundStyle(Theme.secondary)
@@ -534,7 +534,7 @@ struct ReadingHistoryPage: View {
     @State private var cleared = false
 
     var body: some View {
-        SettingsPage(title: "Reading history", subtitle: "A private record of the news and episodes you open, save, and mark relevant or not relevant.") {
+        SettingsPage(title: "Reading history", subtitle: "Decent digest keeps a private reading history of the news and episodes you open, save, and mark relevant or not relevant.") {
             ShowSwitch(label: "Keep reading history", isOn: Binding(
                 get: { preferences.keepsReadingHistory },
                 set: { preferences.setKeepsReadingHistory($0) }
