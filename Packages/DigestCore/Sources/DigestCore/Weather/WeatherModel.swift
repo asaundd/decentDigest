@@ -42,6 +42,9 @@ public final class WeatherModel {
     private let now: () -> Date
     private let sampleOnFailure: Bool
     @ObservationIgnored private var isLoading = false
+    /// Set by the app from `NetworkStatus`. WeatherKit's errors don't always say a missing connection
+    /// was the cause, so a failure while the device is offline counts as offline too.
+    @ObservationIgnored public var deviceIsOffline: @MainActor () -> Bool = { false }
 
     /// - Parameter sampleOnFailure: show sample weather when the forecast can't be fetched,
     ///   so the layout can be checked before WeatherKit is set up.
@@ -96,7 +99,7 @@ public final class WeatherModel {
             save(target, forKey: Keys.place)
             if credit == nil { credit = await provider.credit() }
         } catch {
-            isOffline = Connectivity.isOffline(error)
+            isOffline = Connectivity.isOffline(error) || deviceIsOffline()
             // Keep the last forecast if there is one; it still says roughly the right thing.
             // Sample weather stands in only while WeatherKit isn't set up, never for want of a connection.
             if report == nil, sampleOnFailure, !isOffline {
@@ -124,7 +127,7 @@ public final class WeatherModel {
         do {
             found = try await places.place(named: trimmed)
         } catch {
-            isOffline = Connectivity.isOffline(error)
+            isOffline = Connectivity.isOffline(error) || deviceIsOffline()
             return false
         }
         guard let found else { return false }

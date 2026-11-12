@@ -20,9 +20,11 @@ struct WeatherLines: View {
 
     var body: some View {
         // With no location and no city, the date stands alone.
-        if let report = model.report, let place = model.place {
+        let offline = model.isOffline || network?.isOffline == true
+        // Sample weather (debug builds without WeatherKit) never stands in while offline.
+        if let report = model.report, let place = model.place, !(model.isSample && offline) {
             forecast(report, place: place, unit: .current())
-        } else if model.hasPlaceSource, model.isOffline || network?.isOffline == true {
+        } else if model.hasPlaceSource, offline {
             // Weather is on, but no forecast has ever arrived.
             Text("Offline. Weather will show once you're connected.")
                 .font(.subheadline)

@@ -39,6 +39,7 @@ struct DecentDigestApp: App {
         let sampleOnFailure = false
         #endif
         self.weather = WeatherModel(provider: WeatherKitSource(), places: LocationPlaces(), sampleOnFailure: sampleOnFailure)
+        weather.deviceIsOffline = { [network] in network.isOffline }
     }
 
     var body: some Scene {
