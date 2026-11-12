@@ -124,9 +124,7 @@ struct HeadlineRow: View {
                             // Bold to regular is an instant change, never animated.
                             .animation(nil, value: headline.isUnread)
                             .foregroundStyle(Theme.ink)
-                        Text(headline.detail)
-                            .font(.subheadline)
-                            .foregroundStyle(Theme.secondary)
+                        DetailLine(detail: headline.detail)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     if let marker = headline.marker {
@@ -212,12 +210,10 @@ struct HeadlineRow: View {
             // Line up with the title, past the dash column.
             .padding(.horizontal, DashColumn.width)
 
-            HStack(spacing: 16) {
-                ActionLinks(actions: actions)
-            }
-            .padding(.leading, DashColumn.width)
-            .padding(.top, 2)
-            .padding(.bottom, 6)
+            WrappingActionLinks(actions: actions)
+                .padding(.leading, DashColumn.width)
+                .padding(.top, 2)
+                .padding(.bottom, 6)
         }
     }
 }
@@ -240,7 +236,7 @@ struct ActionRibbon: View {
             }
             // At large text sizes the links sit above the buttons.
             VStack(alignment: .leading, spacing: 0) {
-                HStack(spacing: 16) { ActionLinks(actions: actions) }
+                WrappingActionLinks(actions: actions)
                 HStack {
                     Spacer(minLength: 0)
                     JudgmentButtons(actions: actions)
@@ -251,6 +247,18 @@ struct ActionRibbon: View {
         .padding(.leading, leadingPadding)
         .padding(.trailing, trailingPadding - RibbonButton.gap)
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// The text actions on one line, or one under another when they don't fit (large text sizes).
+struct WrappingActionLinks: View {
+    var actions: HeadlineActions
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 16) { ActionLinks(actions: actions) }
+            VStack(alignment: .leading, spacing: 0) { ActionLinks(actions: actions) }
+        }
     }
 }
 
@@ -421,5 +429,27 @@ private struct LinkButtonStyle: PrimitiveButtonStyle {
             Button(role: configuration.role, action: configuration.trigger) { configuration.label }
                 .buttonStyle(.borderless)
         }
+    }
+}
+
+/// The gray line under a title, "Source · 3h", on one line: a long source name is cut with … and
+/// the age stays whole.
+private struct DetailLine: View {
+    var detail: String
+
+    var body: some View {
+        HStack(spacing: 0) {
+            if let split = detail.range(of: " · ", options: .backwards) {
+                Text(detail[..<split.lowerBound])
+                    .lineLimit(1)
+                Text(detail[split.lowerBound...])
+                    .fixedSize()
+            } else {
+                Text(detail)
+                    .lineLimit(1)
+            }
+        }
+        .font(.subheadline)
+        .foregroundStyle(Theme.secondary)
     }
 }

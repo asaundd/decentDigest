@@ -370,9 +370,11 @@ struct SettingsRow: View {
     var body: some View {
         NavigationLink(value: page) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
+                // The name always shows in full; a long value is cut with ….
                 Text(title)
                     .font(.body)
                     .foregroundStyle(Theme.ink)
+                    .fixedSize()
                 Spacer(minLength: 12)
                 if let value {
                     Text(value)

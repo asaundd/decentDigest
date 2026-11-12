@@ -69,6 +69,23 @@ public enum FeedParser {
         return ParsedFeed(title: delegate.feedTitle, items: newest(delegate.items, limit: maxItems))
     }
 
+    /// A person's name from a feed's author field. RSS 2.0 asks for an email address, often written
+    /// "jane@site.com (Jane Doe)": that gives "Jane Doe", and an address alone gives nothing.
+    static func authorName(_ raw: String) -> String? {
+        var text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let open = text.firstIndex(of: "("), let close = text.lastIndex(of: ")"), open < close {
+            let inside = text[text.index(after: open)..<close].trimmingCharacters(in: .whitespaces)
+            let outside = text[..<open].trimmingCharacters(in: .whitespaces)
+            if outside.contains("@") || outside.isEmpty { text = inside }
+        }
+        // "Jane Doe <jane@site.com>" keeps the name before the address.
+        if let angle = text.firstIndex(of: "<") {
+            text = text[..<angle].trimmingCharacters(in: .whitespaces)
+        }
+        guard !text.isEmpty, !text.contains("@") else { return nil }
+        return text
+    }
+
     /// The newest `limit` items, in the feed's own order.
     static func newest(_ items: [ParsedItem], limit: Int) -> [ParsedItem] {
         guard items.count > limit else { return items }
@@ -214,7 +231,7 @@ public enum FeedParser {
                 title: cleanTitle.isEmpty ? FeedParser.shortLink(link ?? "") : cleanTitle,
                 summary: (cleanSummary?.isEmpty ?? true) ? nil : cleanSummary,
                 fullText: fullText,
-                author: author.map { HTMLText.plain($0) },
+                author: author.flatMap { FeedParser.authorName(HTMLText.plain($0)) },
                 published: published ?? updated,
                 durationSeconds: duration
             )

@@ -263,3 +263,11 @@ private func data(_ string: String) -> Data { Data(string.utf8) }
     #expect(config.urlCache == nil)
     #expect(config.timeoutIntervalForResource == WebSession.maxSeconds)
 }
+
+@Test func authorEmailsBecomeNames() {
+    #expect(FeedParser.authorName("jane@site.com (Jane Doe)") == "Jane Doe")
+    #expect(FeedParser.authorName("Jane Doe <jane@site.com>") == "Jane Doe")
+    #expect(FeedParser.authorName("noreply@site.com") == nil)
+    #expect(FeedParser.authorName("Jane Doe") == "Jane Doe")
+    #expect(FeedParser.authorName("Jane Doe (guest)") == "Jane Doe (guest)")
+}

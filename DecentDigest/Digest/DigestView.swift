@@ -294,6 +294,9 @@ struct DigestView: View {
             Text(Date.now, format: .dateTime.weekday(.wide).month(.wide).day())
                 .font(Theme.dateFont)
                 .accessibilityAddTraits(.isHeader)
+                // Clear of the Settings button at the top right; a long date wraps instead.
+                .padding(.trailing, 52)
+                .fixedSize(horizontal: false, vertical: true)
             // Weather is the page's opening lines, not a titled section.
             if preferences.isShown(.weather) {
                 WeatherLines(model: weather) { showsWeatherSettings = true }

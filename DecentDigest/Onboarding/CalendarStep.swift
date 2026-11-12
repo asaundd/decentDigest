@@ -151,6 +151,17 @@ struct AgendaListPicker: View {
         return order.map { ($0, byName[$0] ?? []) }
     }
 
+    private func listName(_ list: AgendaList, note: String?, included: Bool) -> Text {
+        let name = Text(list.title)
+            .font(.callout)
+            .foregroundStyle(included ? Theme.itemInk : Theme.secondary)
+        guard let note else { return name }
+        let noteText = Text(note)
+            .font(.subheadline)
+            .foregroundStyle(Theme.secondary)
+        return Text("\(name)  \(noteText)")
+    }
+
     private func row(_ list: AgendaList, note: String?) -> some View {
         let included = !excluded.contains(list.id)
         return HStack(alignment: .firstTextBaseline, spacing: 12) {
@@ -159,15 +170,9 @@ struct AgendaListPicker: View {
                     .foregroundStyle(Theme.secondary)
                     .frame(width: DashColumn.width, alignment: .leading)
                     .accessibilityHidden(true)
-                Text(list.title)
-                    .font(.callout)
-                    .foregroundStyle(included ? Theme.itemInk : Theme.secondary)
-                    .padding(.trailing, 8)
-                if let note {
-                    Text(note)
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.secondary)
-                }
+                // One run of text, so a long name wraps and Hide or Show stays on the right.
+                listName(list, note: note, included: included)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             Group {

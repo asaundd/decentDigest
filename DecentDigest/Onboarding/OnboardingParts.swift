@@ -360,11 +360,14 @@ struct FooterLink: View {
     /// True for a link whose label changes when tapped (Show all / Show less): it skips the pressed
     /// dimming, which otherwise fades back in on the new label.
     var still = false
+    /// True to let a long label wrap onto more lines instead of staying on one.
+    var wraps = false
     var action: () -> Void
 
-    init(_ title: String, still: Bool = false, action: @escaping () -> Void) {
+    init(_ title: String, still: Bool = false, wraps: Bool = false, action: @escaping () -> Void) {
         self.title = title
         self.still = still
+        self.wraps = wraps
         self.action = action
     }
 
@@ -373,7 +376,7 @@ struct FooterLink: View {
             Text(title)
                 .font(Theme.actionFont)
                 .foregroundStyle(Theme.accent)
-                .fixedSize()
+                .fixedSize(horizontal: !wraps, vertical: true)
                 .padding(.vertical, 4)
                 .contentShape(Rectangle())
         }
