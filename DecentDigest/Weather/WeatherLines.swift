@@ -13,6 +13,7 @@ struct WeatherLines: View {
 
     @Environment(\.openURL) private var openURL
     @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(NetworkStatus.self) private var network: NetworkStatus?
     @State private var showsWeek = false
     /// The temperature now, 40pt at the default text size, growing with it.
     @ScaledMetric(relativeTo: .largeTitle) private var temperatureSize: CGFloat = 40
@@ -48,7 +49,7 @@ struct WeatherLines: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 8)
 
-            if model.isOffline, !model.isSample {
+            if model.isOffline || network?.isOffline == true, !model.isSample {
                 // The last forecast still shows; this says when it is from.
                 Text(WeatherRules.offlineNote(fetchedAt: report.fetchedAt, now: .now))
                     .font(.subheadline)

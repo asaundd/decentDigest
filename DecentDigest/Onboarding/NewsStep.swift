@@ -56,6 +56,7 @@ struct NewsPicker: View {
 
     @Environment(SearchReveal.self) private var reveal: SearchReveal?
     @Environment(\.modelContext) private var context
+    @Environment(NetworkStatus.self) private var network: NetworkStatus?
     @Query(sort: \Source.sortOrder) private var sources: [Source]
 
     @State private var text = ""
@@ -99,6 +100,10 @@ struct NewsPicker: View {
             // the reader only has to tap Follow.
             .task(id: query) {
                 await lookUp(query)
+            }
+            // Offline, the library can still be searched; only adding a site by its address can't.
+            if network?.isOffline == true {
+                OfflineNote(text: OfflineMessage.newsSearch)
             }
 
             // Search mode starts with the tap, not the first letter: the lists step aside for a
@@ -260,7 +265,7 @@ struct NewsPicker: View {
                 } else if isLooking {
                     quiet("Looking for a feed…")
                 } else if isOffline {
-                    quiet(OfflineMessage.search(inSetup: !inSettings))
+                    quiet("Adding a site by its address needs a connection.")
                 } else if notFound {
                     quiet("No feed found at that address. Try the site's feed address instead.")
                 }
@@ -275,6 +280,11 @@ struct NewsPicker: View {
     private func lookUp(_ address: String) async {
         guard FeedFinder.looksLikeAddress(address) else {
             isLooking = false
+            return
+        }
+        guard network?.isOffline != true else {
+            isLooking = false
+            isOffline = true
             return
         }
         isLooking = true

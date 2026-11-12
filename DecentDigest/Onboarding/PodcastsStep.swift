@@ -53,6 +53,7 @@ struct PodcastPicker: View {
     static let suggested = (try? FeedLibrary.bundled())?.suggestedPodcasts() ?? []
 
     @Environment(\.modelContext) private var context
+    @Environment(NetworkStatus.self) private var network: NetworkStatus?
     @Query(sort: \Source.sortOrder) private var sources: [Source]
 
     @State private var text = ""
@@ -73,12 +74,23 @@ struct PodcastPicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SearchBox(placeholder: "Search Apple Podcasts", text: $text, isFocused: $searchFocused) {
+            // Searching Apple Podcasts needs a connection: offline, the box is grayed out with a note under it.
+            let offline = network?.isOffline == true
+            SearchBox(placeholder: "Search Apple Podcasts", text: $text, isFocused: $searchFocused, isDisabled: offline) {
                 searchFocused = false
             }
             // Searches once typing pauses.
             .task(id: query) {
                 await search(query)
+            }
+            .onChange(of: offline) { _, nowOffline in
+                if nowOffline {
+                    text = ""
+                    searchFocused = false
+                }
+            }
+            if offline {
+                OfflineNote(text: OfflineMessage.search(inSetup: !inSettings))
             }
 
             // Search mode starts with the tap, not the first letter: the lists step aside for a

@@ -415,6 +415,8 @@ struct SearchBox: View {
     var submitLabel: SubmitLabel = .done
     /// Shows Paste beside Cancel while the box is empty, for boxes where pasting is likely.
     var offersPaste = false
+    /// Grayed out and not tappable, for a search that needs a connection while offline.
+    var isDisabled = false
     var onSubmit: () -> Void = {}
 
     @Environment(SearchReveal.self) private var reveal: SearchReveal?
@@ -422,6 +424,8 @@ struct SearchBox: View {
     var body: some View {
         HStack(spacing: 12) {
             field
+                .disabled(isDisabled)
+                .opacity(isDisabled ? 0.5 : 1)
             if offersPaste && isFocused.wrappedValue && text.isEmpty {
                 // Apple's own Paste control, so iOS doesn't ask before pasting. Styled as close
                 // to Cancel as iOS allows.
@@ -549,5 +553,22 @@ enum OfflineMessage {
         inSetup
             ? "You're offline. Connect to the internet to search, or skip for now."
             : "You're offline. Connect to the internet to search."
+    }
+
+    /// News' search still finds sites in the built-in library; only a pasted address needs the web.
+    static let newsSearch = "You're offline. You can still search the sites listed here; adding one by its address needs a connection."
+}
+
+/// The gray note shown under a search box while offline, before anything is typed.
+struct OfflineNote: View {
+    var text: String
+
+    var body: some View {
+        Text(text)
+            .font(.subheadline)
+            .foregroundStyle(Theme.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, 8)
     }
 }

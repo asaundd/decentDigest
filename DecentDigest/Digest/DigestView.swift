@@ -19,6 +19,7 @@ struct DigestView: View {
     var sectionOrder: [DigestSection] = DigestSection.allCases
 
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(NetworkStatus.self) private var network: NetworkStatus?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query(sort: \SavedItem.savedAt, order: .reverse) private var saved: [SavedItem]
     @State private var panel: PanelRequest?
@@ -296,6 +297,10 @@ struct DigestView: View {
                 // Clear of the Settings button at the top right; a long date wraps instead.
                 .padding(.trailing, 52)
                 .fixedSize(horizontal: false, vertical: true)
+            if network?.isOffline == true {
+                OfflineBar()
+                    .padding(.top, 8)
+            }
             // Weather is the page's opening lines, not a titled section.
             if preferences.isShown(.weather) {
                 WeatherLines(model: weather) { showsWeatherSettings = true }
@@ -403,6 +408,8 @@ struct DigestView: View {
                 .foregroundStyle(Theme.secondary)
                 .fixedSize()
                 .padding(.vertical, 4)
+        } else if network?.isOffline == true {
+            DisabledFooterLink(title: "Refresh all")
         } else {
             FooterLink("Refresh all", still: true) {
                 Task { await refreshAll() }
@@ -435,6 +442,21 @@ struct DigestView: View {
             WeatherCreditLine(credit: credit)
                 .fixedSize()
         }
+    }
+}
+
+/// Under the date while the device has no connection: one line on the same pale slate as the event
+/// happening now. Everything on the page is what was saved; nothing is fetched until it is back.
+struct OfflineBar: View {
+    var body: some View {
+        Text("You're offline. Showing what's already saved on this device.")
+            .font(.subheadline)
+            .foregroundStyle(Theme.ink)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.nowTint, in: RoundedRectangle(cornerRadius: 6))
     }
 }
 

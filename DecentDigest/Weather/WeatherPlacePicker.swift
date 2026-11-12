@@ -20,6 +20,7 @@ struct WeatherPlacePicker: View {
     var inSetup = false
 
     @Environment(\.openURL) private var openURL
+    @Environment(NetworkStatus.self) private var network: NetworkStatus?
     @State private var text = ""
     @State private var isLooking = false
     @State private var notFound = false
@@ -55,14 +56,25 @@ struct WeatherPlacePicker: View {
             }
             .padding(.top, ruled ? 0 : 8)
 
-            SearchBox(placeholder: "Search for a city", text: $text, isFocused: $searchFocused, submitLabel: .search) {
+            // Finding a city needs a connection: offline, the box is grayed out with a note under it.
+            let offline = network?.isOffline == true
+            SearchBox(placeholder: "Search for a city", text: $text, isFocused: $searchFocused, submitLabel: .search, isDisabled: offline) {
                 lookUp(text)
             }
             .onChange(of: text) { _, typed in
                 notFound = false
                 search.update(typed)
             }
+            .onChange(of: offline) { _, nowOffline in
+                if nowOffline {
+                    text = ""
+                    searchFocused = false
+                }
+            }
             .padding(.top, 6)
+            if offline {
+                OfflineNote(text: OfflineMessage.search(inSetup: inSetup))
+            }
 
             if !search.suggestions.isEmpty && !text.isEmpty {
                 suggestions

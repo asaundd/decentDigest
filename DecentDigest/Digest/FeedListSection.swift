@@ -18,6 +18,7 @@ struct FeedListSection: View {
     @Environment(\.modelContext) private var context
     @Environment(\.openURL) private var openURL
     @Environment(\.scrollHold) private var scrollHold
+    @Environment(NetworkStatus.self) private var network: NetworkStatus?
 
     @Query(sort: \FeedItem.publishedAt, order: .reverse) private var items: [FeedItem]
     @Query private var sources: [Source]
@@ -104,10 +105,10 @@ struct FeedListSection: View {
                 empty: nil,
                 showsAll: showsAll && staying > limit,
                 showTitle: NewsRules.showMoreTitle(count: staying),
-                lead: isOffline && !isRefreshing ? "Offline" : nil,
                 app: isEpisodes ? ListFooter.Link(title: "Podcasts ↗", spoken: "Open Podcasts") { openURL(ApplePodcasts.app) } : nil,
                 refresh: refresh.map { action in ListFooter.Link(title: "Refresh", spoken: "Refresh news", action: action) },
-                isRefreshing: isRefreshing
+                isRefreshing: isRefreshing,
+                refreshDisabled: network?.isOffline == true
             ) {
                 let folding = showsAll
                 showsAll.toggle()
@@ -144,8 +145,8 @@ struct FeedListSection: View {
         var status: ItemStatus
     }
 
-    /// True while this list's last check couldn't connect.
-    private var isOffline: Bool { isEpisodes ? podcastsOffline : newsOffline }
+    /// True while offline, or while this list's last check couldn't connect.
+    private var isOffline: Bool { network?.isOffline == true || (isEpisodes ? podcastsOffline : newsOffline) }
 
     private var emptyMessage: String {
         if isOffline { return isEpisodes ? "Offline. New episodes will show once you're connected." : "Offline. New items will show once you're connected." }

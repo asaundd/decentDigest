@@ -10,6 +10,7 @@ struct DecentDigestApp: App {
     private let agenda: AgendaModel
     private let weather: WeatherModel
     private let preferences = DigestPreferences()
+    private let network = NetworkStatus()
     /// True when the saved data couldn't be opened: the app says so instead of showing an empty digest.
     private let storageFailed: Bool
 
@@ -49,6 +50,7 @@ struct DecentDigestApp: App {
             }
         }
         .modelContainer(container)
+        .environment(network)
     }
 
     private var digest: some View {
