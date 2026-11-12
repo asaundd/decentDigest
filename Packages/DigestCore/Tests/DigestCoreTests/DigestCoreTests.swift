@@ -6,6 +6,8 @@ import Testing
     let a = ItemID.make(feedURL: "https://example.com/feed", guidOrLink: "post-1")
     let b = ItemID.make(feedURL: "https://example.com/feed", guidOrLink: "post-1")
     let c = ItemID.make(feedURL: "https://example.com/feed", guidOrLink: "post-2")
+    // However the address was typed, the same feed gives the same ids.
+    #expect(ItemID.make(feedURL: "http://www.Example.com/feed/", guidOrLink: "post-1") == a)
     #expect(a == b)
     #expect(a != c)
     #expect(a.count == 64)

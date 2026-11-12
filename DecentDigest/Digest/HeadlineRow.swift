@@ -142,7 +142,11 @@ struct HeadlineRow: View {
             .accessibilityValue(Text(headline.isUnread ? "Unread" : "Read"))
             .accessibilityHint(Text(isExpanded ? "Shows less" : "Shows details and actions"))
             .accessibilityAddTraits(.isButton)
+            // On the part VoiceOver lands on, so a closed row can be marked without opening it.
             .accessibilityActions {
+                ForEach(Array(actions.choices.reversed()), id: \.self) { choice in
+                    Button(choice.label) { actions.choose(choice) }
+                }
                 if let save = actions.save {
                     Button("Save", action: save)
                 }

@@ -48,29 +48,44 @@ public actor FeedStore {
 
     /// Deletes cached items past the expiry window. Items shown but never touched are recorded as ignored,
     /// unless reading history is off: then the record of an expired item goes too (saved items keep theirs).
-    /// An expired item is never fetched again, so nothing comes back.
+    /// A dated item that has expired is never stored again, so nothing comes back. An item the feed sent
+    /// without a date would come back as new while the feed still lists it, so its record always stays.
+    /// Then the history drops records untouched for 12 months.
     public func prune(now: Date = .now, keepsHistory: Bool = true) throws {
         let cutoff = NewsRules.expiryCutoff(now: now)
         let expired = try modelContext.fetch(FetchDescriptor<FeedItem>(predicate: #Predicate { $0.publishedAt < cutoff }))
-        guard !expired.isEmpty else { return }
-        let expiredIDs = Set(expired.map(\.itemID))
-        if !keepsHistory {
-            let saved = Set(try modelContext.fetch(FetchDescriptor<SavedItem>()).map(\.itemID))
-            for state in try modelContext.fetch(FetchDescriptor<ItemState>())
-            where expiredIDs.contains(state.itemID) && !saved.contains(state.itemID) {
-                modelContext.delete(state)
+        if !expired.isEmpty {
+            let expiredIDs = Set(expired.map(\.itemID))
+            let undatedIDs = Set(expired.filter(\.undated).map(\.itemID))
+            let saved = keepsHistory ? [] : Set(try modelContext.fetch(FetchDescriptor<SavedItem>()).map(\.itemID))
+            for state in try modelContext.fetch(FetchDescriptor<ItemState>()) where expiredIDs.contains(state.itemID) {
+                if !keepsHistory, !undatedIDs.contains(state.itemID), !saved.contains(state.itemID) {
+                    modelContext.delete(state)
+                } else if state.resolvedAt == nil, state.status.isUnread {
+                    state.status = .ignored
+                    state.resolvedAt = now
+                }
             }
             for item in expired { modelContext.delete(item) }
-            try modelContext.save()
-            return
         }
-        let states = try modelContext.fetch(FetchDescriptor<ItemState>(predicate: #Predicate { $0.resolvedAt == nil }))
-        for state in states where expiredIDs.contains(state.itemID) && state.status.isUnread {
-            state.status = .ignored
-            state.resolvedAt = now
-        }
-        for item in expired { modelContext.delete(item) }
+        try pruneHistory(now: now)
         try modelContext.save()
+    }
+
+    /// Deletes reading records with nothing newer than 12 months, so the history stays a steady size.
+    /// Saved items keep theirs.
+    func pruneHistory(now: Date = .now) throws {
+        let cutoff = NewsRules.historyCutoff(now: now)
+        // Only records first shown before the cutoff can qualify.
+        let old = try modelContext.fetch(FetchDescriptor<ItemState>(predicate: #Predicate { state in
+            state.firstShownAt.flatMap { $0 < cutoff } ?? true
+        }))
+        guard !old.isEmpty else { return }
+        let saved = Set(try modelContext.fetch(FetchDescriptor<SavedItem>()).map(\.itemID))
+        for state in old where !saved.contains(state.itemID) && state.status != .saved {
+            let last = [state.firstShownAt, state.openedAt, state.resolvedAt].compactMap { $0 }.max() ?? .distantPast
+            if last < cutoff { modelContext.delete(state) }
+        }
     }
 
     // MARK: Private
@@ -195,6 +210,7 @@ public actor FeedStore {
                 durationSeconds: item.durationSeconds,
                 guid: item.guid
             )
+            feedItem.undated = item.published == nil
             modelContext.insert(feedItem)
             known[itemID] = feedItem
         }

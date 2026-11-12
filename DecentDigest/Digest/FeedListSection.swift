@@ -70,7 +70,7 @@ struct FeedListSection: View {
             HeadlineRow(
                 headline: row,
                 isExpanded: expandedIDs.contains(entry.item.itemID),
-                actions: actions(for: entry),
+                actions: actions(for: entry, headline: row),
                 onExpandedBottom: { bottom in
                     guard pendingReveal == entry.item.itemID else { return }
                     pendingReveal = nil
@@ -146,11 +146,14 @@ struct FeedListSection: View {
             sources.filter { $0.kind == kind.rawValue }.map { ($0.id, $0) },
             uniquingKeysWith: { first, _ in first }
         )
+        let byID = Dictionary(items.map { ($0.itemID, $0) }, uniquingKeysWith: { first, _ in first })
+        // Only the records of items still on the device matter here, not the whole history.
         let readings = Dictionary(
-            states.map { ($0.itemID, NewsRules.Reading(status: $0.status, openedAt: $0.openedAt, resolvedAt: $0.resolvedAt)) },
+            states.lazy
+                .filter { byID[$0.itemID] != nil }
+                .map { ($0.itemID, NewsRules.Reading(status: $0.status, openedAt: $0.openedAt, resolvedAt: $0.resolvedAt)) },
             uniquingKeysWith: { first, _ in first }
         )
-        let byID = Dictionary(items.map { ($0.itemID, $0) }, uniquingKeysWith: { first, _ in first })
         let candidates = items
             .filter { followed[$0.sourceID] != nil }
             .map { NewsRules.Candidate(itemID: $0.itemID, publishedAt: $0.publishedAt) }
@@ -194,9 +197,8 @@ struct FeedListSection: View {
         )
     }
 
-    private func actions(for entry: Entry) -> HeadlineActions {
+    private func actions(for entry: Entry, headline row: Headline) -> HeadlineActions {
         let item = entry.item
-        let row = self.headline(for: entry)
         let openAction: (() -> Void)?
         if isEpisodes {
             openAction = { openEpisode(entry) }

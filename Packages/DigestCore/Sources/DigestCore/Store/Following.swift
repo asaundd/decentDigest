@@ -64,15 +64,9 @@ public enum Following {
         try? context.save()
     }
 
-    /// A feed address compared without its scheme, "www." or a trailing slash.
+    /// A feed address compared without its scheme, "www." or a trailing slash (`ItemID.key`).
     nonisolated public static func key(for feedURL: String) -> String {
-        var text = feedURL.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        for prefix in ["https://", "http://"] where text.hasPrefix(prefix) {
-            text.removeFirst(prefix.count)
-        }
-        if text.hasPrefix("www.") { text.removeFirst(4) }
-        while text.hasSuffix("/") { text.removeLast() }
-        return text
+        ItemID.key(for: feedURL)
     }
 }
 #endif

@@ -19,6 +19,14 @@ public enum NewsRules {
     /// Feeds fetched at the same time.
     public static let maxConcurrentFetches = 6
 
+    /// How long the reading history keeps a record, from the last time anything happened to it.
+    public static let historyMonths = 12
+
+    /// Records with nothing newer than this are deleted (saved items keep theirs).
+    public static func historyCutoff(now: Date, calendar: Calendar = .current) -> Date {
+        calendar.date(byAdding: .month, value: -historyMonths, to: now) ?? now.addingTimeInterval(-365 * 86_400)
+    }
+
     public static func expiryCutoff(now: Date, calendar: Calendar = .current) -> Date {
         calendar.date(byAdding: .day, value: -expiryDays, to: now) ?? now.addingTimeInterval(-Double(expiryDays) * 86_400)
     }

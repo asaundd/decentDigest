@@ -14,7 +14,8 @@ struct SavedSectionView: View {
     @Environment(\.scrollHold) private var scrollHold
 
     @Query private var items: [FeedItem]
-    @Query private var states: [ItemState]
+    /// Only the records of saved items, not the whole reading history.
+    @Query(filter: #Predicate<ItemState> { $0.statusRaw == "saved" }) private var states: [ItemState]
     @Query private var sources: [Source]
     @AppStorage(DigestPreferences.readingHistoryOffKey) private var historyOff = false
 
@@ -39,8 +40,11 @@ struct SavedSectionView: View {
             .digestRow()
 
         let shown = Array(saved.prefix(showsAll ? NewsRules.expandedLimit : limit))
+        // Looked up once per redraw, not once per row.
+        let shownIDs = Set(shown.map(\.itemID))
+        let cached = Dictionary(items.lazy.filter { shownIDs.contains($0.itemID) }.map { ($0.itemID, $0) }, uniquingKeysWith: { first, _ in first })
         ForEach(shown, id: \.itemID) { item in
-            let row = self.headline(for: item)
+            let row = self.headline(for: item, cached: cached[item.itemID])
             HeadlineRow(
                 headline: row,
                 isExpanded: expandedIDs.contains(item.itemID),
@@ -82,9 +86,9 @@ struct SavedSectionView: View {
         }
     }
 
-    private func headline(for item: SavedItem) -> Headline {
-        // The full post is only on this device while the feed still lists it.
-        let cached = items.first { $0.itemID == item.itemID }
+    /// - Parameter cached: the item as the feed last sent it; the full post is only on this device
+    ///   while the feed still lists it.
+    private func headline(for item: SavedItem, cached: FeedItem?) -> Headline {
         let opened = states.first { $0.itemID == item.itemID }?.openedAt != nil
         if item.isEpisode {
             return Headline(

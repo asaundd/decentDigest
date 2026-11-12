@@ -129,6 +129,9 @@ public final class FeedItem {
     public var durationSeconds: Int?
     /// The item's guid from its feed, to find an episode in Apple Podcasts.
     public var guid: String?
+    /// True when the feed gave the item no date, so it was dated when first fetched. The feed may
+    /// list it again after it expires, so its record is kept even with reading history off.
+    public var undated: Bool = false
 
     public init(itemID: String, sourceID: String, title: String, link: String?, summary: String?, fullText: String? = nil, author: String?, publishedAt: Date, fetchedAt: Date = .now, durationSeconds: Int? = nil, guid: String? = nil) {
         self.durationSeconds = durationSeconds

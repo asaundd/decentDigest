@@ -118,11 +118,6 @@ private struct LeaveSwipe: ViewModifier {
             .onChange(of: request, initial: true) { _, action in
                 if let action { commit(action) }
             }
-            .accessibilityActions {
-                ForEach(Array(stripActions.reversed()), id: \.self) { action in
-                    Button(action.label) { commit(action) }
-                }
-            }
     }
 
     // MARK: The strip behind the row

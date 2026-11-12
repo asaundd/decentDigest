@@ -10,17 +10,25 @@ struct DecentDigestApp: App {
     private let agenda: AgendaModel
     private let weather: WeatherModel
     private let preferences = DigestPreferences()
+    /// True when the saved data couldn't be opened: the app says so instead of showing an empty digest.
+    private let storageFailed: Bool
 
     init() {
-        let container: ModelContainer
-        do {
-            container = try DigestStore.makeContainer()
-        } catch {
-            // If the store can't open, the app still runs for this session without saving.
-            container = (try? DigestStore.makeContainer(inMemory: true)) ?? DigestStore.previewContainer()
+        var container: ModelContainer?
+        #if DEBUG
+        // Edit Scheme › Run › Arguments: -simulateStorageFailure shows the message below.
+        let simulatesFailure = ProcessInfo.processInfo.arguments.contains("-simulateStorageFailure")
+        #else
+        let simulatesFailure = false
+        #endif
+        if !simulatesFailure {
+            container = try? DigestStore.makeContainer()
         }
-        self.container = container
-        self.refresher = NewsRefresher(container: container)
+        storageFailed = container == nil
+        // An empty store in memory, only so the app has something to hang the message on.
+        let opened = container ?? (try! DigestStore.makeContainer(inMemory: true))
+        self.container = opened
+        self.refresher = NewsRefresher(container: opened)
         self.agenda = AgendaModel(source: EventKitSource())
         #if DEBUG
         // Until WeatherKit is turned on for the app's identifier, debug builds show sample weather
@@ -34,9 +42,39 @@ struct DecentDigestApp: App {
 
     var body: some Scene {
         WindowGroup {
-            DigestView(agenda: agenda, weather: weather, preferences: preferences, refresh: { [refresher] force, kind in await refresher.refresh(force: force, only: kind) })
+            if storageFailed {
+                StorageProblemView()
+            } else {
+                digest
+            }
         }
         .modelContainer(container)
+    }
+
+    private var digest: some View {
+        DigestView(agenda: agenda, weather: weather, preferences: preferences, refresh: { [refresher] force, kind in await refresher.refresh(force: force, only: kind) })
+    }
+}
+
+/// Shown instead of the digest when the saved data can't be opened, which should never happen.
+/// Nothing is shown from memory, so nothing the reader does is lost on quit.
+struct StorageProblemView: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            LogoMark(color: Theme.logoButton)
+                .frame(width: 44)
+                .accessibilityHidden(true)
+            Text("Decent digest couldn't open its saved data.")
+                .font(Theme.sectionTitleFont)
+                .foregroundStyle(Theme.ink)
+                .fixedSize(horizontal: false, vertical: true)
+            Text("Close the app and open it again. If this keeps happening, restart your device.")
+                .foregroundStyle(Theme.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, Theme.margin)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .background(Theme.page.ignoresSafeArea())
     }
 }
 
