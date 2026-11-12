@@ -17,8 +17,8 @@ extension View {
 
 /// Remembers when a row last moved sideways, so a swipe that is let go near where it began
 /// isn't taken as a tap, and whether a row rests open on its actions.
-/// Gestures and taps both run on the main thread.
-final class SwipeGuard: @unchecked Sendable {
+@MainActor
+final class SwipeGuard {
     /// A finger that moves less than this sideways is tapping, not swiping.
     static let tapTolerance: CGFloat = 10
 
@@ -44,8 +44,8 @@ final class SwipeGuard: @unchecked Sendable {
 }
 
 /// Lets a closing row ask the digest to hold its scroll position for a moment.
-/// Taps and layout both run on the main thread.
-final class ScrollHold: @unchecked Sendable {
+@MainActor
+final class ScrollHold {
     /// Set by the digest: holds the page's place while a row closes or leaves.
     var onHold: (() -> Void)?
     /// How far the bottom of the screen reaches past the end of the page, last seen (negative while
@@ -195,7 +195,11 @@ private struct DoneSwipe: ViewModifier {
 
     private func commit() {
         guard !committed else { return }
+        // Set first, so a second swipe or tap can't check the to-do off twice.
+        exitX = dragX
+        committed = true
         guard check() else {
+            committed = false
             withAnimation(.easeOut(duration: 0.2)) { dragX = 0 }
             return
         }
@@ -204,9 +208,7 @@ private struct DoneSwipe: ViewModifier {
             finish()
             return
         }
-        exitX = dragX
         frozenHeight = height
-        committed = true
         let rowWidth = width
 
         Task { @MainActor in

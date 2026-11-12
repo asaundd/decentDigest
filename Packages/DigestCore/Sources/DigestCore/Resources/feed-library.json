@@ -687,7 +687,6 @@
     },
     {
       "id": "nature",
-      "defaultFollow": false,
       "title": "Nature",
       "siteUrl": "https://www.nature.com/nature",
       "feedUrl": "https://www.nature.com/nature.rss",
@@ -909,8 +908,7 @@
       "category": "tech",
       "description": "A weekly look at the future of tech, from The New York Times.",
       "verified": true,
-      "verifiedAt": "2026-11-09",
-      "defaultFollow": true
+      "verifiedAt": "2026-11-09"
     },
     {
       "id": "lennys-podcast",
@@ -920,8 +918,7 @@
       "category": "product",
       "description": "Interviews with product leaders on building products and careers.",
       "verified": true,
-      "verifiedAt": "2026-11-09",
-      "defaultFollow": true
+      "verifiedAt": "2026-11-09"
     },
     {
       "id": "decoder",
@@ -931,8 +928,7 @@
       "category": "tech",
       "description": "Long conversations with leaders about how their companies work.",
       "verified": true,
-      "verifiedAt": "2026-11-09",
-      "defaultFollow": true
+      "verifiedAt": "2026-11-09"
     },
     {
       "id": "latent-space",
@@ -942,8 +938,7 @@
       "category": "ai",
       "description": "The AI engineer's podcast.",
       "verified": true,
-      "verifiedAt": "2026-11-09",
-      "defaultFollow": false
+      "verifiedAt": "2026-11-09"
     },
     {
       "id": "vergecast",
@@ -953,8 +948,7 @@
       "category": "tech",
       "description": "The Verge's weekly show on tech news.",
       "verified": true,
-      "verifiedAt": "2026-11-09",
-      "defaultFollow": false
+      "verifiedAt": "2026-11-09"
     },
     {
       "id": "acquired",
@@ -964,8 +958,7 @@
       "category": "product",
       "description": "Long histories of great companies. New episodes are occasional.",
       "verified": true,
-      "verifiedAt": "2026-11-09",
-      "defaultFollow": false
+      "verifiedAt": "2026-11-09"
     }
   ]
 }

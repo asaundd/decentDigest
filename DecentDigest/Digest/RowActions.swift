@@ -214,14 +214,15 @@ private struct LeaveSwipe: ViewModifier {
         guard committed == nil else { return }
         swipeGuard.restsOpen = false
         commitHaptic += 1
+        // Set first, so a second tap or swipe can't record the action twice.
+        exitX = dragX
+        committed = action
         if reduceMotion {
             scrollHold?.hold()
             perform(action)
             return
         }
-        exitX = dragX
         frozenHeight = height
-        committed = action
         let rowWidth = width
 
         Task { @MainActor in

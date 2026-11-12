@@ -189,7 +189,7 @@ struct HeadlineRow: View {
                         .foregroundStyle(Theme.secondary)
                 }
                 Spacer(minLength: 0)
-                JudgmentButtons(actions: actions)
+                ActionButtons(actions: actions)
             }
             .padding(.leading, DashColumn.width)
             .padding(.trailing, -RibbonButton.gap)
@@ -232,14 +232,14 @@ struct ActionRibbon: View {
             HStack(spacing: 16) {
                 ActionLinks(actions: actions)
                 Spacer(minLength: 0)
-                JudgmentButtons(actions: actions)
+                ActionButtons(actions: actions)
             }
             // At large text sizes the links sit above the buttons.
             VStack(alignment: .leading, spacing: 0) {
                 WrappingActionLinks(actions: actions)
                 HStack {
                     Spacer(minLength: 0)
-                    JudgmentButtons(actions: actions)
+                    ActionButtons(actions: actions)
                 }
             }
         }
@@ -286,7 +286,7 @@ struct ActionLinks: View {
 
 /// Small square buttons for Save (when offered), then ↓ Not relevant and ↑ Relevant (the same order as
 /// the swipe), or ✓ Read when reading history is off.
-struct JudgmentButtons: View {
+struct ActionButtons: View {
     var actions: HeadlineActions
 
     var body: some View {
@@ -383,8 +383,8 @@ extension View {
 /// An action shown as a plain link: slate, semibold, underlined. No outline or fill.
 struct TextLink: View {
     var title: String
-    /// True for a link whose label changes when tapped (Show week / Show less): it skips the
-    /// pressed dimming, which otherwise fades back in on the new label.
+    /// True for a link whose label changes when tapped: it skips the pressed dimming, which
+    /// otherwise fades back in on the new label.
     var still = false
     var action: () -> Void
 

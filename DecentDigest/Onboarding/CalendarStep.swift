@@ -3,7 +3,7 @@ import SwiftUI
 import UIKit
 
 /// Step 2: Calendar and Reminders. One Allow link per app; once allowed, that app's calendars or
-/// lists open underneath, all ticked, and a tap leaves one off the page.
+/// lists open underneath, all shown, each with Hide to leave it off the digest.
 struct CalendarStep: View {
     var agenda: AgendaModel
     var back: () -> Void

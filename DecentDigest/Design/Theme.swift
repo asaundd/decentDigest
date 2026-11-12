@@ -55,7 +55,6 @@ enum Theme {
     // Spacing
     static let margin: CGFloat = 24
     static let ruleSpacing: CGFloat = 24
-    static let titleToList: CGFloat = 6
     /// From a section title to the first line of News, Podcasts, Saved, Calendar or To do.
     static let titleToFirstItem: CGFloat = 11
 

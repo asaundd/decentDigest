@@ -16,7 +16,7 @@ struct CalendarSectionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.titleToFirstItem - DayHeader.firstTopPadding) {
             // Calendar ↗ sits on the footer line.
-            SectionHeader(title: DigestSection.calendar.title) { EmptyView() }
+            SectionHeader(title: DigestSection.calendar.title)
 
             // The digest shows this section only once Calendar access is on.
             if model.calendarAccess == .granted, !model.hasLoaded {

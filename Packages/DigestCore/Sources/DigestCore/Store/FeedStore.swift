@@ -170,7 +170,8 @@ public actor FeedStore {
         for item in items {
             let itemID = ItemID.make(feedURL: feedURL, guidOrLink: item.identity)
             if let existing = known[itemID] {
-                // Fill in text an earlier version of the app didn't keep, and titles it read wrongly.
+                // A later fetch can carry more than the first: a corrected title, the full text, the author,
+                // the length or the guid.
                 if existing.title != item.title, !item.title.isEmpty { existing.title = item.title }
                 if existing.fullText == nil, let fullText = item.fullText { existing.fullText = fullText }
                 if existing.author == nil, let author = item.author { existing.author = author }

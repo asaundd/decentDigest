@@ -226,7 +226,7 @@ struct PrimaryButton: View {
 }
 
 /// A row in a setup list: a name over an optional gray line on the left, and an action on the right
-/// (Allow, Follow, ✓ Following, Choose…).
+/// (Allow, ✓ Allowed, Follow, Unfollow, Use).
 struct ChoiceRow<Trailing: View>: View {
     var title: String
     var subtitle: String?
@@ -322,8 +322,8 @@ struct FollowLink: View {
 /// A link that undoes a choice (Unfollow, Hide): gray, with a faint underline a little below the text.
 struct QuietLink: View {
     var title: String
-    /// True for a link whose label changes when tapped (Show week / Show less): it skips the pressed
-    /// dimming, which otherwise fades back in on the new label.
+    /// True for a link whose label changes when tapped: it skips the pressed dimming, which
+    /// otherwise fades back in on the new label.
     var still = false
     var action: () -> Void
 

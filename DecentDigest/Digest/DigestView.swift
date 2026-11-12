@@ -24,9 +24,9 @@ struct DigestView: View {
     @State private var panel: PanelRequest?
     @State private var showsWeatherSettings = false
     @State private var showsSettings = false
-    /// Setup replayed from Show welcome again in Settings.
+    /// Setup replayed from Start setup over in Settings.
     @State private var showsSetup = false
-    /// Set when Show welcome again closes Settings, so setup opens once Settings has gone.
+    /// Set when Start setup over closes Settings, so setup opens once Settings has gone.
     @State private var setupAfterSettings = false
     /// True while feeds are being checked, so News and Podcasts can say so.
     @State private var isRefreshing = false
@@ -304,7 +304,7 @@ struct DigestView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// Setup shows on first launch, and again from Show welcome again in Settings.
+    /// Setup shows on first launch, and again from Start setup over in Settings.
     private var setupBinding: Binding<Bool> {
         Binding(
             get: { !preferences.hasFinishedSetup || showsSetup },

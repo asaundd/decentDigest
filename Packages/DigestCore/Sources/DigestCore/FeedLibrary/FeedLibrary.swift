@@ -18,8 +18,6 @@ public struct FeedLibrary: Decodable, Sendable {
         public var description: String?
         public var verified: Bool?
         public var popularityRank: Int?
-        /// False for feeds offered in the library but not followed by default (for example, long academic articles).
-        public var defaultFollow: Bool?
     }
 
     /// A podcast offered in the library. Its Apple Podcasts id lets Open ↗ open episodes in Podcasts.
@@ -31,8 +29,6 @@ public struct FeedLibrary: Decodable, Sendable {
         public var category: String
         public var description: String?
         public var verified: Bool?
-        /// True for the shows followed before the reader has chosen any.
-        public var defaultFollow: Bool?
     }
 
     public var version: Int

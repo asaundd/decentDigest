@@ -54,16 +54,6 @@ import Testing
     #expect(shown.map(\.itemID) == ["opened"])
 }
 
-@Test func choosingATopicFollowsItsTwoMostPopularSites() throws {
-    let library = try FeedLibrary.bundled()
-    for category in library.categories {
-        let picks = library.topicPicks(in: category.id)
-        #expect(picks.count == NewsRules.starterFeedsPerCategory)
-        #expect(picks.allSatisfy { $0.feedUrl.hasPrefix("https://") && $0.category == category.id })
-        #expect(!picks.contains { $0.id == "nature" })
-    }
-}
-
 @Test func topicNamesAreSentenceCase() throws {
     let library = try FeedLibrary.bundled()
     #expect(library.categories.map(\.name).contains("Healthtech and digital health"))

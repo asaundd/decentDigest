@@ -181,19 +181,15 @@ extension ListFooter {
     }
 }
 
-/// A section title with an optional action at the right end of the row.
-struct SectionHeader<Action: View>: View {
+/// A section's Georgia title. Title rows carry no links.
+struct SectionHeader: View {
     var title: String
-    @ViewBuilder var action: Action
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(title)
-                .font(Theme.sectionTitleFont)
-                .accessibilityAddTraits(.isHeader)
-            Spacer()
-            action
-        }
+        Text(title)
+            .font(Theme.sectionTitleFont)
+            .accessibilityAddTraits(.isHeader)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

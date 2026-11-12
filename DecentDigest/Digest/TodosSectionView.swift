@@ -18,7 +18,7 @@ struct TodosSectionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Reminders ↗ sits on the footer line.
-            SectionHeader(title: DigestSection.todos.title) { EmptyView() }
+            SectionHeader(title: DigestSection.todos.title)
                 .padding(.bottom, Theme.titleToFirstItem - DayHeader.firstTopPadding)
                 .digestRow()
 
