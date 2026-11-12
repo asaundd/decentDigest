@@ -54,20 +54,20 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		DD0000000000000000000604 /* Config */ = {
-			isa = PBXGroup;
-			children = (
-				DD0000000000000000000103 /* Signing.xcconfig */,
-			);
-			path = Config;
-			sourceTree = "<group>";
-		};
 		DD0000000000000000000603 /* Packages */ = {
 			isa = PBXGroup;
 			children = (
 				DD0000000000000000000102 /* DigestCore */,
 			);
 			path = Packages;
+			sourceTree = "<group>";
+		};
+		DD0000000000000000000604 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				DD0000000000000000000103 /* Signing.xcconfig */,
+			);
+			path = Config;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -212,13 +212,13 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Decent digest";
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Full access lets Decent digest show your events. They are read only on your device, never changed by the app, and never shared with the developer or anyone else.";
-				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Full access lets Decent digest show your to-dos and check them off when you tap. They are managed only on your device and never shared with the developer or anyone else.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Your location lets Decent digest show the weather where you are. It is used only to name your city and get its forecast from Apple Weather, and is never shared with the developer.";
+				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Full access lets Decent digest show your to-dos and check them off when you tap. They are managed only on your device and never shared with the developer or anyone else.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -245,13 +245,13 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Decent digest";
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Full access lets Decent digest show your events. They are read only on your device, never changed by the app, and never shared with the developer or anyone else.";
-				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Full access lets Decent digest show your to-dos and check them off when you tap. They are managed only on your device and never shared with the developer or anyone else.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Your location lets Decent digest show the weather where you are. It is used only to name your city and get its forecast from Apple Weather, and is never shared with the developer.";
+				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Full access lets Decent digest show your to-dos and check them off when you tap. They are managed only on your device and never shared with the developer or anyone else.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
