@@ -559,7 +559,7 @@ struct ReadingHistoryPage: View {
             VStack(alignment: .leading, spacing: 8) {
                 DashLine("It stays on your device and in your own iCloud, and is never shared with developers.")
                 DashLine("Today it keeps your lists tidy, so news and episodes you've already opened, saved, or marked don't come back.")
-                DashLine("When it's off, what you open, save, or mark is still kept while the item is on the digest, so your devices match. It's deleted when the item leaves, a week after it came out. Saved items stay until you remove them.")
+                DashLine("When turned off, reading history is still briefly saved until the item expires a week after it came out, so your digest matches across multiple devices. Saved items still stay saved until you remove them.")
             }
             PlainRule(spacing: 20)
             if cleared {
