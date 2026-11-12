@@ -22,6 +22,13 @@ struct WeatherLines: View {
         // With no location and no city, the date stands alone.
         if let report = model.report, let place = model.place {
             forecast(report, place: place, unit: .current())
+        } else if model.hasPlaceSource, model.isOffline || network?.isOffline == true {
+            // Weather is on, but no forecast has ever arrived.
+            Text("Offline. Weather will show once you're connected.")
+                .font(.subheadline)
+                .foregroundStyle(Theme.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, 14)
         }
     }
 

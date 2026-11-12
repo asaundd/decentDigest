@@ -408,8 +408,6 @@ struct DigestView: View {
                 .foregroundStyle(Theme.secondary)
                 .fixedSize()
                 .padding(.vertical, 4)
-        } else if network?.isOffline == true {
-            DisabledFooterLink(title: "Refresh all")
         } else {
             FooterLink("Refresh all", still: true) {
                 Task { await refreshAll() }
@@ -427,11 +425,14 @@ struct DigestView: View {
                 .font(Theme.wordmarkFont)
                 .foregroundStyle(Theme.secondary)
                 .fixedSize()
-            Text("·")
-                .font(Theme.wordmarkFont)
-                .foregroundStyle(Theme.secondary)
-                .accessibilityHidden(true)
-            refreshAllLink
+            // Left out while offline; the bar under the date says why.
+            if network?.isOffline != true {
+                Text("·")
+                    .font(Theme.wordmarkFont)
+                    .foregroundStyle(Theme.secondary)
+                    .accessibilityHidden(true)
+                refreshAllLink
+            }
         }
     }
 
@@ -449,14 +450,16 @@ struct DigestView: View {
 /// happening now. Everything on the page is what was saved; nothing is fetched until it is back.
 struct OfflineBar: View {
     var body: some View {
-        Text("You're offline. Showing what's already saved on this device.")
+        Text("You're offline. Showing only what's saved on this device.")
             .font(.subheadline)
             .foregroundStyle(Theme.ink)
             .fixedSize(horizontal: false, vertical: true)
-            .padding(.horizontal, 10)
             .padding(.vertical, 6)
             .frame(maxWidth: .infinity, alignment: .leading)
+            // The tint reaches past the text on both sides, so the words line up with the page's.
+            .padding(.horizontal, 10)
             .background(Theme.nowTint, in: RoundedRectangle(cornerRadius: 6))
+            .padding(.horizontal, -10)
     }
 }
 

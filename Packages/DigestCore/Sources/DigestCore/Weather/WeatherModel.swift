@@ -97,7 +97,8 @@ public final class WeatherModel {
         } catch {
             isOffline = Connectivity.isOffline(error)
             // Keep the last forecast if there is one; it still says roughly the right thing.
-            if report == nil, sampleOnFailure {
+            // Sample weather stands in only while WeatherKit isn't set up, never for want of a connection.
+            if report == nil, sampleOnFailure, !isOffline {
                 report = SampleDigest.weather(now: date)
                 isSample = true
             }

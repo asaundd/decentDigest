@@ -425,7 +425,6 @@ struct SearchBox: View {
         HStack(spacing: 12) {
             field
                 .disabled(isDisabled)
-                .opacity(isDisabled ? 0.5 : 1)
             if offersPaste && isFocused.wrappedValue && text.isEmpty {
                 // Apple's own Paste control, so iOS doesn't ask before pasting. Styled as close
                 // to Cancel as iOS allows.
@@ -475,7 +474,10 @@ struct SearchBox: View {
 
     private var field: some View {
         HStack(spacing: 8) {
-            TextField(placeholder, text: $text)
+            // Disabled, the box loses its fill and keeps only a dashed outline, its words in a light gray.
+            TextField(text: $text, prompt: Text(placeholder).foregroundStyle(isDisabled ? Theme.past : Theme.secondary)) {
+                Text(placeholder)
+            }
                 .keyboardType(keyboard)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
@@ -500,7 +502,14 @@ struct SearchBox: View {
         .padding(.trailing, text.isEmpty ? 12 : 6)
         .padding(.vertical, text.isEmpty ? 10 : 6)
         .frame(minHeight: 44)
-        .background(Theme.fieldFill, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(isDisabled ? Color.clear : Theme.fieldFill, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay {
+            if isDisabled {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .strokeBorder(Theme.rule, style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+            }
+        }
+        .accessibilityValue(isDisabled ? "Unavailable while offline" : "")
     }
 }
 
@@ -556,7 +565,7 @@ enum OfflineMessage {
     }
 
     /// News' search still finds sites in the built-in library; only a pasted address needs the web.
-    static let newsSearch = "You're offline. You can still search the sites listed here; adding one by its address needs a connection."
+    static let newsSearch = "You're offline. You can still search the sites listed here, but adding a new site by its address requires a connection."
 }
 
 /// The gray note shown under a search box while offline, before anything is typed.

@@ -265,7 +265,7 @@ struct NewsPicker: View {
                 } else if isLooking {
                     quiet("Looking for a feed…")
                 } else if isOffline {
-                    quiet("Adding a site by its address needs a connection.")
+                    quiet("Adding a new site by its address requires a connection.")
                 } else if notFound {
                     quiet("No feed found at that address. Try the site's feed address instead.")
                 }

@@ -97,8 +97,11 @@ struct FeedListSection: View {
             }
         }
 
-        // Both lists always show their line: News for Refresh, Podcasts for Podcasts ↗.
-        if !waiting {
+        // Podcasts always shows its line, for Podcasts ↗; News for Refresh, which is left out while
+        // offline (the bar under the date says why).
+        let offersRefresh = refresh != nil && network?.isOffline != true
+        let toggles = !showsAll && remaining > 0 || showsAll && staying > limit
+        if !waiting && (toggles || isEpisodes || offersRefresh) {
             ListFooter(
                 hidden: showsAll ? 0 : remaining,
                 phrase: { _ in "more" },
@@ -106,9 +109,8 @@ struct FeedListSection: View {
                 showsAll: showsAll && staying > limit,
                 showTitle: NewsRules.showMoreTitle(count: staying),
                 app: isEpisodes ? ListFooter.Link(title: "Podcasts ↗", spoken: "Open Podcasts") { openURL(ApplePodcasts.app) } : nil,
-                refresh: refresh.map { action in ListFooter.Link(title: "Refresh", spoken: "Refresh news", action: action) },
-                isRefreshing: isRefreshing,
-                refreshDisabled: network?.isOffline == true
+                refresh: offersRefresh ? refresh.map { action in ListFooter.Link(title: "Refresh", spoken: "Refresh news", action: action) } : nil,
+                isRefreshing: isRefreshing
             ) {
                 let folding = showsAll
                 showsAll.toggle()

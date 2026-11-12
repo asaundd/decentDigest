@@ -98,8 +98,6 @@ struct ListFooter: View {
     var refresh: Link? = nil
     /// True while the refresh runs: the link gives way to a gray "Refreshing…".
     var isRefreshing = false
-    /// True while offline: Refresh shows in light gray and can't be tapped.
-    var refreshDisabled = false
 
     var body: some View {
         // On a narrow screen or at large text sizes the links drop under the text.
@@ -146,8 +144,6 @@ struct ListFooter: View {
                     .foregroundStyle(Theme.secondary)
                     .fixedSize()
                     .padding(.vertical, 4)
-            } else if refreshDisabled {
-                DisabledFooterLink(title: refresh.title)
             } else {
                 link(refresh)
             }
@@ -174,30 +170,14 @@ extension ListFooter {
     /// "4 more events this week · Show all", "Show less", or "No other events this week" when nothing
     /// waits, each followed by the app link. `showTitle` replaces "Show all" for a list that opens
     /// only part of the way ("Show 25").
-    init(hidden: Int, phrase: (Int) -> String, empty: String?, showsAll: Bool, showTitle: String = "Show all", app: Link?, refresh: Link? = nil, isRefreshing: Bool = false, refreshDisabled: Bool = false, toggle: @escaping () -> Void) {
+    init(hidden: Int, phrase: (Int) -> String, empty: String?, showsAll: Bool, showTitle: String = "Show all", app: Link?, refresh: Link? = nil, isRefreshing: Bool = false, toggle: @escaping () -> Void) {
         if hidden > 0 {
-            self.init(text: "\(hidden) \(phrase(hidden))", toggle: Link(title: showTitle, action: toggle), app: app, refresh: refresh, isRefreshing: isRefreshing, refreshDisabled: refreshDisabled)
+            self.init(text: "\(hidden) \(phrase(hidden))", toggle: Link(title: showTitle, action: toggle), app: app, refresh: refresh, isRefreshing: isRefreshing)
         } else if showsAll {
-            self.init(text: nil, toggle: Link(title: "Show less", action: toggle), app: app, refresh: refresh, isRefreshing: isRefreshing, refreshDisabled: refreshDisabled)
+            self.init(text: nil, toggle: Link(title: "Show less", action: toggle), app: app, refresh: refresh, isRefreshing: isRefreshing)
         } else {
-            self.init(text: empty, toggle: nil, app: app, refresh: refresh, isRefreshing: isRefreshing, refreshDisabled: refreshDisabled)
+            self.init(text: empty, toggle: nil, app: app, refresh: refresh, isRefreshing: isRefreshing)
         }
-    }
-}
-
-/// A footer link that can't be used right now (Refresh while offline): the same weight in a light
-/// gray, not a button.
-struct DisabledFooterLink: View {
-    var title: String
-
-    var body: some View {
-        Text(title)
-            .font(Theme.actionFont)
-            .foregroundStyle(Theme.past)
-            .fixedSize()
-            .padding(.vertical, 4)
-            .accessibilityLabel(title)
-            .accessibilityValue("Unavailable while offline")
     }
 }
 
