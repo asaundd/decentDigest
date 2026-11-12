@@ -12,6 +12,8 @@ struct TodosSectionView: View {
     @State private var anytimeExpanded = false
     @State private var showsAll = false
     @State private var openIDs: Set<String> = []
+    /// To-dos checked off on their card, riding out to the right.
+    @State private var leavingIDs: Set<String> = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -117,7 +119,7 @@ struct TodosSectionView: View {
             isChecked: model.checkedIDs.contains(todo.id),
             isOpen: openIDs.contains(todo.id),
             onTap: { tap(todo) },
-            toggleCheck: { toggleCheck(todo) },
+            check: { cardCheck(todo) },
             open: { open(todo) }
         )
         // Rows are full width so a swipe can draw its label at the page's edge.
@@ -126,12 +128,13 @@ struct TodosSectionView: View {
         .id(todo.id)
         // A to-do that leaves is gone at once; one that joins fades in after the slide.
         .transition(HeadlineMotion.transition)
-        .checkOffSwipe { swipeCheck(todo) }
+        .checkOffSwipe(request: leavingIDs.contains(todo.id)) { swipeCheck(todo) }
     }
 
     // MARK: Actions
 
-    /// Opens or closes a to-do's card. A checked-off to-do leaves when its card closes.
+    /// Opens or closes a to-do's card. A to-do checked off on its card leaves on its own,
+    /// or at once if its card is closed first.
     private func tap(_ todo: TodoEntry) {
         if openIDs.contains(todo.id) { scrollHold?.hold() }
         if openIDs.remove(todo.id) == nil {
@@ -143,17 +146,19 @@ struct TodosSectionView: View {
         }
     }
 
-    /// The ✓ on the card checks off; once checked it is the undo arrow.
-    private func toggleCheck(_ todo: TodoEntry) {
-        if model.checkedIDs.contains(todo.id) {
-            model.uncheck(todo)
-        } else {
-            model.check(todo)
+    /// The ✓ on the card checks the to-do off: the strike draws, then the row rides out to the
+    /// right as if swiped and leaves.
+    private func cardCheck(_ todo: TodoEntry) {
+        guard !model.checkedIDs.contains(todo.id), model.check(todo) else { return }
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.5))
+            leavingIDs.insert(todo.id)
         }
     }
 
     /// A swipe checks the to-do off and it leaves at once.
     private func swipeCheck(_ todo: TodoEntry) {
+        leavingIDs.remove(todo.id)
         guard model.check(todo) else { return }
         scrollHold?.hold()
         openIDs.remove(todo.id)
@@ -183,7 +188,7 @@ struct TodoRow: View {
     var isChecked: Bool
     var isOpen: Bool
     var onTap: () -> Void
-    var toggleCheck: () -> Void
+    var check: () -> Void
     var open: () -> Void
 
     @Environment(\.swipeGuard) private var swipeGuard
@@ -212,7 +217,7 @@ struct TodoRow: View {
             .accessibilityValue(isChecked ? "Checked off" : "")
             .accessibilityHint(isOpen ? "Shows less" : "Shows details")
             .accessibilityAddTraits(.isButton)
-            .accessibilityAction(named: isChecked ? "Undo check off" : "Check off", toggleCheck)
+            .accessibilityAction(named: "Check off", check)
 
             if isOpen {
                 card
@@ -261,14 +266,11 @@ struct TodoRow: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                // ✓ sits at the top right, where it is on a News card. Once checked it is the undo arrow.
-                RibbonButton(
-                    systemImage: isChecked ? "arrow.uturn.backward" : "checkmark",
-                    label: isChecked ? "Undo check off" : "Check off",
-                    action: toggleCheck
-                )
-                .padding(.top, -6)
-                .padding(.trailing, -RibbonButton.gap)
+                // ✓ sits at the top right, where it is on a News card.
+                RibbonButton(systemImage: "checkmark", label: "Check off", action: check)
+                    .disabled(isChecked)
+                    .padding(.top, -6)
+                    .padding(.trailing, -RibbonButton.gap)
             }
             TextLink("Open ↗", action: open)
                 .accessibilityLabel("Open in Reminders")

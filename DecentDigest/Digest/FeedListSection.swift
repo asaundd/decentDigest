@@ -46,19 +46,16 @@ struct FeedListSection: View {
             .padding(.bottom, Theme.titleToFirstItem - HeadlineRow.verticalPadding)
         .digestRow()
 
-        if eligible.isEmpty {
-            // On first launch the list fills in as each feed arrives.
-            HStack(spacing: 8) {
-                if isRefreshing {
-                    ProgressView()
-                        .controlSize(.small)
-                }
-                Text(emptyText)
-            }
-            .foregroundStyle(Theme.secondary)
-            .padding(.vertical, HeadlineRow.verticalPadding)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .digestRow()
+        if eligible.isEmpty && isRefreshing {
+            // While the first feeds arrive; the rows replace the bars as each feed comes in.
+            PlaceholderBars()
+                .digestRow()
+        } else if eligible.isEmpty {
+            Text(isEpisodes ? "No new episodes right now." : "Nothing new right now.")
+                .foregroundStyle(Theme.secondary)
+                .padding(.vertical, HeadlineRow.verticalPadding)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .digestRow()
         }
 
         ForEach(shown, id: \.item.itemID) { entry in
@@ -124,15 +121,6 @@ struct FeedListSection: View {
     private var limit: Int { isEpisodes ? PodcastRules.itemsShown : NewsRules.itemsShown }
 
     private var choices: [RowAction] { RowAction.choices(keepsHistory: !historyOff) }
-
-    private var emptyText: String {
-        switch (isEpisodes, isRefreshing) {
-        case (false, true): "Checking your feeds…"
-        case (false, false): "Nothing new right now."
-        case (true, true): "Checking your shows…"
-        case (true, false): "No new episodes right now."
-        }
-    }
 
     private struct Entry {
         var item: FeedItem

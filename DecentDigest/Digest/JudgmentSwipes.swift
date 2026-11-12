@@ -6,10 +6,13 @@ extension View {
     /// hand: the symbol and a small gray word on the page, pinned to the edge the row is leaving,
     /// while a strike draws across the title. Letting go past the threshold, where the strike is
     /// complete, checks it off. There is no left swipe.
-    func checkOffSwipe(_ action: @escaping () -> Void) -> some View {
+    /// - Parameter request: set when ✓ on the card checks the to-do off, so the row rides out
+    ///   to the right as if swiped, then `action` runs.
+    func checkOffSwipe(request: Bool = false, _ action: @escaping () -> Void) -> some View {
         modifier(JudgmentSwipe(
             leading: SwipeAction(symbol: "checkmark", label: "Done", action: action),
-            trailing: nil
+            trailing: nil,
+            request: request
         ))
     }
 }
@@ -81,6 +84,8 @@ private struct JudgmentSwipe: ViewModifier {
     var leading: SwipeAction?
     /// Swiping left.
     var trailing: SwipeAction?
+    /// Set to send the row off to the right without a swipe.
+    var request = false
 
     /// How far the row must travel before letting go acts on it.
     private static let threshold: CGFloat = 96
@@ -103,6 +108,9 @@ private struct JudgmentSwipe: ViewModifier {
             .environment(\.swipeGuard, swipeGuard)
             .environment(\.swipeProgress, min(abs(offset) / Self.threshold, 1))
             .sensoryFeedback(.selection, trigger: isArmed) { _, armed in armed }
+            .onChange(of: request) { _, requested in
+                if requested { leave(toRight: true) }
+            }
     }
 
     @ViewBuilder
@@ -110,12 +118,13 @@ private struct JudgmentSwipe: ViewModifier {
         if offset != 0, let swipe = offset > 0 ? leading : trailing {
             let isLeading = offset > 0
             // Only the strip the row has moved off is drawn, so the page color never changes
-            // and the label never sits under the row's text.
-            VStack(spacing: 3) {
+            // and the label never sits under the row's text. Symbol and word share one line at the
+            // row's text size, so they fit a compact row.
+            HStack(spacing: 4) {
                 Image(systemName: swipe.symbol)
-                    .font(.title3.weight(.light))
+                    .font(AgendaMetrics.itemFont.weight(.light))
                 Text(swipe.label)
-                    .font(.caption.weight(.medium))
+                    .font(AgendaMetrics.itemFont.weight(.medium))
             }
             .fixedSize()
             // Gray while dragging; ink once letting go would act on the row.
@@ -149,7 +158,11 @@ private struct JudgmentSwipe: ViewModifier {
             withAnimation(.easeOut(duration: 0.2)) { dragX = 0 }
             return
         }
-        let toRight = x > 0
+        leave(toRight: x > 0)
+    }
+
+    private func leave(toRight: Bool) {
+        guard exit == nil, let swipe = toRight ? leading : trailing else { return }
         withAnimation(.easeOut(duration: 0.18)) {
             exit = toRight ? 600 : -600
         } completion: {

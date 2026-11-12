@@ -1,7 +1,7 @@
 #if DEBUG
 import SwiftUI
 
-/// A test-only page for trying news row actions on the phone before they're built into the digest.
+/// A test-only page for trying news row actions and loading placeholders on the phone before they're built into the digest.
 /// Opened from the Settings footer in debug builds. Nothing here touches real feeds or reading state.
 struct DesignLabView: View {
     @State private var style: LabStyle = .fill
@@ -43,6 +43,17 @@ struct DesignLabView: View {
                     .font(.footnote)
                     .foregroundStyle(Theme.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+            }
+
+            SectionRule()
+
+            // The bars a slow first read shows in News and Podcasts, looping here so they can be watched.
+            ForEach(["News", "Podcasts"], id: \.self) { title in
+                Text(title)
+                    .font(Theme.sectionTitleFont)
+                    .padding(.bottom, Theme.titleToFirstItem - LabRow.verticalPadding)
+                PlaceholderBars(delay: .zero)
+                    .padding(.bottom, 16)
             }
 
             SectionRule()

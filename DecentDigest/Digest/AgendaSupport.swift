@@ -197,8 +197,9 @@ struct QuietLine: View {
     }
 }
 
-/// Faint, still bars at about the height of a list's rows, shown in place of the rows when the first
-/// read of them takes longer than 0.6s. The rows replace them in place. No shimmer.
+/// Faint bars standing in for a section's rows while a slow first read finishes. A slightly
+/// darker shade passes down the bars, one after another, like a list being written out, slower
+/// than the launch logo draws. With Reduce Motion on, the bars stay still.
 struct PlaceholderBars: View {
     /// Each bar's share of the line.
     var widths: [CGFloat] = [0.72, 0.48, 0.6]
@@ -206,26 +207,49 @@ struct PlaceholderBars: View {
     /// Before this, nothing shows: most reads finish while the launch logo is still on screen.
     var delay: Duration = .milliseconds(600)
 
+    /// Time between one bar darkening and the next.
+    static let step: Double = 0.28
+    /// How long each bar takes to darken and lighten again.
+    static let pulse: Double = 0.7
+    /// The rest after the last bar, before the shade starts again at the top.
+    static let pause: Double = 0.6
+
     @State private var shows = false
+    @State private var start = Date.now
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ForEach(Array(widths.enumerated()), id: \.offset) { _, width in
-                GeometryReader { proxy in
-                    RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(Theme.placeholder)
-                        .frame(width: proxy.size.width * width, height: 10)
-                        .frame(maxHeight: .infinity)
+        TimelineView(.animation(paused: reduceMotion || !shows)) { context in
+            let elapsed = context.date.timeIntervalSince(start)
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(Array(widths.enumerated()), id: \.offset) { index, width in
+                    GeometryReader { proxy in
+                        let bar = RoundedRectangle(cornerRadius: 3, style: .continuous)
+                        bar.fill(Theme.placeholder)
+                            // The passing shade is the rule color laid over the bar.
+                            .overlay(bar.fill(Theme.rule).opacity(reduceMotion ? 0 : Self.shade(bar: index, of: widths.count, at: elapsed)))
+                            .frame(width: proxy.size.width * width, height: 10)
+                            .frame(maxHeight: .infinity)
+                    }
+                    .frame(height: rowHeight)
                 }
-                .frame(height: rowHeight)
             }
         }
         .opacity(shows ? 1 : 0)
         .task {
             try? await Task.sleep(for: delay)
+            start = .now
             shows = true
         }
         .accessibilityElement()
         .accessibilityLabel("Loading")
+    }
+
+    /// How dark one bar is `elapsed` seconds into the loop, from 0 (resting) to 1.
+    static func shade(bar: Int, of count: Int, at elapsed: TimeInterval) -> Double {
+        let cycle = Double(max(count - 1, 0)) * step + pulse + pause
+        let local = elapsed.truncatingRemainder(dividingBy: cycle) - Double(bar) * step
+        guard local > 0, local < pulse else { return 0 }
+        return sin(.pi * local / pulse)
     }
 }
