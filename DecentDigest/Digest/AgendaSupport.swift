@@ -198,9 +198,10 @@ struct QuietLine: View {
     }
 }
 
-/// Faint bars standing in for a section's rows while a slow first read finishes. A slightly
-/// darker shade passes down the bars, one after another, like a list being written out, slower
-/// than the launch logo draws. With Reduce Motion on, the bars stay still.
+/// Faint bars standing in for a section's rows while a slow first read finishes. Top to bottom,
+/// each bar turns a shade darker and stays so, like a list being written out, slower than the
+/// launch logo draws; once the last one has, they all lighten together and it starts again.
+/// With Reduce Motion on, the bars stay still.
 struct PlaceholderBars: View {
     /// Each bar's share of the line.
     var widths: [CGFloat] = [0.72, 0.48, 0.6]
@@ -210,10 +211,14 @@ struct PlaceholderBars: View {
 
     /// Time between one bar darkening and the next.
     static let step: Double = 0.28
-    /// How long each bar takes to darken and lighten again.
-    static let pulse: Double = 0.7
-    /// The rest after the last bar, before the shade starts again at the top.
-    static let pause: Double = 0.6
+    /// How long each bar takes to darken.
+    static let darken: Double = 0.25
+    /// How long all the bars stay dark once the last one has darkened.
+    static let hold: Double = 0.3
+    /// How long they take to lighten again, all together.
+    static let lighten: Double = 0.3
+    /// The rest before the shade starts again at the top.
+    static let pause: Double = 0.4
 
     @State private var shows = false
     @State private var start = Date.now
@@ -246,11 +251,20 @@ struct PlaceholderBars: View {
         .accessibilityLabel("Loading")
     }
 
-    /// How dark one bar is `elapsed` seconds into the loop, from 0 (resting) to 1.
+    /// How dark one bar is `elapsed` seconds into the loop, from 0 (resting) to 1. Each bar darkens
+    /// in turn and stays dark until the last one has, then they all lighten together.
     static func shade(bar: Int, of count: Int, at elapsed: TimeInterval) -> Double {
-        let cycle = Double(max(count - 1, 0)) * step + pulse + pause
-        let local = elapsed.truncatingRemainder(dividingBy: cycle) - Double(bar) * step
-        guard local > 0, local < pulse else { return 0 }
-        return sin(.pi * local / pulse)
+        let allDark = Double(max(count - 1, 0)) * step + darken
+        let lightensAt = allDark + hold
+        let cycle = lightensAt + lighten + pause
+        let local = elapsed.truncatingRemainder(dividingBy: cycle)
+        let level: Double
+        if local >= lightensAt {
+            level = 1 - min((local - lightensAt) / lighten, 1)
+        } else {
+            level = min(max((local - Double(bar) * step) / darken, 0), 1)
+        }
+        // Eased, so each change starts and ends gently.
+        return level * level * (3 - 2 * level)
     }
 }
