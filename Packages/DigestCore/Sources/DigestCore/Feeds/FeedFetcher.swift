@@ -31,7 +31,7 @@ public struct FeedFetcher: Sendable {
         if let etag { request.setValue(etag, forHTTPHeaderField: "If-None-Match") }
         if let lastModified { request.setValue(lastModified, forHTTPHeaderField: "If-Modified-Since") }
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await WebSession.data(for: request)
         guard let http = response as? HTTPURLResponse else { throw FetchError.http(0) }
         if http.statusCode == 304 { return .notModified }
         guard (200..<300).contains(http.statusCode) else { throw FetchError.http(http.statusCode) }

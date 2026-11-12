@@ -53,6 +53,8 @@ public enum FeedParser {
     public static let summaryLimit = 600
     /// Full posts are cut at this many characters.
     public static let fullTextLimit = 50_000
+    /// A feed keeps at most this many items, the newest. Real feeds send 10 to 100.
+    public static let maxItems = 200
 
     public static func parse(_ data: Data) throws -> ParsedFeed {
         let delegate = Delegate()
@@ -64,7 +66,16 @@ public enum FeedParser {
         if !ok && delegate.items.isEmpty {
             throw FeedParserError.malformed(parser.parserError?.localizedDescription ?? "unknown")
         }
-        return ParsedFeed(title: delegate.feedTitle, items: delegate.items)
+        return ParsedFeed(title: delegate.feedTitle, items: newest(delegate.items, limit: maxItems))
+    }
+
+    /// The newest `limit` items, in the feed's own order.
+    static func newest(_ items: [ParsedItem], limit: Int) -> [ParsedItem] {
+        guard items.count > limit else { return items }
+        let kept = Set(items.indices.sorted {
+            (items[$0].published ?? .distantPast) > (items[$1].published ?? .distantPast)
+        }.prefix(limit))
+        return items.indices.filter(kept.contains).map { items[$0] }
     }
 
     /// A title for an item that has none: its link without the scheme or "www.", cut to fit one line.

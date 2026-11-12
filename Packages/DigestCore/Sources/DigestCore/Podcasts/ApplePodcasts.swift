@@ -19,7 +19,7 @@ public enum ApplePodcasts {
               let url = URL(string: "https://itunes.apple.com/lookup?id=\(id)&entity=podcastEpisode&limit=200") else { return nil }
         var request = URLRequest(url: url, timeoutInterval: 10)
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        guard let fetched = try? await URLSession.shared.data(for: request),
+        guard let fetched = try? await WebSession.data(for: request),
               (fetched.1 as? HTTPURLResponse)?.statusCode == 200 else { return nil }
         return match(lookup: fetched.0, guid: guid, title: title)
     }
@@ -63,7 +63,7 @@ public enum ApplePodcasts {
         guard let url = searchURL(term) else { return [] }
         var request = URLRequest(url: url, timeoutInterval: 10)
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        guard let fetched = try? await URLSession.shared.data(for: request),
+        guard let fetched = try? await WebSession.data(for: request),
               (fetched.1 as? HTTPURLResponse)?.statusCode == 200 else { return [] }
         return shows(fromSearch: fetched.0)
     }
