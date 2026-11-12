@@ -2,26 +2,17 @@ import SwiftUI
 import UIKit
 
 extension View {
-    /// Swipe right to check a to-do off. The system swipe actions draw buttons, so this is drawn by
-    /// hand: the symbol and a small gray word on the page, pinned to the edge the row is leaving,
-    /// while a strike draws across the title. Letting go past the threshold, where the strike is
-    /// complete, checks it off. There is no left swipe.
-    /// - Parameter request: set when ✓ on the card checks the to-do off, so the row rides out
-    ///   to the right as if swiped, then `action` runs.
-    func checkOffSwipe(request: Bool = false, _ action: @escaping () -> Void) -> some View {
-        modifier(JudgmentSwipe(
-            leading: SwipeAction(symbol: "checkmark", label: "Done", action: action),
-            trailing: nil,
-            request: request
-        ))
+    /// Swipe right to check a to-do off; a left swipe does nothing. Drawn by hand like the News swipe,
+    /// mirrored: ✓ Done on one line in the strip the row has moved off, gray until letting go would
+    /// check it off, then ink. Once checked, here or from the card's ✓ (`request`), the row slides off
+    /// to the right with ✓ Done riding out at its edge, rests a beat at the right, then closes up and
+    /// the rows below slide up.
+    /// - Parameters:
+    ///   - check: runs as the row starts to leave; false (Reminders refused) brings the row back.
+    ///   - finish: runs once the gap has closed, to take the to-do off the list.
+    func checkOffSwipe(request: Bool = false, check: @escaping () -> Bool, finish: @escaping () -> Void) -> some View {
+        modifier(DoneSwipe(request: request, check: check, finish: finish))
     }
-}
-
-/// What a swipe in one direction shows and does.
-struct SwipeAction {
-    var symbol: String
-    var label: String
-    var action: () -> Void
 }
 
 /// Remembers when a row last moved sideways, so a swipe that is let go near where it began
@@ -64,9 +55,34 @@ final class ScrollHold: @unchecked Sendable {
     var holdsUntil = Date.distantPast
     /// The page's scroll offset, last seen.
     var offset: CGFloat = 0
+    /// The space at the top of the page that the status bar covers, last seen.
+    var topInset: CGFloat = 0
+    /// Set by the digest: scrolls the page by this many points (negative is up).
+    var scrollBy: ((CGFloat) -> Void)?
+
+    /// After Show less, brings a list's title back on screen when it has scrolled off the top.
+    /// - Parameter titleTop: the title's top, in the page's visible frame, before the list folded.
+    func bringBack(titleTop: CGFloat) {
+        let wanted = topInset + 12
+        guard titleTop < wanted else { return }
+        scrollBy?(titleTop - wanted)
+    }
 
     func hold() {
         onHold?()
+    }
+}
+
+/// Where a list's title sits on screen, last seen. Kept in a box, not view state, so scrolling
+/// never redraws the list.
+final class TitlePlace {
+    var top: CGFloat = 0
+}
+
+extension View {
+    /// Notes where this title sits in the page's visible frame, for `ScrollHold.bringBack`.
+    func tracksPlace(in place: TitlePlace) -> some View {
+        onGeometryChange(for: CGFloat.self) { $0.frame(in: .scrollView).minY } action: { place.top = $0 }
     }
 }
 
@@ -75,100 +91,142 @@ extension EnvironmentValues {
     /// Told just before an open row closes, so the page keeps its place instead of scrolling back
     /// when a row near its bottom gets shorter.
     @Entry var scrollHold: ScrollHold? = nil
-    /// How far a to-do's swipe has gone toward checking it off, from 0 to 1. Draws the strike on its title.
-    @Entry var swipeProgress: Double = 0
 }
 
-private struct JudgmentSwipe: ViewModifier {
-    /// Swiping right.
-    var leading: SwipeAction?
-    /// Swiping left.
-    var trailing: SwipeAction?
-    /// Set to send the row off to the right without a swipe.
-    var request = false
+private struct DoneSwipe: ViewModifier {
+    var request: Bool
+    var check: () -> Bool
+    var finish: () -> Void
 
-    /// How far the row must travel before letting go acts on it.
+    /// How far the row must travel before letting go checks it off.
     private static let threshold: CGFloat = 96
 
-    /// How far the row has been dragged sideways.
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scrollHold) private var scrollHold
+
     @State private var dragX: CGFloat = 0
-    /// Where the row flies off to once it has been acted on.
-    @State private var exit: CGFloat?
+    @State private var width: CGFloat = 393
+    @State private var height: CGFloat = 0
     @State private var swipeGuard = SwipeGuard()
 
-    private var offset: CGFloat { exit ?? dragX }
+    // Once checked off.
+    @State private var committed = false
+    @State private var exitX: CGFloat = 0
+    @State private var labelAtTrailing = false
+    @State private var labelOpacity: Double = 1
+    @State private var frozenHeight: CGFloat?
 
-    private var isArmed: Bool { abs(offset) >= Self.threshold }
+    private var offset: CGFloat { committed ? exitX : dragX }
+
+    private var isArmed: Bool { !committed && dragX >= Self.threshold }
 
     func body(content: Content) -> some View {
         content
             .offset(x: offset)
-            .background { band }
+            .background(alignment: .leading) { strip }
             .gesture(HorizontalPan(onChange: dragChanged, onEnd: dragEnded))
             .environment(\.swipeGuard, swipeGuard)
-            .environment(\.swipeProgress, min(abs(offset) / Self.threshold, 1))
+            .onGeometryChange(for: CGSize.self) { $0.size } action: { size in
+                width = size.width
+                if frozenHeight == nil { height = size.height }
+            }
+            .frame(height: frozenHeight, alignment: .top)
+            // While the row closes up, nothing spills over the rows below it.
+            .mask { Rectangle().padding(.vertical, frozenHeight == nil ? -24 : 0) }
             .sensoryFeedback(.selection, trigger: isArmed) { _, armed in armed }
             .onChange(of: request) { _, requested in
-                if requested { leave(toRight: true) }
+                if requested { commit() }
             }
     }
 
     @ViewBuilder
-    private var band: some View {
-        if offset != 0, let swipe = offset > 0 ? leading : trailing {
-            let isLeading = offset > 0
-            // Only the strip the row has moved off is drawn, so the page color never changes
-            // and the label never sits under the row's text. Symbol and word share one line at the
-            // row's text size, so they fit a compact row.
-            HStack(spacing: 4) {
-                Image(systemName: swipe.symbol)
-                    .font(AgendaMetrics.itemFont.weight(.light))
-                Text(swipe.label)
-                    .font(AgendaMetrics.itemFont.weight(.medium))
-            }
-            .fixedSize()
-            // Gray while dragging; ink once letting go would act on the row.
-            .foregroundStyle(isArmed ? Theme.ink : Theme.secondary)
-            .padding(.horizontal, Theme.margin)
-            .frame(width: abs(offset), alignment: isLeading ? .leading : .trailing)
-            .frame(maxHeight: .infinity)
-            .clipped()
-            .frame(maxWidth: .infinity, alignment: isLeading ? .leading : .trailing)
-            .accessibilityHidden(true)
+    private var strip: some View {
+        if committed {
+            // ✓ Done rides out with the row's edge, then rests at the right.
+            label(color: Theme.ink)
+                .opacity(labelOpacity)
+                .padding(.horizontal, Theme.margin)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: labelAtTrailing ? .trailing : .leading)
+                .accessibilityHidden(true)
+        } else if dragX > 0 {
+            label(color: isArmed ? Theme.ink : Theme.secondary)
+                .padding(.horizontal, Theme.margin)
+                // Only the strip the row has moved off is drawn, so the page color never changes.
+                .frame(width: dragX, alignment: .leading)
+                .frame(maxHeight: .infinity)
+                .clipped()
+                .accessibilityHidden(true)
         }
     }
 
+    /// ✓ and Done on one line at the row's text size, so they fit a compact row.
+    private func label(color: Color) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: "checkmark")
+                .font(AgendaMetrics.itemFont.weight(.light))
+            Text("Done")
+                .font(AgendaMetrics.itemFont.weight(.medium))
+        }
+        .fixedSize()
+        .foregroundStyle(color)
+    }
+
     private func dragChanged(_ x: CGFloat) {
-        guard exit == nil else { return }
+        guard !committed else { return }
         // A finger that drifts a little while tapping is still a tap.
         guard abs(x) >= SwipeGuard.tapTolerance else { return }
-        // A direction with no action doesn't move.
-        dragX = (x > 0 && leading == nil) || (x < 0 && trailing == nil) ? 0 : x
         swipeGuard.lastMove = .now
+        dragX = max(0, x)
     }
 
     private func dragEnded(_ x: CGFloat, cancelled: Bool) {
+        guard !committed else { return }
         guard abs(x) >= SwipeGuard.tapTolerance else {
             dragX = 0
             return
         }
         swipeGuard.lastMove = .now
-        let swipe = x > 0 ? leading : trailing
-        guard exit == nil, !cancelled, abs(x) >= Self.threshold, let swipe else {
+        if !cancelled, x >= Self.threshold {
+            commit()
+        } else {
+            withAnimation(.easeOut(duration: 0.2)) { dragX = 0 }
+        }
+    }
+
+    private func commit() {
+        guard !committed else { return }
+        guard check() else {
             withAnimation(.easeOut(duration: 0.2)) { dragX = 0 }
             return
         }
-        leave(toRight: x > 0)
-    }
+        if reduceMotion {
+            scrollHold?.hold()
+            finish()
+            return
+        }
+        exitX = dragX
+        frozenHeight = height
+        committed = true
+        let rowWidth = width
 
-    private func leave(toRight: Bool) {
-        guard exit == nil, let swipe = toRight ? leading : trailing else { return }
-        withAnimation(.easeOut(duration: 0.18)) {
-            exit = toRight ? 600 : -600
-        } completion: {
-            swipe.action()
-            exit = nil
-            dragX = 0
+        Task { @MainActor in
+            // 1. The row slides off to the right; ✓ Done rides out with its edge.
+            withAnimation(.easeOut(duration: 0.18)) {
+                exitX = rowWidth
+                labelAtTrailing = true
+            }
+            try? await Task.sleep(for: .seconds(0.18))
+            // 2. A beat to see it was done, as on News.
+            try? await Task.sleep(for: .seconds(0.18))
+            // 3. The gap closes and the rows below slide up. The page holds its place meanwhile.
+            scrollHold?.hold()
+            withAnimation(.easeOut(duration: 0.16)) {
+                frozenHeight = 0
+                labelOpacity = 0
+            }
+            // Taken off the list only once the gap has fully closed on screen.
+            try? await Task.sleep(for: .seconds(0.26))
+            finish()
         }
     }
 }
@@ -206,43 +264,6 @@ struct HorizontalPan: UIGestureRecognizerRepresentable {
             guard let pan = recognizer as? UIPanGestureRecognizer else { return true }
             let velocity = pan.velocity(in: pan.view)
             return abs(velocity.x) > abs(velocity.y) * 1.5
-        }
-    }
-}
-
-/// A hand-drawn strike across each line of a title, drawn left to right as `progress` goes from 0 to 1.
-struct StrikeRenderer: TextRenderer {
-    var progress: Double
-    var color: Color
-
-    var animatableData: Double {
-        get { progress }
-        set { progress = newValue }
-    }
-
-    func draw(layout: Text.Layout, in context: inout GraphicsContext) {
-        for line in layout {
-            context.draw(line)
-        }
-        guard progress > 0 else { return }
-
-        let lines = Array(layout)
-        let total = lines.reduce(0) { $0 + $1.typographicBounds.width }
-        var remaining = total * min(progress, 1)
-        for (index, line) in lines.enumerated() where remaining > 0 {
-            let bounds = line.typographicBounds
-            let length = min(bounds.width, remaining)
-            remaining -= length
-            // Through the middle of the lowercase letters, with a slight rise and sag so it looks drawn.
-            let y = bounds.rect.minY + bounds.ascent * 0.68
-            let rise: CGFloat = index.isMultiple(of: 2) ? -1.2 : 0.9
-            var path = Path()
-            path.move(to: CGPoint(x: bounds.rect.minX - 1, y: y + 0.6))
-            path.addQuadCurve(
-                to: CGPoint(x: bounds.rect.minX + length, y: y + rise * (length / max(bounds.width, 1))),
-                control: CGPoint(x: bounds.rect.minX + length * 0.5, y: y - 1)
-            )
-            context.stroke(path, with: .color(color), style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
         }
     }
 }

@@ -128,7 +128,7 @@ struct TodosSectionView: View {
         .id(todo.id)
         // A to-do that leaves is gone at once; one that joins fades in after the slide.
         .transition(HeadlineMotion.transition)
-        .checkOffSwipe(request: leavingIDs.contains(todo.id)) { swipeCheck(todo) }
+        .checkOffSwipe(request: leavingIDs.contains(todo.id), check: { model.check(todo) }, finish: { finishCheck(todo) })
     }
 
     // MARK: Actions
@@ -146,25 +146,16 @@ struct TodosSectionView: View {
         }
     }
 
-    /// The ✓ on the card checks the to-do off: the strike draws, then the row rides out to the
-    /// right as if swiped and leaves.
+    /// The ✓ on the card checks the to-do off: the row rides out to the right as if swiped.
     private func cardCheck(_ todo: TodoEntry) {
-        guard !model.checkedIDs.contains(todo.id), model.check(todo) else { return }
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(0.5))
-            leavingIDs.insert(todo.id)
-        }
+        leavingIDs.insert(todo.id)
     }
 
-    /// A swipe checks the to-do off and it leaves at once.
-    private func swipeCheck(_ todo: TodoEntry) {
+    /// Once a checked-off to-do's row has closed up, it leaves the list.
+    private func finishCheck(_ todo: TodoEntry) {
         leavingIDs.remove(todo.id)
-        guard model.check(todo) else { return }
-        scrollHold?.hold()
         openIDs.remove(todo.id)
-        withAnimation(HeadlineMotion.close) {
-            model.finishChecking(todo.id)
-        }
+        model.finishChecking(todo.id)
     }
 
     private func open(_ todo: TodoEntry) {
@@ -192,8 +183,6 @@ struct TodoRow: View {
     var open: () -> Void
 
     @Environment(\.swipeGuard) private var swipeGuard
-    @Environment(\.swipeProgress) private var swipeProgress
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -234,21 +223,13 @@ struct TodoRow: View {
         .padding(.bottom, isOpen ? 6 : 0)
     }
 
-    /// The strike draws when checked from the card, or follows the finger during a swipe.
-    private var strike: Double { isChecked ? 1 : swipeProgress }
-
     private var title: some View {
         var text = Text(todo.title)
         if let note {
-            // Once struck, the note goes the same gray as the title.
-            let noteText = Text("  \(note)").foregroundStyle(strike >= 1 ? Theme.past : Theme.secondary)
+            let noteText = Text("  \(note)").foregroundStyle(Theme.secondary)
             text = Text("\(text)\(noteText)")
         }
-        return text
-            .textRenderer(StrikeRenderer(progress: strike, color: Theme.itemInk))
-            .foregroundStyle(strike >= 1 ? Theme.past : Theme.itemInk)
-            // Checking from the card draws the strike left to right; undoing clears it at once.
-            .animation(isChecked && !reduceMotion ? .easeOut(duration: 0.35) : nil, value: isChecked)
+        return text.foregroundStyle(Theme.itemInk)
     }
 
     private var card: some View {

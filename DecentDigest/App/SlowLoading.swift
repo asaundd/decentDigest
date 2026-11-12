@@ -6,6 +6,15 @@ import Foundation
 enum SlowLoading {
     static let key = "debug.slowLoading"
 
+    /// True while the Design lab's Slow loading switch is on (debug builds only).
+    static var isOn: Bool {
+        #if DEBUG
+        UserDefaults.standard.bool(forKey: key)
+        #else
+        false
+        #endif
+    }
+
     static func pause() async {
         #if DEBUG
         if UserDefaults.standard.bool(forKey: key) {

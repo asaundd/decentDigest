@@ -39,7 +39,7 @@ struct DesignLabView: View {
                 SettingsLabel("Loading")
                 Toggle("Slow loading", isOn: $slowLoading)
                     .tint(Theme.switchOn)
-                Text("Every read and fetch on the digest waits 3 seconds first, so the launch logo, placeholder bars and late rows can be checked. Quit and reopen the app to see a cold launch. Stays on until turned off.")
+                Text("Every read and fetch on the digest waits 3 seconds first, so the launch logo, placeholder bars and late rows can be checked. News and Podcasts show their bars while feeds are checked, even when they have rows. Quit and reopen the app to see a cold launch. Stays on until turned off.")
                     .font(.footnote)
                     .foregroundStyle(Theme.secondary)
                     .fixedSize(horizontal: false, vertical: true)

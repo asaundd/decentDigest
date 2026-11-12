@@ -92,9 +92,21 @@ struct DigestView: View {
             } action: { _, offset in
                 scrollHold.offset = offset
             }
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                geometry.contentInsets.top
+            } action: { _, inset in
+                scrollHold.topInset = inset
+            }
             .scrollPosition($scrollPosition)
             .environment(\.scrollHold, scrollHold)
-            .onAppear { scrollHold.onHold = { holdPlace() } }
+            .onAppear {
+                scrollHold.onHold = { holdPlace() }
+                scrollHold.scrollBy = { delta in
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        scrollPosition.scrollTo(y: scrollHold.offset + delta)
+                    }
+                }
+            }
             // Pull to refresh on the digest only. Set here, on the page's own scroll view, so it
             // doesn't reach the scroll views in Settings and setup, where a pull down closes the sheet.
             .refreshable {

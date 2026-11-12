@@ -27,6 +27,7 @@ struct FeedListSection: View {
     @State private var expandedIDs: Set<String> = []
     @State private var pendingReveal: String?
     @State private var showsAll = false
+    @State private var titlePlace = TitlePlace()
     /// Rows playing their leaving animation, and what was chosen for each.
     @State private var leaving: [String: RowAction] = [:]
     /// Rows closing up as they leave. They no longer count toward the rows shown, so the next one
@@ -35,8 +36,11 @@ struct FeedListSection: View {
 
     var body: some View {
         let eligible = eligibleEntries
+        // Bars stand in while the first feeds arrive. With the Design lab's Slow loading on, they
+        // stand in for stored rows too while feeds are checked, so they can be seen.
+        let waiting = isRefreshing && (eligible.isEmpty || SlowLoading.isOn)
         // Show all opens the list up to 25 rows, never further.
-        let shown = visible(eligible, limit: showsAll ? NewsRules.expandedLimit : limit)
+        let shown = waiting ? [] : visible(eligible, limit: showsAll ? NewsRules.expandedLimit : limit)
         let staying = eligible.count(where: { !closing.contains($0.item.itemID) })
         let remaining = staying - shown.count(where: { !closing.contains($0.item.itemID) })
 
@@ -44,11 +48,12 @@ struct FeedListSection: View {
             .font(Theme.sectionTitleFont)
             .accessibilityAddTraits(.isHeader)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .tracksPlace(in: titlePlace)
             .padding(.bottom, Theme.titleToFirstItem - HeadlineRow.verticalPadding)
         .digestRow()
 
-        if eligible.isEmpty && isRefreshing {
-            // While the first feeds arrive; the rows replace the bars as each feed comes in.
+        if waiting {
+            // The rows replace the bars as each feed comes in.
             PlaceholderBars()
                 .digestRow()
         } else if eligible.isEmpty {
@@ -90,7 +95,7 @@ struct FeedListSection: View {
 
         // News shows its line only when more wait; Podcasts always does, for Podcasts ↗.
         let toggles = !showsAll && remaining > 0 || showsAll && staying > limit
-        if toggles || isEpisodes {
+        if !waiting && (toggles || isEpisodes) {
             ListFooter(
                 hidden: showsAll ? 0 : remaining,
                 phrase: { _ in "more" },
@@ -99,7 +104,10 @@ struct FeedListSection: View {
                 showTitle: NewsRules.showMoreTitle(count: staying),
                 app: isEpisodes ? ListFooter.Link(title: "Podcasts ↗", spoken: "Open Podcasts") { openURL(ApplePodcasts.app) } : nil
             ) {
+                let folding = showsAll
                 showsAll.toggle()
+                // Show less brings the list's title back when the reader had scrolled past it.
+                if folding { scrollHold?.bringBack(titleTop: titlePlace.top) }
             }
             .padding(.top, 4)
             .digestRow()

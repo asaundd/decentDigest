@@ -24,6 +24,7 @@ struct SavedSectionView: View {
     /// Rows playing their leaving animation, and what was chosen for each.
     @State private var leaving: [String: RowAction] = [:]
     @State private var showsAll = false
+    @State private var titlePlace = TitlePlace()
 
     /// Like News, Saved shows a few rows, then "N more · Show all".
     private let limit = NewsRules.itemsShown
@@ -33,6 +34,7 @@ struct SavedSectionView: View {
             .font(Theme.sectionTitleFont)
             .accessibilityAddTraits(.isHeader)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .tracksPlace(in: titlePlace)
             .padding(.bottom, Theme.titleToFirstItem - HeadlineRow.verticalPadding)
             .digestRow()
 
@@ -70,7 +72,10 @@ struct SavedSectionView: View {
                 showTitle: NewsRules.showMoreTitle(count: saved.count),
                 app: nil
             ) {
+                let folding = showsAll
                 showsAll.toggle()
+                // Show less brings the list's title back when the reader had scrolled past it.
+                if folding { scrollHold?.bringBack(titleTop: titlePlace.top) }
             }
             .padding(.top, 4)
             .digestRow()
