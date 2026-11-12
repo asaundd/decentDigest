@@ -24,6 +24,8 @@ struct FeedListSection: View {
     @Query private var states: [ItemState]
     @AppStorage(NewsRefresher.listStartedAtKey) private var listStartedAt: Double = 0
     @AppStorage(DigestPreferences.readingHistoryOffKey) private var historyOff = false
+    @AppStorage(NewsRefresher.offlineKey(.news)) private var newsOffline = false
+    @AppStorage(NewsRefresher.offlineKey(.podcast)) private var podcastsOffline = false
 
     /// Open rows stay open until the reader closes them.
     @State private var expandedIDs: Set<String> = []
@@ -58,7 +60,7 @@ struct FeedListSection: View {
             PlaceholderBars()
                 .digestRow()
         } else if eligible.isEmpty {
-            Text(isEpisodes ? "No new episodes right now." : "Nothing new right now.")
+            Text(emptyMessage)
                 .foregroundStyle(Theme.secondary)
                 .padding(.vertical, HeadlineRow.verticalPadding)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -102,6 +104,7 @@ struct FeedListSection: View {
                 empty: nil,
                 showsAll: showsAll && staying > limit,
                 showTitle: NewsRules.showMoreTitle(count: staying),
+                lead: isOffline && !isRefreshing ? "Offline" : nil,
                 app: isEpisodes ? ListFooter.Link(title: "Podcasts ↗", spoken: "Open Podcasts") { openURL(ApplePodcasts.app) } : nil,
                 refresh: refresh.map { action in ListFooter.Link(title: "Refresh", spoken: "Refresh news", action: action) },
                 isRefreshing: isRefreshing
@@ -139,6 +142,14 @@ struct FeedListSection: View {
         var sourceName: String
         var appleID: String?
         var status: ItemStatus
+    }
+
+    /// True while this list's last check couldn't connect.
+    private var isOffline: Bool { isEpisodes ? podcastsOffline : newsOffline }
+
+    private var emptyMessage: String {
+        if isOffline { return isEpisodes ? "Offline. New episodes will show once you're connected." : "Offline. New items will show once you're connected." }
+        return isEpisodes ? "No new episodes right now." : "Nothing new right now."
     }
 
     private var eligibleEntries: [Entry] {

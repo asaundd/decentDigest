@@ -222,7 +222,8 @@ struct WeatherStep: View {
         ) {
             WeatherPlacePicker(
                 model: weather,
-                cityNote: "Select a city instead and change it at any time in Settings."
+                cityNote: "Select a city instead and change it at any time in Settings.",
+                inSetup: true
             )
         }
     }

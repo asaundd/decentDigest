@@ -64,6 +64,7 @@ struct NewsPicker: View {
     /// The last change to the box came in all at once, as a paste does.
     @State private var arrivedWhole = false
     @State private var notFound = false
+    @State private var isOffline = false
     @State private var openTopics: Set<String> = []
     @State private var fullTopics: Set<String> = []
     @State private var showsAllFollowed = false
@@ -90,6 +91,7 @@ struct NewsPicker: View {
             .onChange(of: text) { old, new in
                 found = nil
                 notFound = false
+                isOffline = false
                 // Several characters at once means a paste (or autofill), not typing.
                 arrivedWhole = new.count - old.count > 3
             }
@@ -257,6 +259,8 @@ struct NewsPicker: View {
                     }
                 } else if isLooking {
                     quiet("Looking for a feed…")
+                } else if isOffline {
+                    quiet(OfflineMessage.search(inSetup: !inSettings))
                 } else if notFound {
                     quiet("No feed found at that address. Try the site's feed address instead.")
                 }
@@ -282,12 +286,20 @@ struct NewsPicker: View {
         } catch {
             return
         }
-        let result = await FeedFinder.find(address)
+        let result: FoundFeed?
+        var offline = false
+        do {
+            result = try await FeedFinder.find(address)
+        } catch {
+            result = nil
+            offline = true
+        }
         // The reader may have typed something else meanwhile.
         guard !Task.isCancelled, query == address else { return }
         isLooking = false
         found = result
-        notFound = result == nil
+        isOffline = offline
+        notFound = result == nil && !offline
     }
 
     // MARK: Rows
@@ -311,6 +323,7 @@ struct NewsPicker: View {
         text = ""
         found = nil
         notFound = false
+        isOffline = false
         searchFocused = false
     }
 

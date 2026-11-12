@@ -17,6 +17,7 @@ Decent digest is a native iPhone app that shows a calm daily digest: weather, ca
 - **Window onto other apps.** Checking off a to-do writes back to Reminders. Podcast episodes open in Apple Podcasts. Title-only news items open in Safari.
 - **Every permission is optional.** The app must work when calendar, reminders or location access is declined.
 - **Never lose data silently.** If the saved data can't be opened, the app shows a plain message (`StorageProblemView`) instead of an empty digest. In debug builds, the launch argument `-simulateStorageFailure` shows it.
+- **Offline says so.** The app tells a failure for want of a connection from the error iOS returns (`Connectivity.isOffline`), never by watching the network. News and Podcasts keep what is stored; after a check that reached nothing, their footer line starts with a gray "Offline" and an empty list says "Offline. New items will show once you're connected." Weather keeps the last forecast with a gray "Offline · weather from 9:40a" under it. The searches in setup and Settings say "You're offline. Connect to the internet to search." (setup adds ", or skip for now").
 - **https feeds only.**
 - **Dependencies:** keep them minimal. Ask before adding a package.
 

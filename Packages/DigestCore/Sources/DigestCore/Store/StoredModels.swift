@@ -34,7 +34,7 @@ public final class Source {
     }
 }
 
-public enum SourceKind: String, Sendable {
+public enum SourceKind: String, Sendable, CaseIterable {
     case news, podcast
 }
 

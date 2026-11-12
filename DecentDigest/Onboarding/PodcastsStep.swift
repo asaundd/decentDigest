@@ -59,6 +59,7 @@ struct PodcastPicker: View {
     @State private var results: [ApplePodcasts.Show] = []
     @State private var isSearching = false
     @State private var searchedFor = ""
+    @State private var isOffline = false
     @FocusState private var searchFocused: Bool
 
     private var followed: [Source] {
@@ -93,7 +94,7 @@ struct PodcastPicker: View {
                     if isSearching && results.isEmpty {
                         quiet("Searching…")
                     } else if !isSearching && results.isEmpty && searchedFor == query {
-                        quiet("No shows found.")
+                        quiet(isOffline ? OfflineMessage.search(inSetup: !inSettings) : "No shows found.")
                     }
                 }
                 .padding(.top, 6)
@@ -174,8 +175,16 @@ struct PodcastPicker: View {
             return
         }
         isSearching = true
-        let found = await ApplePodcasts.search(term)
+        let found: [ApplePodcasts.Show]
+        var offline = false
+        do {
+            found = try await ApplePodcasts.search(term)
+        } catch {
+            found = []
+            offline = true
+        }
         guard !Task.isCancelled else { return }
+        isOffline = offline
         results = found
         searchedFor = term
         isSearching = false

@@ -59,12 +59,19 @@ public enum ApplePodcasts {
 
     /// Searches Apple Podcasts for shows. Uses Apple's public search, which needs no key;
     /// only the typed words are sent. Shows without an https feed are left out.
-    public static func search(_ term: String) async -> [Show] {
+    /// - Throws: `Connectivity.Offline` when the device has no connection.
+    public static func search(_ term: String) async throws -> [Show] {
         guard let url = searchURL(term) else { return [] }
         var request = URLRequest(url: url, timeoutInterval: 10)
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        guard let fetched = try? await WebSession.data(for: request),
-              (fetched.1 as? HTTPURLResponse)?.statusCode == 200 else { return [] }
+        let fetched: (Data, URLResponse)
+        do {
+            fetched = try await WebSession.data(for: request)
+        } catch {
+            if Connectivity.isOffline(error) { throw Connectivity.Offline() }
+            return []
+        }
+        guard (fetched.1 as? HTTPURLResponse)?.statusCode == 200 else { return [] }
         return shows(fromSearch: fetched.0)
     }
 

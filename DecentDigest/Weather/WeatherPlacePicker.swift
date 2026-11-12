@@ -16,6 +16,8 @@ struct WeatherPlacePicker: View {
     var cityNote: String
     /// Puts a rule between the two choices.
     var ruled = true
+    /// In setup, the offline note also offers Skip for now.
+    var inSetup = false
 
     @Environment(\.openURL) private var openURL
     @State private var text = ""
@@ -72,7 +74,12 @@ struct WeatherPlacePicker: View {
                     .foregroundStyle(Theme.secondary)
                     .padding(.top, 8)
             }
-            if notFound {
+            if !text.isEmpty && (search.isOffline || (notFound && model.isOffline)) {
+                Text(OfflineMessage.search(inSetup: inSetup))
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.secondary)
+                    .padding(.top, 8)
+            } else if notFound {
                 Text("No city found by that name.")
                     .font(.subheadline)
                     .foregroundStyle(Theme.secondary)

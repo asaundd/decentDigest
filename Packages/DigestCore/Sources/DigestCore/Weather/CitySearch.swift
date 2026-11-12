@@ -25,6 +25,8 @@ public final class CitySearch {
     public static let limit = 5
 
     public private(set) var suggestions: [Suggestion] = []
+    /// True when Apple Maps couldn't be reached for want of a connection.
+    public private(set) var isOffline = false
 
     @ObservationIgnored private let completer = MKLocalSearchCompleter()
     @ObservationIgnored private var delegate: CompleterDelegate?
@@ -33,7 +35,11 @@ public final class CitySearch {
         completer.resultTypes = .address
         // Cities and towns only, not street addresses.
         completer.addressFilter = MKAddressFilter(including: .locality)
-        let delegate = CompleterDelegate { [weak self] in self?.refresh() }
+        let delegate = CompleterDelegate { [weak self] in
+            self?.refresh()
+        } onFailure: { [weak self] offline in
+            self?.isOffline = offline
+        }
         self.delegate = delegate
         completer.delegate = delegate
     }
@@ -44,6 +50,7 @@ public final class CitySearch {
         if trimmed.isEmpty {
             completer.cancel()
             suggestions = []
+            isOffline = false
         } else {
             completer.queryFragment = trimmed
         }
@@ -52,10 +59,12 @@ public final class CitySearch {
     public func clear() {
         completer.cancel()
         suggestions = []
+        isOffline = false
     }
 
     private func refresh() {
         guard !completer.queryFragment.isEmpty else { return }
+        isOffline = false
         suggestions = Array(completer.results.prefix(Self.limit).map {
             Suggestion(title: $0.title, subtitle: $0.subtitle)
         })
@@ -65,9 +74,11 @@ public final class CitySearch {
 /// Hands the completer's callbacks back to the main actor.
 private final class CompleterDelegate: NSObject, MKLocalSearchCompleterDelegate {
     private let onUpdate: @MainActor @Sendable () -> Void
+    private let onFailure: @MainActor @Sendable (Bool) -> Void
 
-    init(onUpdate: @escaping @MainActor @Sendable () -> Void) {
+    init(onUpdate: @escaping @MainActor @Sendable () -> Void, onFailure: @escaping @MainActor @Sendable (Bool) -> Void) {
         self.onUpdate = onUpdate
+        self.onFailure = onFailure
     }
 
     func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
@@ -75,6 +86,10 @@ private final class CompleterDelegate: NSObject, MKLocalSearchCompleterDelegate 
         MainActor.assumeIsolated { update() }
     }
 
-    func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: any Error) {}
+    func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: any Error) {
+        let failure = onFailure
+        let offline = Connectivity.isOffline(error)
+        MainActor.assumeIsolated { failure(offline) }
+    }
 }
 #endif

@@ -48,6 +48,15 @@ struct WeatherLines: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 8)
 
+            if model.isOffline, !model.isSample {
+                // The last forecast still shows; this says when it is from.
+                Text(WeatherRules.offlineNote(fetchedAt: report.fetchedAt, now: .now))
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 4)
+            }
+
             if model.isSample {
                 // Debug builds only, until WeatherKit is turned on for the app.
                 Text("Sample weather: WeatherKit isn't set up for this build.")

@@ -69,10 +69,11 @@ public enum FeedFinder {
     }
 
     /// Looks for the feed behind an address. Returns nil when none is found.
-    public static func find(_ text: String, session: URLSession = WebSession.shared) async -> FoundFeed? {
+    /// - Throws: `Connectivity.Offline` when the device has no connection.
+    public static func find(_ text: String, session: URLSession = WebSession.shared) async throws -> FoundFeed? {
         guard let url = address(from: text) else { return nil }
-        guard let page = await download(url, session: session) else {
-            return await tryCommonPaths(near: url, session: session)
+        guard let page = try await download(url, session: session) else {
+            return try await tryCommonPaths(near: url, session: session)
         }
         let (data, finalURL) = page
         if let feed = try? FeedParser.parse(data) {
@@ -81,21 +82,21 @@ public enum FeedFinder {
         // A web page: try the feeds it names, then the usual paths.
         let html = String(decoding: data.prefix(512_000), as: UTF8.self)
         for link in feedLinks(inHTML: html, base: finalURL).prefix(3) {
-            if let linked = await download(link, session: session),
+            if let linked = try await download(link, session: session),
                let feed = try? FeedParser.parse(linked.data) {
                 return found(feed, at: linked.url)
             }
         }
-        return await tryCommonPaths(near: finalURL, session: session)
+        return try await tryCommonPaths(near: finalURL, session: session)
     }
 
     // MARK: Private
 
-    private static func tryCommonPaths(near url: URL, session: URLSession) async -> FoundFeed? {
+    private static func tryCommonPaths(near url: URL, session: URLSession) async throws -> FoundFeed? {
         guard let host = url.host() else { return nil }
         for path in commonPaths {
             guard let candidate = URL(string: "https://\(host)\(path)"),
-                  let fetched = await download(candidate, session: session),
+                  let fetched = try await download(candidate, session: session),
                   let feed = try? FeedParser.parse(fetched.data) else { continue }
             return found(feed, at: fetched.url)
         }
@@ -112,12 +113,18 @@ public enum FeedFinder {
         )
     }
 
-    /// Downloads a page or feed, refusing anything that ends up off https.
-    private static func download(_ url: URL, session: URLSession) async -> (data: Data, url: URL)? {
+    /// Downloads a page or feed, refusing anything that ends up off https. Throws only when offline.
+    private static func download(_ url: URL, session: URLSession) async throws -> (data: Data, url: URL)? {
         var request = URLRequest(url: url, timeoutInterval: 15)
         request.setValue("application/rss+xml, application/atom+xml, application/xml;q=0.9, text/html;q=0.8, */*;q=0.5", forHTTPHeaderField: "Accept")
-        guard let fetched = try? await WebSession.data(for: request, session: session),
-              let http = fetched.1 as? HTTPURLResponse, (200..<300).contains(http.statusCode) else { return nil }
+        let fetched: (Data, URLResponse)
+        do {
+            fetched = try await WebSession.data(for: request, session: session)
+        } catch {
+            if Connectivity.isOffline(error) { throw Connectivity.Offline() }
+            return nil
+        }
+        guard let http = fetched.1 as? HTTPURLResponse, (200..<300).contains(http.statusCode) else { return nil }
         let finalURL = http.url ?? url
         guard finalURL.scheme?.lowercased() == "https" else { return nil }
         return (fetched.0, finalURL)

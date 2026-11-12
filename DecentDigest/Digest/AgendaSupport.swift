@@ -170,13 +170,18 @@ extension ListFooter {
     /// "4 more events this week · Show all", "Show less", or "No other events this week" when nothing
     /// waits, each followed by the app link. `showTitle` replaces "Show all" for a list that opens
     /// only part of the way ("Show 25").
-    init(hidden: Int, phrase: (Int) -> String, empty: String?, showsAll: Bool, showTitle: String = "Show all", app: Link?, refresh: Link? = nil, isRefreshing: Bool = false, toggle: @escaping () -> Void) {
+    /// `lead` comes first in the gray text ("Offline · 6 more").
+    init(hidden: Int, phrase: (Int) -> String, empty: String?, showsAll: Bool, showTitle: String = "Show all", lead: String? = nil, app: Link?, refresh: Link? = nil, isRefreshing: Bool = false, toggle: @escaping () -> Void) {
+        func joined(_ text: String?) -> String? {
+            let parts = [lead, text].compactMap { $0 }
+            return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        }
         if hidden > 0 {
-            self.init(text: "\(hidden) \(phrase(hidden))", toggle: Link(title: showTitle, action: toggle), app: app, refresh: refresh, isRefreshing: isRefreshing)
+            self.init(text: joined("\(hidden) \(phrase(hidden))"), toggle: Link(title: showTitle, action: toggle), app: app, refresh: refresh, isRefreshing: isRefreshing)
         } else if showsAll {
-            self.init(text: nil, toggle: Link(title: "Show less", action: toggle), app: app, refresh: refresh, isRefreshing: isRefreshing)
+            self.init(text: joined(nil), toggle: Link(title: "Show less", action: toggle), app: app, refresh: refresh, isRefreshing: isRefreshing)
         } else {
-            self.init(text: empty, toggle: nil, app: app, refresh: refresh, isRefreshing: isRefreshing)
+            self.init(text: joined(empty), toggle: nil, app: app, refresh: refresh, isRefreshing: isRefreshing)
         }
     }
 }

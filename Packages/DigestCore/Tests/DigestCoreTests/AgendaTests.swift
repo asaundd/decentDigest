@@ -369,3 +369,21 @@ private func threeTodos() -> [TodoEntry] {
     await reopened.setIncluded(true, calendar: "work")
     #expect(reopened.events.count == 2)
 }
+
+// MARK: Offline
+
+@Test func offlineWeatherSaysWhenItIsFrom() {
+    let us = Locale(identifier: "en_US")
+    #expect(WeatherRules.offlineNote(fetchedAt: at(9, 40), now: at(13), calendar: utc, locale: us) == "Offline · weather from 9:40a")
+    #expect(WeatherRules.offlineNote(fetchedAt: at(21, 5, day: -1), now: at(13), calendar: utc, locale: us) == "Offline · weather from yesterday 9:05p")
+    #expect(WeatherRules.offlineNote(fetchedAt: at(8, day: -3), now: at(13), calendar: utc, locale: us).hasPrefix("Offline · weather from "))
+}
+
+@Test func offlineErrorsAreToldApart() {
+    #expect(Connectivity.isOffline(URLError(.notConnectedToInternet)))
+    #expect(Connectivity.isOffline(Connectivity.Offline()))
+    let wrapped = NSError(domain: "WeatherDaemon", code: 2, userInfo: [NSUnderlyingErrorKey: URLError(.networkConnectionLost) as NSError])
+    #expect(Connectivity.isOffline(wrapped))
+    #expect(!Connectivity.isOffline(URLError(.badServerResponse)))
+    #expect(!Connectivity.isOffline(FeedFetcher.FetchError.http(404)))
+}

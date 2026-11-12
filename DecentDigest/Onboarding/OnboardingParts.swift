@@ -542,3 +542,12 @@ struct DashLine: View {
         }
     }
 }
+
+/// What a search in setup or Settings says when the device has no connection.
+enum OfflineMessage {
+    static func search(inSetup: Bool) -> String {
+        inSetup
+            ? "You're offline. Connect to the internet to search, or skip for now."
+            : "You're offline. Connect to the internet to search."
+    }
+}
