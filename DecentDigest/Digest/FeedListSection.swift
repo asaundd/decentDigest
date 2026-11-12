@@ -160,7 +160,7 @@ struct FeedListSection: View {
 
     private var eligibleEntries: [Entry] {
         let followed = Dictionary(
-            sources.filter { $0.kind == kind.rawValue && !$0.isMuted }.map { ($0.id, $0) },
+            sources.filter { $0.kind == kind.rawValue }.map { ($0.id, $0) },
             uniquingKeysWith: { first, _ in first }
         )
         let readings = Dictionary(

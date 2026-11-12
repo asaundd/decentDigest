@@ -13,7 +13,7 @@ struct PodcastsStep: View {
     @Query private var sources: [Source]
 
     private var followed: [Source] {
-        sources.filter { $0.kind == SourceKind.podcast.rawValue && !$0.isMuted }
+        sources.filter { $0.kind == SourceKind.podcast.rawValue }
     }
 
     var body: some View {
@@ -60,7 +60,7 @@ struct PodcastPicker: View {
     @FocusState private var searchFocused: Bool
 
     private var followed: [Source] {
-        sources.filter { $0.kind == SourceKind.podcast.rawValue && !$0.isMuted }
+        sources.filter { $0.kind == SourceKind.podcast.rawValue }
     }
 
     private var query: String { text.trimmingCharacters(in: .whitespacesAndNewlines) }

@@ -121,7 +121,7 @@ struct SettingsView: View {
 
     private func count(of kind: SourceKind, shown: Bool, one: String, many: String) -> String {
         guard shown else { return "Off" }
-        let count = sources.filter { $0.kind == kind.rawValue && !$0.isMuted }.count
+        let count = sources.filter { $0.kind == kind.rawValue }.count
         return count == 0 ? "None" : "\(count) \(count == 1 ? one : many)"
     }
 

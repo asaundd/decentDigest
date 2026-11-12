@@ -25,29 +25,26 @@ public enum Following {
         }
     }
 
-    /// True when the feed is followed and not muted. Addresses match by `key(for:)`.
+    /// True when the feed is followed. Addresses match by `key(for:)`.
     public static func isFollowing(_ feedURL: String, in sources: [Source]) -> Bool {
         let wanted = key(for: feedURL)
-        return sources.contains { !$0.isMuted && key(for: $0.feedURL) == wanted }
+        return sources.contains { key(for: $0.feedURL) == wanted }
     }
 
     public static func follow(_ feed: Feed, in context: ModelContext) {
         let wanted = key(for: feed.feedURL)
         let kind = feed.kind.rawValue
         let existing = (try? context.fetch(FetchDescriptor<Source>(predicate: #Predicate { $0.kind == kind }))) ?? []
-        if let source = existing.first(where: { key(for: $0.feedURL) == wanted }) {
-            source.isMuted = false
-        } else {
-            context.insert(Source(
-                kind: feed.kind,
-                feedURL: feed.feedURL,
-                siteURL: feed.siteURL,
-                title: feed.title,
-                category: feed.category,
-                sortOrder: (existing.map(\.sortOrder).max() ?? -1) + 1,
-                appleID: feed.appleID
-            ))
-        }
+        guard !existing.contains(where: { key(for: $0.feedURL) == wanted }) else { return }
+        context.insert(Source(
+            kind: feed.kind,
+            feedURL: feed.feedURL,
+            siteURL: feed.siteURL,
+            title: feed.title,
+            category: feed.category,
+            sortOrder: (existing.map(\.sortOrder).max() ?? -1) + 1,
+            appleID: feed.appleID
+        ))
         try? context.save()
     }
 

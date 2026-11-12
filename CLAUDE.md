@@ -39,7 +39,7 @@ Decent digest is a native iPhone app that shows a calm daily digest: weather, ca
   - `Weather/` forecast models, `WeatherRules` (today in a few words, the "what changes next" line), `WeatherModel`, which the UI observes, `WeatherKitSource`, `LocationPlaces` and `CitySearch` (iOS only)
   - `Podcasts/` `PodcastRules` (episode length, a new show's first fetch) and `ApplePodcasts` (finds an episode's Apple Podcasts link; searches shows in setup)
   - `Setup/` `DigestPreferences`: whether setup is done and which sections are on the page
-  - `Store/` SwiftData models, container setup, `FeedStore` (the background writer for fetched feeds), `ReadingState` (item status writes from the UI) and `Following` (follow and unfollow from the UI)
+  - `Store/` SwiftData models, container setup, `FeedStore` (the background writer for fetched feeds), `ReadingState` (item status writes from the UI), `Following` (follow and unfollow from the UI) and `SyncDuplicates` (folds together records iCloud sync doubled, before each refresh)
   - `Sample/` sample digest, weather and places for previews and tests
 - `design/app-icon/` icon source SVGs.
 
@@ -54,7 +54,7 @@ Decent digest is a native iPhone app that shows a calm daily digest: weather, ca
 
 - Feed item ids are `ItemID.make(feedURL:guidOrLink:)`, a SHA-256 hash. Synced reading state is keyed by it, so never change the formula.
 - Item status values: `new`, `read` (opened, or marked ✓ Read when reading history is off; a marked one has `resolvedAt` set and leaves at once), `useful` (↑ or a full swipe left, shown as "Relevant"), `notRelevant` (↓, shown as "Not relevant"), `ignored` (expired untouched), `unread`, `saved` (in Saved, never expires). Keep them distinct; they form the user's reading history, which stays on device and in the user's iCloud.
-- For CloudKit-synced SwiftData models: every property optional or defaulted, no unique constraints, no required relationships.
+- For CloudKit-synced SwiftData models: every property optional or defaulted, no unique constraints, no required relationships. Since CloudKit can't keep values unique, `SyncDuplicates` keeps one `Source` per kind and feed address, one `ItemState` and one `SavedItem` per item id. Once the schema is deployed to production, synced fields can be added but never removed or renamed.
 - News and podcasts share `Source` (`kind` is `news` or `podcast`; a podcast keeps its Apple Podcasts id in `appleID`), `FeedItem`, `ItemState` and `SavedItem` (`kind` says which). Episodes follow the News rules: they leave 7 days after they came out, untouched ones become `ignored`. A source's first fetch starts News at today's items (or yesterday's) and a show at its newest episode from the last 7 days.
 - Two stores: `Source`, `ItemState` and `SavedItem` sync through iCloud; `FeedItem` and `FetchState` stay on the device. Models link by id strings, not relationships.
 

@@ -19,7 +19,6 @@ public final class Source {
     public var title: String = ""
     public var category: String?
     public var addedAt: Date = Date.now
-    public var isMuted: Bool = false
     public var sortOrder: Int = 0
     /// A podcast's Apple Podcasts id, so Open ↗ can open its episodes in the Podcasts app.
     public var appleID: String?
@@ -56,7 +55,6 @@ public final class ItemState {
     public var statusRaw: String = ItemStatus.new.rawValue
     public var firstShownAt: Date?
     public var openedAt: Date?
-    public var readSeconds: Double?
     /// When the item left the digest (useful, not relevant or ignored).
     public var resolvedAt: Date?
 

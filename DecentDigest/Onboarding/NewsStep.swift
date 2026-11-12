@@ -13,7 +13,7 @@ struct NewsStep: View {
     @Query private var sources: [Source]
 
     private var followed: [Source] {
-        sources.filter { $0.kind == SourceKind.news.rawValue && !$0.isMuted }
+        sources.filter { $0.kind == SourceKind.news.rawValue }
     }
 
     var body: some View {
@@ -70,7 +70,7 @@ struct NewsPicker: View {
     @FocusState private var searchFocused: Bool
 
     private var followed: [Source] {
-        sources.filter { $0.kind == SourceKind.news.rawValue && !$0.isMuted }
+        sources.filter { $0.kind == SourceKind.news.rawValue }
     }
 
     /// Sites followed by name or address rather than from a topic.

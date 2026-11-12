@@ -5,13 +5,17 @@ import SwiftData
 /// The one place that writes fetched feeds into SwiftData, off the main thread.
 @ModelActor
 public actor FeedStore {
-    /// Fetches every followed feed and show that is due, stores new items and prunes expired ones.
+    /// Merges records doubled by iCloud sync, fetches every followed feed and show that is due,
+    /// stores new items and prunes expired ones.
     /// - Parameters:
     ///   - force: fetch every source now, even if it was fetched recently.
     ///   - keepsHistory: false when reading history is off, so expired items leave no record.
     /// - Returns: how many feeds were fetched.
     @discardableResult
     public func refresh(force: Bool = false, keepsHistory: Bool = true, now: Date = .now, fetcher: FeedFetcher = FeedFetcher()) async -> Int {
+        // Records that iCloud brought in twice are folded together first, so a feed followed
+        // on two devices is fetched once.
+        try? SyncDuplicates.merge(in: modelContext)
         let jobs: [Job]
         do {
             jobs = try dueJobs(force: force, now: now)
@@ -87,10 +91,7 @@ public actor FeedStore {
     }
 
     private func dueJobs(force: Bool, now: Date) throws -> [Job] {
-        let sources = try modelContext.fetch(FetchDescriptor<Source>(
-            predicate: #Predicate { !$0.isMuted },
-            sortBy: [SortDescriptor(\.sortOrder)]
-        ))
+        let sources = try modelContext.fetch(FetchDescriptor<Source>(sortBy: [SortDescriptor(\.sortOrder)]))
         let states = Dictionary(try modelContext.fetch(FetchDescriptor<FetchState>()).map { ($0.sourceID, $0) }, uniquingKeysWith: { first, _ in first })
         return sources.compactMap { source in
             let state = states[source.id]
