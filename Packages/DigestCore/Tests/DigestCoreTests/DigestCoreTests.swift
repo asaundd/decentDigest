@@ -111,3 +111,8 @@ import Testing
     reopened.showAllSections()
     #expect(DigestPreferences.Section.allCases.allSatisfy { DigestPreferences(defaults: defaults).isShown($0) })
 }
+
+@Test func longListsOpenToTwentyFive() {
+    #expect(NewsRules.showMoreTitle(count: 25) == "Show all")
+    #expect(NewsRules.showMoreTitle(count: 26) == "Show 25")
+}

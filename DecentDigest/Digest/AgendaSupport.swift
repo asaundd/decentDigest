@@ -153,10 +153,11 @@ struct ListFooter: View {
 
 extension ListFooter {
     /// "4 more events this week · Show all", "Show less", or "No other events this week" when nothing
-    /// waits, each followed by the app link.
-    init(hidden: Int, phrase: (Int) -> String, empty: String?, showsAll: Bool, app: Link?, toggle: @escaping () -> Void) {
+    /// waits, each followed by the app link. `showTitle` replaces "Show all" for a list that opens
+    /// only part of the way ("Show 25").
+    init(hidden: Int, phrase: (Int) -> String, empty: String?, showsAll: Bool, showTitle: String = "Show all", app: Link?, toggle: @escaping () -> Void) {
         if hidden > 0 {
-            self.init(text: "\(hidden) \(phrase(hidden))", toggle: Link(title: "Show all", action: toggle), app: app)
+            self.init(text: "\(hidden) \(phrase(hidden))", toggle: Link(title: showTitle, action: toggle), app: app)
         } else if showsAll {
             self.init(text: nil, toggle: Link(title: "Show less", action: toggle), app: app)
         } else {

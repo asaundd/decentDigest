@@ -203,7 +203,7 @@ struct EventRow: View {
                     .padding(.top, 6)
             }
 
-            HStack(spacing: 12) {
+            HStack(spacing: 16) {
                 TextLink("Open ↗", action: open)
                     .accessibilityLabel("Open in Calendar")
                 if let directions {

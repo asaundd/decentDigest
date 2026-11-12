@@ -138,17 +138,10 @@ struct NewsPicker: View {
             }
         }
         if inSettings && query.isEmpty && followed.count > 4 {
-            HStack(spacing: 6) {
-                if shown.count < followed.count {
-                    Text("\(followed.count - shown.count) more")
-                        .foregroundStyle(Theme.secondary)
-                    Text("·")
-                        .foregroundStyle(Theme.secondary)
-                        .accessibilityHidden(true)
-                }
-                TextLink(showsAllFollowed ? "Show less" : "Show all") { showsAllFollowed.toggle() }
+            // The same footer line as the digest's lists.
+            ListFooter(hidden: followed.count - shown.count, phrase: { _ in "more" }, empty: nil, showsAll: showsAllFollowed, app: nil) {
+                showsAllFollowed.toggle()
             }
-            .font(.subheadline)
             .padding(.top, 2)
         }
     }

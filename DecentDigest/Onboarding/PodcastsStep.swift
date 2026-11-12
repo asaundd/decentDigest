@@ -48,6 +48,8 @@ struct PodcastsStep: View {
 struct PodcastPicker: View {
     /// Settings lists every show you follow first, then the suggestions you don't.
     var inSettings = false
+    /// In Settings, Following shows 4 shows, then "N more · Show all".
+    @State private var showsAllFollowed = false
     static let suggested = (try? FeedLibrary.bundled())?.suggestedPodcasts() ?? []
 
     @Environment(\.modelContext) private var context
@@ -103,9 +105,17 @@ struct PodcastPicker: View {
                 inSettings || !Self.suggested.contains { Following.key(for: $0.feedUrl) == Following.key(for: source.feedURL) }
             }
             if !searching && !extra.isEmpty {
+                let limited = inSettings && !showsAllFollowed
+                let shownFollowing = limited ? Array(extra.prefix(4)) : extra
                 ListHeading("Following")
-                ForEach(extra) { source in
+                ForEach(shownFollowing) { source in
                     row(title: source.title, subtitle: nil, feed: .init(kind: .podcast, feedURL: source.feedURL, title: source.title, appleID: source.appleID))
+                }
+                if inSettings && extra.count > 4 {
+                    ListFooter(hidden: extra.count - shownFollowing.count, phrase: { _ in "more" }, empty: nil, showsAll: showsAllFollowed, app: nil) {
+                        showsAllFollowed.toggle()
+                    }
+                    .padding(.top, 2)
                 }
                 PlainRule(spacing: 20)
             }

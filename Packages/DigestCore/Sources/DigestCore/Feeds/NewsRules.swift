@@ -4,6 +4,14 @@ import Foundation
 public enum NewsRules {
     /// Headlines shown in the News section.
     public static let itemsShown = 5
+    /// News, Podcasts and Saved open to at most this many rows. Past it, the footer offers
+    /// "Show 25" instead of "Show all", so a long list never fills the page.
+    public static let expandedLimit = 25
+
+    /// The footer's link for opening a list of `count` rows: all of them, or the first 25.
+    public static func showMoreTitle(count: Int) -> String {
+        count > expandedLimit ? "Show \(expandedLimit)" : "Show all"
+    }
     /// Items older than this are not shown and leave the cache.
     public static let expiryDays = 7
     /// A source is fetched again only after this long, unless the reader pulls to refresh.

@@ -174,7 +174,6 @@ struct HeadlineRow: View {
     private var noSummary: some View {
         Text("No summary available.")
             .font(.callout)
-            .italic()
             .foregroundStyle(Theme.secondary)
     }
 

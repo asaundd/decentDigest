@@ -36,7 +36,7 @@ struct SavedSectionView: View {
             .padding(.bottom, Theme.titleToFirstItem - HeadlineRow.verticalPadding)
             .digestRow()
 
-        let shown = showsAll ? saved : Array(saved.prefix(limit))
+        let shown = Array(saved.prefix(showsAll ? NewsRules.expandedLimit : limit))
         ForEach(shown, id: \.itemID) { item in
             let row = self.headline(for: item)
             HeadlineRow(
@@ -63,10 +63,11 @@ struct SavedSectionView: View {
 
         if saved.count > limit {
             ListFooter(
-                hidden: saved.count - shown.count,
+                hidden: showsAll ? 0 : saved.count - shown.count,
                 phrase: { _ in "more" },
                 empty: nil,
                 showsAll: showsAll,
+                showTitle: NewsRules.showMoreTitle(count: saved.count),
                 app: nil
             ) {
                 showsAll.toggle()

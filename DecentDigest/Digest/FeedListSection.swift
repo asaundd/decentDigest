@@ -35,7 +35,8 @@ struct FeedListSection: View {
 
     var body: some View {
         let eligible = eligibleEntries
-        let shown = showsAll ? eligible : visible(eligible)
+        // Show all opens the list up to 25 rows, never further.
+        let shown = visible(eligible, limit: showsAll ? NewsRules.expandedLimit : limit)
         let staying = eligible.count(where: { !closing.contains($0.item.itemID) })
         let remaining = staying - shown.count(where: { !closing.contains($0.item.itemID) })
 
@@ -88,13 +89,14 @@ struct FeedListSection: View {
         }
 
         // News shows its line only when more wait; Podcasts always does, for Podcasts ↗.
-        let toggles = remaining > 0 || showsAll && staying > limit
+        let toggles = !showsAll && remaining > 0 || showsAll && staying > limit
         if toggles || isEpisodes {
             ListFooter(
-                hidden: remaining,
+                hidden: showsAll ? 0 : remaining,
                 phrase: { _ in "more" },
                 empty: nil,
                 showsAll: showsAll && staying > limit,
+                showTitle: NewsRules.showMoreTitle(count: staying),
                 app: isEpisodes ? ListFooter.Link(title: "Podcasts ↗", spoken: "Open Podcasts") { openURL(ApplePodcasts.app) } : nil
             ) {
                 showsAll.toggle()
@@ -109,7 +111,7 @@ struct FeedListSection: View {
     private var isEpisodes: Bool { kind == .podcast }
 
     /// The first rows up to the limit, plus any closing up among them, which don't count.
-    private func visible(_ eligible: [Entry]) -> [Entry] {
+    private func visible(_ eligible: [Entry], limit: Int) -> [Entry] {
         var counted = 0
         return eligible.filter { entry in
             guard counted < limit else { return false }
