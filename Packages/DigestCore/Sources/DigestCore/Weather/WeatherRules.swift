@@ -297,7 +297,7 @@ public enum WeatherRules {
         capitalized(text.lowercased())
     }
 
-    /// The gray note under the weather while the device is offline: "Offline · weather from 9:40a",
+    /// The gray note under the weather while the device is offline: "Offline · Weather from 9:40a",
     /// "from yesterday 9:40p", or the weekday when it is older.
     public static func offlineNote(fetchedAt: Date, now: Date, calendar: Calendar = .current, locale: Locale = .current) -> String {
         let time = AgendaFormat.shortTime(fetchedAt, calendar: calendar, locale: locale)
@@ -313,7 +313,7 @@ public enum WeatherRules {
             formatter.setLocalizedDateFormatFromTemplate("EEEE")
             when = "\(formatter.string(from: fetchedAt)) \(time)"
         }
-        return "Offline · weather from \(when)"
+        return "Offline · Weather from \(when)"
     }
 
     private static func capitalized(_ text: String) -> String {
