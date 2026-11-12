@@ -38,9 +38,8 @@ struct FeedListSection: View {
 
     var body: some View {
         let eligible = eligibleEntries
-        // Bars stand in while the first feeds arrive. With the Design lab's Slow loading on, they
-        // stand in for stored rows too while feeds are checked, so they can be seen.
-        let waiting = isRefreshing && (eligible.isEmpty || SlowLoading.isOn)
+        // Bars stand in while the first feeds arrive. Rows already showing stay while feeds are checked.
+        let waiting = isRefreshing && eligible.isEmpty
         // Show all opens the list up to 25 rows, never further.
         let shown = waiting ? [] : visible(eligible, limit: showsAll ? NewsRules.expandedLimit : limit)
         let staying = eligible.count(where: { !closing.contains($0.item.itemID) })

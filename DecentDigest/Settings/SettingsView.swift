@@ -205,19 +205,6 @@ struct SettingsView: View {
                     #endif
                 }
             }
-            #if DEBUG
-            // A test-only page for trying designs on the phone.
-            NavigationLink {
-                DesignLabView()
-            } label: {
-                Text("Design lab")
-                    .font(Theme.actionFont)
-                    .underline()
-                    .foregroundStyle(Theme.accent)
-                    .padding(.vertical, 4)
-            }
-            .buttonStyle(.borderless)
-            #endif
         }
     }
 }

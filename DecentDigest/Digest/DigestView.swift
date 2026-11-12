@@ -278,12 +278,10 @@ struct DigestView: View {
     }
 
     private func reloadAgenda() async {
-        await SlowLoading.pause()
         await agenda.reload()
     }
 
     private func reloadWeather(force: Bool = false) async {
-        await SlowLoading.pause()
         await weather.reload(force: force)
     }
 
@@ -332,7 +330,6 @@ struct DigestView: View {
         guard !isRefreshing else { return }
         isRefreshing = true
         refreshingOnly = kind
-        await SlowLoading.pause()
         await refresh(force, kind)
         isRefreshing = false
         refreshingOnly = nil
