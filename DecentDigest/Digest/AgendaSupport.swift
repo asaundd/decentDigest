@@ -83,6 +83,7 @@ struct MoreLine: View {
 /// The gray line at the foot of a list: what waits ("4 more events this week"), then quiet links for
 /// Show all or Show less and the app the section comes from, joined by dots:
 /// "4 more events this week · Show all · Calendar ↗". Used by Calendar, To do, News and Podcasts.
+/// News ends it with Refresh, which reads "Refreshing…" in gray while feeds are checked.
 struct ListFooter: View {
     struct Link {
         var title: String
@@ -94,6 +95,9 @@ struct ListFooter: View {
     var text: String?
     var toggle: Link?
     var app: Link?
+    var refresh: Link? = nil
+    /// True while the refresh runs: the link gives way to a gray "Refreshing…".
+    var isRefreshing = false
 
     var body: some View {
         // On a narrow screen or at large text sizes the links drop under the text.
@@ -119,7 +123,7 @@ struct ListFooter: View {
                 .foregroundStyle(Theme.secondary)
                 .fixedSize()
                 .padding(.vertical, 4)
-            if toggle != nil || app != nil { dot }
+            if toggle != nil || app != nil || refresh != nil { dot }
         }
         links
     }
@@ -128,10 +132,21 @@ struct ListFooter: View {
     private var links: some View {
         if let toggle {
             link(toggle)
-            if app != nil { dot }
+            if app != nil || refresh != nil { dot }
         }
         if let app {
             link(app)
+            if refresh != nil { dot }
+        }
+        if let refresh {
+            if isRefreshing {
+                Text("Refreshing…")
+                    .foregroundStyle(Theme.secondary)
+                    .fixedSize()
+                    .padding(.vertical, 4)
+            } else {
+                link(refresh)
+            }
         }
     }
 
@@ -155,13 +170,13 @@ extension ListFooter {
     /// "4 more events this week · Show all", "Show less", or "No other events this week" when nothing
     /// waits, each followed by the app link. `showTitle` replaces "Show all" for a list that opens
     /// only part of the way ("Show 25").
-    init(hidden: Int, phrase: (Int) -> String, empty: String?, showsAll: Bool, showTitle: String = "Show all", app: Link?, toggle: @escaping () -> Void) {
+    init(hidden: Int, phrase: (Int) -> String, empty: String?, showsAll: Bool, showTitle: String = "Show all", app: Link?, refresh: Link? = nil, isRefreshing: Bool = false, toggle: @escaping () -> Void) {
         if hidden > 0 {
-            self.init(text: "\(hidden) \(phrase(hidden))", toggle: Link(title: showTitle, action: toggle), app: app)
+            self.init(text: "\(hidden) \(phrase(hidden))", toggle: Link(title: showTitle, action: toggle), app: app, refresh: refresh, isRefreshing: isRefreshing)
         } else if showsAll {
-            self.init(text: nil, toggle: Link(title: "Show less", action: toggle), app: app)
+            self.init(text: nil, toggle: Link(title: "Show less", action: toggle), app: app, refresh: refresh, isRefreshing: isRefreshing)
         } else {
-            self.init(text: empty, toggle: nil, app: app)
+            self.init(text: empty, toggle: nil, app: app, refresh: refresh, isRefreshing: isRefreshing)
         }
     }
 }

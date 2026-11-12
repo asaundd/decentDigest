@@ -9,16 +9,17 @@ public actor FeedStore {
     /// stores new items and prunes expired ones.
     /// - Parameters:
     ///   - force: fetch every source now, even if it was fetched recently.
+    ///   - only: fetch only news feeds or only shows; nil fetches both.
     ///   - keepsHistory: false when reading history is off, so expired items leave no record.
     /// - Returns: how many feeds were fetched.
     @discardableResult
-    public func refresh(force: Bool = false, keepsHistory: Bool = true, now: Date = .now, fetcher: FeedFetcher = FeedFetcher()) async -> Int {
+    public func refresh(force: Bool = false, only kind: SourceKind? = nil, keepsHistory: Bool = true, now: Date = .now, fetcher: FeedFetcher = FeedFetcher()) async -> Int {
         // Records that iCloud brought in twice are folded together first, so a feed followed
         // on two devices is fetched once.
         try? SyncDuplicates.merge(in: modelContext)
         let jobs: [Job]
         do {
-            jobs = try dueJobs(force: force, now: now)
+            jobs = try dueJobs(force: force, kind: kind, now: now)
         } catch {
             return 0
         }
@@ -90,10 +91,12 @@ public actor FeedStore {
         }
     }
 
-    private func dueJobs(force: Bool, now: Date) throws -> [Job] {
+    private func dueJobs(force: Bool, kind: SourceKind?, now: Date) throws -> [Job] {
         let sources = try modelContext.fetch(FetchDescriptor<Source>(sortBy: [SortDescriptor(\.sortOrder)]))
         let states = Dictionary(try modelContext.fetch(FetchDescriptor<FetchState>()).map { ($0.sourceID, $0) }, uniquingKeysWith: { first, _ in first })
         return sources.compactMap { source in
+            let sourceKind = SourceKind(rawValue: source.kind) ?? .news
+            if let kind, sourceKind != kind { return nil }
             let state = states[source.id]
             if !force, let last = state?.lastFetchedAt, now.timeIntervalSince(last) < NewsRules.refreshInterval {
                 return nil
@@ -102,7 +105,7 @@ public actor FeedStore {
             let hasCutoff = state?.backfillCutoff != nil
             return Job(
                 sourceID: source.id,
-                kind: SourceKind(rawValue: source.kind) ?? .news,
+                kind: sourceKind,
                 feedURL: source.feedURL,
                 etag: hasCutoff ? state?.etag : nil,
                 lastModified: hasCutoff ? state?.lastModified : nil

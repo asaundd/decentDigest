@@ -13,8 +13,9 @@ struct DigestView: View {
     var weather: WeatherModel
     /// Which sections the reader set up, and whether setup is done.
     var preferences: DigestPreferences
-    /// Fetches news and podcasts. `true` means the reader pulled to refresh.
-    var refresh: @Sendable (Bool) async -> Void = { _ in }
+    /// Fetches news and podcasts, or only one of them. `true` means the reader asked for it
+    /// (pull to refresh, Refresh all, or News' Refresh).
+    var refresh: @Sendable (Bool, SourceKind?) async -> Void = { _, _ in }
     var sectionOrder: [DigestSection] = DigestSection.allCases
 
     @Environment(\.scenePhase) private var scenePhase
@@ -27,8 +28,10 @@ struct DigestView: View {
     @State private var showsSetup = false
     /// Set when Show welcome again closes Settings, so setup opens once Settings has gone.
     @State private var setupAfterSettings = false
-    /// True while feeds are being checked, so News can say so.
+    /// True while feeds are being checked, so News and Podcasts can say so.
     @State private var isRefreshing = false
+    /// Set while only one list's feeds are checked (News' Refresh), so the other doesn't say so.
+    @State private var refreshingOnly: SourceKind?
     /// Where the visible list ends on screen.
     @State private var listBottom: CGFloat = .infinity
     /// False until the launch animation lets the page show, whole.
@@ -110,9 +113,7 @@ struct DigestView: View {
             // Pull to refresh on the digest only. Set here, on the page's own scroll view, so it
             // doesn't reach the scroll views in Settings and setup, where a pull down closes the sheet.
             .refreshable {
-                await reloadAgenda()
-                await reloadWeather(force: true)
-                await runRefresh(force: true)
+                await refreshAll()
             }
             .foregroundStyle(Theme.ink)
             .tint(Theme.accent)
@@ -325,13 +326,27 @@ struct DigestView: View {
         }
     }
 
-    /// Fetches news. The page draws right away; headlines appear as each feed arrives.
-    private func runRefresh(force: Bool) async {
+    /// Fetches news and podcasts, or only `kind`. The page draws right away; items appear as each
+    /// feed arrives.
+    private func runRefresh(force: Bool, only kind: SourceKind? = nil) async {
         guard !isRefreshing else { return }
         isRefreshing = true
+        refreshingOnly = kind
         await SlowLoading.pause()
-        await refresh(force)
+        await refresh(force, kind)
         isRefreshing = false
+        refreshingOnly = nil
+    }
+
+    /// Pull to refresh, and Refresh all at the foot of the page: everything on the page, read again.
+    private func refreshAll() async {
+        await reloadAgenda()
+        await reloadWeather(force: true)
+        await runRefresh(force: true)
+    }
+
+    private func refreshes(_ kind: SourceKind) -> Bool {
+        isRefreshing && (refreshingOnly == nil || refreshingOnly == kind)
     }
 
     /// Scrolls an expanded row up only when its bottom is hidden, so rows higher on the screen stay put.
@@ -353,16 +368,19 @@ struct DigestView: View {
             // Rows set their own margins, so swipes can reach the page's edge.
             TodosSectionView(model: agenda)
         case .news:
-            FeedListSection(kind: .news, isRefreshing: isRefreshing, panel: $panel, reveal: reveal)
+            FeedListSection(kind: .news, isRefreshing: refreshes(.news), refresh: {
+                Task { await runRefresh(force: true, only: .news) }
+            }, panel: $panel, reveal: reveal)
         case .podcasts:
-            FeedListSection(kind: .podcast, isRefreshing: isRefreshing, panel: $panel, reveal: reveal)
+            FeedListSection(kind: .podcast, isRefreshing: refreshes(.podcast), panel: $panel, reveal: reveal)
         case .saved:
             SavedSectionView(saved: saved, panel: $panel, reveal: reveal)
         }
     }
 
-    /// The end of the page, on one line: the small logo and name, like the foot of Settings, then the
-    /// weather credit. On a narrow screen or at large text sizes the credit drops to a second line.
+    /// The end of the page, on one line: the small logo and name, like the foot of Settings, Refresh
+    /// all, then the weather credit. On a narrow screen or at large text sizes the credit drops to a
+    /// second line.
     private var footer: some View {
         ViewThatFits(in: .horizontal) {
             HStack(alignment: .center, spacing: 16) {
@@ -378,6 +396,24 @@ struct DigestView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    /// Does what pulling down at the top does, for a reader at the foot of the page. Reads
+    /// "Refreshing…" in gray while anything is being checked.
+    @ViewBuilder
+    private var refreshAllLink: some View {
+        if isRefreshing {
+            Text("Refreshing…")
+                .font(.subheadline)
+                .foregroundStyle(Theme.secondary)
+                .fixedSize()
+                .padding(.vertical, 4)
+        } else {
+            FooterLink("Refresh all", still: true) {
+                Task { await refreshAll() }
+            }
+            .accessibilityHint("Checks for new events, to-dos, weather, news and episodes")
+        }
+    }
+
     private var appName: some View {
         HStack(alignment: .center, spacing: 8) {
             LogoMark(color: Theme.secondary)
@@ -387,6 +423,11 @@ struct DigestView: View {
                 .font(Theme.wordmarkFont)
                 .foregroundStyle(Theme.secondary)
                 .fixedSize()
+            Text("·")
+                .font(Theme.wordmarkFont)
+                .foregroundStyle(Theme.secondary)
+                .accessibilityHidden(true)
+            refreshAllLink
         }
     }
 

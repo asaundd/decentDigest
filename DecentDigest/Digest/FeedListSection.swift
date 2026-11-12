@@ -7,8 +7,10 @@ import SwiftUI
 struct FeedListSection: View {
     /// News or podcasts.
     var kind: SourceKind = .news
-    /// True while feeds are being checked.
+    /// True while this list's feeds are being checked.
     var isRefreshing: Bool
+    /// News' Refresh link on its footer line: checks every news feed now. Nil for Podcasts.
+    var refresh: (() -> Void)? = nil
     @Binding var panel: PanelRequest?
     /// Scrolls an expanded row into view if its bottom (on screen) is past the visible area.
     var reveal: (String, CGFloat) -> Void
@@ -93,16 +95,17 @@ struct FeedListSection: View {
             }
         }
 
-        // News shows its line only when more wait; Podcasts always does, for Podcasts ↗.
-        let toggles = !showsAll && remaining > 0 || showsAll && staying > limit
-        if !waiting && (toggles || isEpisodes) {
+        // Both lists always show their line: News for Refresh, Podcasts for Podcasts ↗.
+        if !waiting {
             ListFooter(
                 hidden: showsAll ? 0 : remaining,
                 phrase: { _ in "more" },
                 empty: nil,
                 showsAll: showsAll && staying > limit,
                 showTitle: NewsRules.showMoreTitle(count: staying),
-                app: isEpisodes ? ListFooter.Link(title: "Podcasts ↗", spoken: "Open Podcasts") { openURL(ApplePodcasts.app) } : nil
+                app: isEpisodes ? ListFooter.Link(title: "Podcasts ↗", spoken: "Open Podcasts") { openURL(ApplePodcasts.app) } : nil,
+                refresh: refresh.map { action in ListFooter.Link(title: "Refresh", spoken: "Refresh news", action: action) },
+                isRefreshing: isRefreshing
             ) {
                 let folding = showsAll
                 showsAll.toggle()

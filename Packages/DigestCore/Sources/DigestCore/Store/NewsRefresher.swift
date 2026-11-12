@@ -13,8 +13,10 @@ public final class NewsRefresher {
         self.container = container
     }
 
-    /// - Parameter force: true for pull to refresh; otherwise only feeds older than the refresh interval are fetched.
-    public func refresh(force: Bool = false) async {
+    /// - Parameters:
+    ///   - force: true when the reader asked; otherwise only feeds older than the refresh interval are fetched.
+    ///   - only: news feeds only (News' Refresh link) or shows only; nil checks both.
+    public func refresh(force: Bool = false, only kind: SourceKind? = nil) async {
         guard !isRefreshing else { return }
         isRefreshing = true
         defer { isRefreshing = false }
@@ -22,9 +24,9 @@ public final class NewsRefresher {
         let store = await feedStore()
         let started = Date.now
         let keepsHistory = !UserDefaults.standard.bool(forKey: DigestPreferences.readingHistoryOffKey)
-        let fetched = await store.refresh(force: force, keepsHistory: keepsHistory)
+        let fetched = await store.refresh(force: force, only: kind, keepsHistory: keepsHistory)
         // Headlines opened before this refresh leave the News list.
-        if fetched > 0 {
+        if fetched > 0, kind != .podcast {
             UserDefaults.standard.set(started.timeIntervalSince1970, forKey: Self.listStartedAtKey)
         }
     }
