@@ -63,7 +63,7 @@ enum Theme {
     static let dateFont = Font.custom("Georgia", size: 30, relativeTo: .largeTitle)
     static let sectionTitleFont = Font.custom("Georgia", size: 22, relativeTo: .title2)
     static let wordmarkFont = Font.footnote
-    /// Section actions such as Refresh: slate, semibold, underlined.
+    /// Links and actions in cards, the panel and Settings: slate, semibold, underlined.
     static let actionFont = Font.subheadline.weight(.semibold)
     static let ribbonIconFont = Font.subheadline
 }

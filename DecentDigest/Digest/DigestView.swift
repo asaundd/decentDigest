@@ -338,9 +338,9 @@ struct DigestView: View {
             // Rows set their own margins, so swipes can reach the page's edge.
             TodosSectionView(model: agenda)
         case .news:
-            FeedListSection(kind: .news, isRefreshing: isRefreshing, refresh: { await runRefresh(force: true) }, panel: $panel, reveal: reveal)
+            FeedListSection(kind: .news, isRefreshing: isRefreshing, panel: $panel, reveal: reveal)
         case .podcasts:
-            FeedListSection(kind: .podcast, isRefreshing: isRefreshing, refresh: { await runRefresh(force: true) }, panel: $panel, reveal: reveal)
+            FeedListSection(kind: .podcast, isRefreshing: isRefreshing, panel: $panel, reveal: reveal)
         case .saved:
             SavedSectionView(saved: saved, panel: $panel, reveal: reveal)
         }

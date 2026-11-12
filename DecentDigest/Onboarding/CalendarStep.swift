@@ -59,7 +59,7 @@ struct CalendarStep: View {
     }
 }
 
-/// An app the digest reads from, with Allow (iOS then asks), ✓ Allowed, or Open Settings ↗ once declined.
+/// An app the digest reads from, with Allow (iOS then asks), ✓ Allowed, or Turn on in the Settings app ↗ once declined.
 struct AppAccessRow: View {
     var appName: String
     /// The gray line before access is on.
@@ -81,7 +81,7 @@ struct AppAccessRow: View {
             case .granted:
                 DoneNote(text: "Allowed")
             case .denied:
-                TextLink("Open Settings ↗") {
+                TextLink("Turn on in the Settings app ↗") {
                     if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
                 }
                 .accessibilityHint("Access can be turned on for Decent digest in the Settings app")

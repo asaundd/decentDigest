@@ -559,7 +559,6 @@ struct ReadingHistoryPage: View {
             VStack(alignment: .leading, spacing: 8) {
                 DashLine("It stays on your device and in your own iCloud, and is never shared with developers.")
                 DashLine("Today it keeps your lists tidy, so news and episodes you've already opened, saved, or marked don't come back.")
-                DashLine("A later update will use it, on your device, to put the news and episodes you care about most at the top.")
             }
             PlainRule(spacing: 20)
             if cleared {

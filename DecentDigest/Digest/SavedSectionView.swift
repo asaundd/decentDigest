@@ -23,6 +23,10 @@ struct SavedSectionView: View {
     @State private var pendingReveal: String?
     /// Rows playing their leaving animation, and what was chosen for each.
     @State private var leaving: [String: RowAction] = [:]
+    @State private var showsAll = false
+
+    /// Like News, Saved shows a few rows, then "N more · Show all".
+    private let limit = NewsRules.itemsShown
 
     var body: some View {
         Text(DigestSection.saved.title)
@@ -32,7 +36,8 @@ struct SavedSectionView: View {
             .padding(.bottom, Theme.titleToFirstItem - HeadlineRow.verticalPadding)
             .digestRow()
 
-        ForEach(saved, id: \.itemID) { item in
+        let shown = showsAll ? saved : Array(saved.prefix(limit))
+        ForEach(shown, id: \.itemID) { item in
             let row = self.headline(for: item)
             HeadlineRow(
                 headline: row,
@@ -54,6 +59,20 @@ struct SavedSectionView: View {
             .leaveSwipe(choices, request: leaving[item.itemID]) { choice in
                 finish(item, as: choice)
             }
+        }
+
+        if saved.count > limit {
+            ListFooter(
+                hidden: saved.count - shown.count,
+                phrase: { _ in "more" },
+                empty: nil,
+                showsAll: showsAll,
+                app: nil
+            ) {
+                showsAll.toggle()
+            }
+            .padding(.top, 4)
+            .digestRow()
         }
     }
 

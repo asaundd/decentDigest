@@ -9,8 +9,6 @@ struct FeedListSection: View {
     var kind: SourceKind = .news
     /// True while feeds are being checked.
     var isRefreshing: Bool
-    /// Checks every feed now.
-    var refresh: () async -> Void
     @Binding var panel: PanelRequest?
     /// Scrolls an expanded row into view if its bottom (on screen) is past the visible area.
     var reveal: (String, CGFloat) -> Void
@@ -25,8 +23,6 @@ struct FeedListSection: View {
     @AppStorage(NewsRefresher.listStartedAtKey) private var listStartedAt: Double = 0
     @AppStorage(DigestPreferences.readingHistoryOffKey) private var historyOff = false
 
-    /// Set once the reader has refreshed, so the link can say the list is current.
-    @State private var refreshedByReader = false
     /// Open rows stay open until the reader closes them.
     @State private var expandedIDs: Set<String> = []
     @State private var pendingReveal: String?
@@ -43,24 +39,11 @@ struct FeedListSection: View {
         let staying = eligible.count(where: { !closing.contains($0.item.itemID) })
         let remaining = staying - shown.count(where: { !closing.contains($0.item.itemID) })
 
-        HStack(alignment: .firstTextBaseline) {
-            Text(isEpisodes ? DigestSection.podcasts.title : DigestSection.news.title)
-                .font(Theme.sectionTitleFont)
-                .accessibilityAddTraits(.isHeader)
-            Spacer()
-            // Podcasts ↗ sits on the footer line.
-            if !isEpisodes {
-                TextLink(isRefreshing ? "Checking…" : (refreshedByReader ? "Up to date" : "Refresh")) {
-                    Task {
-                        await refresh()
-                        refreshedByReader = true
-                    }
-                }
-                .disabled(isRefreshing)
-                .accessibilityHint("Checks your feeds for new items")
-            }
-        }
-        .padding(.bottom, Theme.titleToFirstItem - HeadlineRow.verticalPadding)
+        Text(isEpisodes ? DigestSection.podcasts.title : DigestSection.news.title)
+            .font(Theme.sectionTitleFont)
+            .accessibilityAddTraits(.isHeader)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.bottom, Theme.titleToFirstItem - HeadlineRow.verticalPadding)
         .digestRow()
 
         if eligible.isEmpty {
@@ -145,7 +128,7 @@ struct FeedListSection: View {
     private var emptyText: String {
         switch (isEpisodes, isRefreshing) {
         case (false, true): "Checking your feeds…"
-        case (false, false): "No new news right now."
+        case (false, false): "Nothing new right now."
         case (true, true): "Checking your shows…"
         case (true, false): "No new episodes right now."
         }
