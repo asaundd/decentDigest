@@ -178,6 +178,18 @@ struct DigestView: View {
         .onChange(of: preferences.appearance, initial: true) { _, appearance in
             AppearanceStyle.apply(appearance)
         }
+        // Back online: finish what couldn't be checked while offline, so the offline notes clear.
+        // Only what failed is checked again; nothing else is fetched.
+        .onChange(of: network?.isOffline) { wasOffline, isOffline in
+            guard wasOffline == true, isOffline == false else { return }
+            let missed = SourceKind.allCases.filter { UserDefaults.standard.bool(forKey: NewsRefresher.offlineKey($0)) }
+            if !missed.isEmpty {
+                Task { await runRefresh(force: true, only: missed.count == 1 ? missed[0] : nil) }
+            }
+            if weather.isOffline {
+                Task { await reloadWeather(force: true) }
+            }
+        }
         .onChange(of: scenePhase, initial: true) { _, phase in
             // Checked-off to-dos still showing leave when the app goes away.
             if phase == .background {

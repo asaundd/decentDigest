@@ -79,7 +79,8 @@ public final class WeatherModel {
         }
         let date = now()
         let reuseFor = force ? WeatherRules.pullRefreshInterval : WeatherRules.refreshInterval
-        if !isSample, let report, place == target,
+        // A forecast kept from before going offline is fetched again once the connection is back.
+        if !isSample, !isOffline, let report, place == target,
            date.timeIntervalSince(report.fetchedAt) < reuseFor {
             // The page opened with a cached forecast; it still needs the Apple Weather credit.
             if credit == nil { credit = await provider.credit() }
