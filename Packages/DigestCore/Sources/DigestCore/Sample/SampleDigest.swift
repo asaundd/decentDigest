@@ -16,7 +16,7 @@ public enum SampleDigest {
             CalendarEntry(id: "e1", title: "Coffee with Priya", start: at(9, 30), end: at(10, 15), calendarName: "Personal", calendarID: "personal", location: "Corner café"),
             CalendarEntry(id: "e2", title: "Design review with Sam", start: at(13), end: at(14), calendarName: "Personal", calendarID: "personal", attendees: ["Sam Rivera"], notes: "Bring the floor plan sketches.\nhttps://zoom.us/j/123456"),
             CalendarEntry(id: "e3", title: "Soccer pickup", start: at(16, 30), end: at(17), calendarName: "Family", calendarID: "family", location: "Lincoln Park, field 3", mapPoint: MapPoint(latitude: 37.78, longitude: -122.50), notes: "Maya has the orange slices this week. Practice can run late if it rains, so check the team chat before leaving."),
-            CalendarEntry(id: "e4", title: "Family dinner", start: at(18, 30), end: at(20), calendarName: "Family", calendarID: "family", attendees: ["Maya", "Leo", "Grandma", "Uncle Ben"]),
+            CalendarEntry(id: "e4", title: "Parent-teacher night", start: at(18, 30), end: at(20), calendarName: "Family", calendarID: "family", attendees: ["Ms. Rivera"]),
             CalendarEntry(id: "e5", title: "Run with Alex", start: at(8, dayOffset: 1), end: at(9, dayOffset: 1), calendarName: "Personal", calendarID: "personal"),
             CalendarEntry(id: "e6", title: "School pickup", start: at(15, 15, dayOffset: 1), end: at(15, 45, dayOffset: 1), calendarName: "Family", calendarID: "family"),
             CalendarEntry(id: "e7", title: "Call with the contractor", start: at(11, dayOffset: 2), end: at(11, 30, dayOffset: 2), calendarName: "Personal", calendarID: "personal"),
