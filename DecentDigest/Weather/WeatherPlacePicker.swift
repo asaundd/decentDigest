@@ -24,7 +24,10 @@ struct WeatherPlacePicker: View {
     @State private var text = ""
     @State private var isLooking = false
     @State private var notFound = false
-    @State private var search = CitySearch()
+    /// Apple Maps suggestions, set up only once the search box is tapped: the first use of Apple Maps
+    /// in a launch tries to reach the network and can hold the screen while it does, so the page
+    /// doesn't touch it just by opening (offline, the box can't be tapped at all).
+    @State private var search: CitySearch?
     @FocusState private var searchFocused: Bool
 
     private var usingLocation: Bool {
@@ -61,9 +64,17 @@ struct WeatherPlacePicker: View {
             SearchBox(placeholder: "Search for a city", text: $text, isFocused: $searchFocused, submitLabel: .search, isDisabled: offline) {
                 lookUp(text)
             }
+            .onChange(of: searchFocused) { _, focused in
+                if focused, search == nil {
+                    search = CitySearch()
+                }
+            }
             .onChange(of: text) { _, typed in
                 notFound = false
-                search.update(typed)
+                if search == nil, !typed.isEmpty {
+                    search = CitySearch()
+                }
+                search?.update(typed)
             }
             .onChange(of: offline) { _, nowOffline in
                 if nowOffline {
@@ -76,7 +87,7 @@ struct WeatherPlacePicker: View {
                 OfflineNote(text: OfflineMessage.search(inSetup: inSetup))
             }
 
-            if !search.suggestions.isEmpty && !text.isEmpty {
+            if let search, !search.suggestions.isEmpty && !text.isEmpty {
                 suggestions
                     .padding(.top, 4)
             }
@@ -86,7 +97,7 @@ struct WeatherPlacePicker: View {
                     .foregroundStyle(Theme.secondary)
                     .padding(.top, 8)
             }
-            if !text.isEmpty && (search.isOffline || (notFound && model.isOffline)) {
+            if !text.isEmpty && (search?.isOffline == true || (notFound && model.isOffline)) {
                 Text(OfflineMessage.search(inSetup: inSetup))
                     .font(.subheadline)
                     .foregroundStyle(Theme.secondary)
@@ -172,7 +183,7 @@ struct WeatherPlacePicker: View {
 
     private var suggestions: some View {
         VStack(alignment: .leading, spacing: 0) {
-            ForEach(search.suggestions) { suggestion in
+            ForEach(search?.suggestions ?? []) { suggestion in
                 Button {
                     lookUp(suggestion.query)
                 } label: {
@@ -209,7 +220,7 @@ struct WeatherPlacePicker: View {
             notFound = !found
             if found {
                 text = ""
-                search.clear()
+                search?.clear()
                 searchFocused = false
             }
         }
