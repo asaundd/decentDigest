@@ -126,7 +126,7 @@ private func week(_ today: WeatherDay, _ days: [(Double, Sky)]) -> String? {
 
 @Test func weekLineNamesTemperatureBeforeTheWeekend() {
     let line = week(day(0, 60, 46, .cloudy), [(60, .cloudy), (60, .cloudy), (70, .cloudy), (70, .cloudy), (70, .clear), (70, .clear)])
-    #expect(line == "Warmer from Thursday.")
+    #expect(line == "Warmer starting Thursday.")
 }
 
 @Test func stormsShareTheLineWithOneMore() {
@@ -142,7 +142,7 @@ private func week(_ today: WeatherDay, _ days: [(Double, Sky)]) -> String? {
 
 @Test func weekLineNamesATurnInTemperature() {
     let line = week(day(0, 60, 46, .cloudy), [(61, .cloudy), (62, .cloudy), (70, .cloudy), (70, .cloudy), (62, .cloudy), (62, .cloudy)])
-    #expect(line == "Warmer from Thursday.")
+    #expect(line == "Warmer starting Thursday.")
 }
 
 @Test func quietWeekHasNoWeekLine() {

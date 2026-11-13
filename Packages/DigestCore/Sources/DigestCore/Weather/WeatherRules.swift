@@ -204,21 +204,21 @@ public enum WeatherRules {
         }
         guard abs(before.high - today.high) < notableHighChange else { return nil }
         if let warmer = later.first(where: { $0.high - today.high >= notableHighChange }) {
-            return (warmer, { "Warmer from \($0)." })
+            return (warmer, { "Warmer starting \($0)." })
         }
         if let colder = later.first(where: { today.high - $0.high >= notableHighChange }) {
-            return (colder, { "Colder from \($0)." })
+            return (colder, { "Colder starting \($0)." })
         }
         return nil
     }
 
-    /// "Friday", "Friday and Saturday", or "from Friday" for three or more.
+    /// "Friday", "Friday and Saturday", or "starting Friday" for three or more.
     private static func daysPhrase(_ names: [String]) -> String {
         switch names.count {
         case 0: return ""
         case 1: return names[0]
         case 2: return "\(names[0]) and \(names[1])"
-        default: return "from \(names[0])"
+        default: return "starting \(names[0])"
         }
     }
 

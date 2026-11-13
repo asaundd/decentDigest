@@ -62,6 +62,7 @@ struct PodcastPicker: View {
     @State private var isOffline = false
     @State private var chart: [ApplePodcasts.Show] = TopShows.cached ?? []
     @State private var chartLoading = false
+    @State private var chartFailed = false
     @FocusState private var searchFocused: Bool
 
     private var followed: [Source] {
@@ -138,11 +139,13 @@ struct PodcastPicker: View {
                 ? chart.filter { !Following.isFollowing($0.feedURL, in: followed) }
                 : chart
             if !searching && !offline {
-                if !top.isEmpty || chartLoading {
+                if !top.isEmpty || chartLoading || (chart.isEmpty && chartFailed) {
                     ListHeading("Top 10 on Apple Podcasts")
                 }
                 if top.isEmpty && chartLoading {
                     quiet("Loading…")
+                } else if chart.isEmpty && chartFailed {
+                    quiet("The top 10 couldn't be loaded just now. You can still search for a show above.")
                 }
                 ForEach(top) { show in
                     row(title: show.title, subtitle: show.author, feed: .init(kind: .podcast, feedURL: show.feedURL, title: show.title, appleID: show.id))
@@ -160,14 +163,13 @@ struct PodcastPicker: View {
             chart = cached
             return
         }
-        guard network?.isOffline != true, !chartLoading else { return }
+        guard network?.isOffline != true else { return }
         chartLoading = true
-        let shows = (try? await ApplePodcasts.topShows(country: Locale.current.region?.identifier)) ?? []
+        chartFailed = false
+        let shows = await TopShows.load()
         chartLoading = false
-        if !shows.isEmpty {
-            TopShows.cached = shows
-            chart = shows
-        }
+        chart = shows
+        chartFailed = shows.isEmpty && network?.isOffline != true
     }
 
     /// A show with Follow or Unfollow. Following a search result clears the search, ready for the next
@@ -226,8 +228,23 @@ struct PodcastPicker: View {
     }
 }
 
-/// Apple's top 10, kept for the rest of the launch so setup and Settings don't ask again.
+/// Apple's top 10, kept for the rest of the launch so setup and Settings don't ask again. The
+/// lookup runs on its own, so a view that redraws or goes away (as setup's does while the network
+/// monitor settles) never cancels it; every caller waits for the same one.
 @MainActor
 enum TopShows {
     static var cached: [ApplePodcasts.Show]?
+    private static var loading: Task<[ApplePodcasts.Show], Never>?
+
+    static func load() async -> [ApplePodcasts.Show] {
+        if let cached { return cached }
+        let task = loading ?? Task {
+            (try? await ApplePodcasts.topShows(country: Locale.current.region?.identifier)) ?? []
+        }
+        loading = task
+        let shows = await task.value
+        loading = nil
+        if !shows.isEmpty { cached = shows }
+        return shows
+    }
 }
