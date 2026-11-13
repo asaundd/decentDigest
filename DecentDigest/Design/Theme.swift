@@ -10,7 +10,10 @@ enum Theme {
     static let ink = Color(light: 0x1A1D1E, dark: 0xECEDEA)
     static let secondary = Color(light: 0x6F7573, dark: 0xA3A8A5)
     static let rule = Color(light: 0xDFE0DC, dark: 0x343937)
-    static let accent = Color(light: 0x3C3C4C, dark: 0xCECED5)
+    /// Links and actions. Debug builds can try other colors in the Design lab.
+    @MainActor static var accent: Color { DesignLab.shared.link.color }
+    /// The logo's slate, which stays put whatever the link color.
+    static let slate = Color(light: 0x3C3C4C, dark: 0xCECED5)
     /// Events and to-dos under a day's name: a touch lighter than ink, so the day names lead.
     static let itemInk = Color(light: 0x3A3F40, dark: 0xD3D5D1)
     /// Events that are over and to-dos just checked off: lighter than secondary, struck through.

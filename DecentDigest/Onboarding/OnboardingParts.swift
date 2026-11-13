@@ -580,11 +580,25 @@ struct OfflineNote: View {
     var text: String
 
     var body: some View {
-        Text(text)
-            .font(.subheadline)
-            .foregroundStyle(Theme.secondary)
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.top, 8)
+        if DesignLab.shared.offlineNotesOnTint {
+            // Trying it on the pale slate of the bar under the date (Design lab).
+            Text(text)
+                .font(.subheadline)
+                .foregroundStyle(Theme.ink)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.vertical, 6)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 10)
+                .background(Theme.nowTint, in: RoundedRectangle(cornerRadius: 6))
+                .padding(.horizontal, -10)
+                .padding(.top, 8)
+        } else {
+            Text(text)
+                .font(.subheadline)
+                .foregroundStyle(Theme.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, 8)
+        }
     }
 }

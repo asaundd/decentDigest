@@ -17,6 +17,7 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \Source.sortOrder) private var sources: [Source]
     @State private var confirmsStartOver = false
+    @State private var showsDesignLab = false
 
     enum Page: Hashable {
         case weather, calendar, todos, news, podcasts, sync, history
@@ -68,6 +69,11 @@ struct SettingsView: View {
             }
         }
         .tint(Theme.accent)
+        #if DEBUG
+        .sheet(isPresented: $showsDesignLab) {
+            DesignLabView()
+        }
+        #endif
         .alert("Start setup over?", isPresented: $confirmsStartOver) {
             Button("Keep my choices") { showWelcome() }
             Button("Clear my choices", role: .destructive) { startOver() }
@@ -200,6 +206,10 @@ struct SettingsView: View {
                     #endif
                 }
             }
+            #if DEBUG
+            // Trying design options on the device; not in release builds.
+            TextLink("Design lab") { showsDesignLab = true }
+            #endif
         }
     }
 }

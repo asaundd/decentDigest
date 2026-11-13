@@ -392,22 +392,30 @@ struct DigestView: View {
         }
     }
 
-    /// The end of the page, on one line: the small logo and name, like the foot of Settings, Refresh
-    /// all, then the weather credit. On a narrow screen or at large text sizes the credit drops to a
-    /// second line.
+    /// The end of the page, on one line: Refresh all on the left, the weather credit on the right.
+    /// No logo or name, since the Dd button sits at the top. On a narrow screen or at large text
+    /// sizes the credit drops to a second line.
     private var footer: some View {
         ViewThatFits(in: .horizontal) {
             HStack(alignment: .center, spacing: 16) {
-                appName
-                weatherCredit
+                refreshPart
                 Spacer(minLength: 0)
+                weatherCredit
             }
             VStack(alignment: .leading, spacing: 12) {
-                appName
+                refreshPart
                 weatherCredit
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Left out while offline; the bar under the date says why.
+    @ViewBuilder
+    private var refreshPart: some View {
+        if network?.isOffline != true {
+            refreshAllLink
+        }
     }
 
     /// Does what pulling down at the top does, for a reader at the foot of the page. Reads
@@ -425,26 +433,6 @@ struct DigestView: View {
                 Task { await refreshAll() }
             }
             .accessibilityHint("Checks for new events, to-dos, weather, news and episodes")
-        }
-    }
-
-    private var appName: some View {
-        HStack(alignment: .center, spacing: 8) {
-            LogoMark(color: Theme.secondary)
-                .frame(width: 22)
-                .accessibilityHidden(true)
-            Text("Decent digest")
-                .font(Theme.wordmarkFont)
-                .foregroundStyle(Theme.secondary)
-                .fixedSize()
-            // Left out while offline; the bar under the date says why.
-            if network?.isOffline != true {
-                Text("·")
-                    .font(Theme.wordmarkFont)
-                    .foregroundStyle(Theme.secondary)
-                    .accessibilityHidden(true)
-                refreshAllLink
-            }
         }
     }
 

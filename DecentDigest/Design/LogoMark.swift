@@ -5,7 +5,7 @@ import SwiftUI
 /// `progress` below 1 draws only part of it, stroke by stroke, left to right and top to bottom,
 /// for the launch animation.
 struct LogoMark: View {
-    var color: Color = Theme.accent
+    var color: Color = Theme.slate
     var progress: Double = 1
 
     var body: some View {
@@ -98,21 +98,64 @@ enum LaunchIntro {
     static var hasPlayed = false
 }
 
-/// The round see-through button with the Dd logo, pinned at the top right of the digest. Opens Settings.
+/// The Dd logo button pinned at the top right of the digest: today a round see-through button; debug
+/// builds can try other looks in the Design lab. Opens Settings.
 struct SettingsButton: View {
     var action: () -> Void
 
     var body: some View {
+        let style = DesignLab.shared.button
         Button(action: action) {
-            LogoMark(color: Theme.logoButton)
-                .frame(width: 22)
+            mark(style)
                 .frame(width: 44, height: 44)
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        // Clear glass, so the page shows through more than the regular kind.
-        .glassEffect(.clear.interactive(), in: .circle)
+        .modifier(ButtonBackground(style: style))
         .accessibilityLabel("Settings")
+    }
+
+    @ViewBuilder
+    private func mark(_ style: DesignLab.ButtonStyle) -> some View {
+        switch style {
+        case .glass:
+            LogoMark(color: Theme.logoButton).frame(width: 22)
+        case .shadow:
+            // Just the logo, lifted off the page by a soft shadow under its lines.
+            LogoMark(color: Theme.logoButton)
+                .frame(width: 26)
+                .shadow(color: .black.opacity(0.22), radius: 1, y: 1)
+                .shadow(color: .black.opacity(0.12), radius: 5, y: 3)
+        case .halo:
+            // Just the logo, with the page color fading out around it.
+            LogoMark(color: Theme.logoButton)
+                .frame(width: 26)
+                .background(
+                    RadialGradient(colors: [Theme.page, Theme.page.opacity(0.9), Theme.page.opacity(0)], center: .center, startRadius: 0, endRadius: 30)
+                        .frame(width: 60, height: 60)
+                )
+        case .disc:
+            LogoMark(color: Theme.logoButton).frame(width: 20)
+        }
+    }
+}
+
+/// Clear glass for today's button, a flat paper disc for D, nothing for the floating logos.
+private struct ButtonBackground: ViewModifier {
+    var style: DesignLab.ButtonStyle
+
+    func body(content: Content) -> some View {
+        switch style {
+        case .glass:
+            // Clear glass, so the page shows through more than the regular kind.
+            content.glassEffect(.clear.interactive(), in: .circle)
+        case .disc:
+            content
+                .background(Theme.page, in: Circle())
+                .overlay(Circle().strokeBorder(Theme.rule, lineWidth: 1))
+        case .shadow, .halo:
+            content
+        }
     }
 }
 
