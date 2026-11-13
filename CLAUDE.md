@@ -48,6 +48,7 @@ Decent digest is a native iPhone app that shows a calm daily digest: weather, ca
 
 - Open `DecentDigest.xcodeproj` and run the **DecentDigest** scheme.
 - Core tests: `cd Packages/DigestCore && swift test` (Swift Testing).
+- Screenshots: in debug builds, the launch argument `-demo` fills every section with the sample content in `Sample/` (made-up sources and names), kept in memory, with no fetching and nothing read from or saved to the reader's data.
 - Bundle ID: `com.decentdigest.app`. Signing uses the developer's own team, set in `Config/Local.xcconfig` (git-ignored, included by `Config/Signing.xcconfig`). Never commit a `DEVELOPMENT_TEAM` value or anything under `xcuserdata/`.
 - WeatherKit needs a paid developer team with WeatherKit turned on for the bundle ID (Capabilities and App Services). Then `CODE_SIGN_ENTITLEMENTS = Config/WeatherKit.entitlements` goes in `Local.xcconfig`. Without it the app still builds, and debug builds show sample weather with a note.
 

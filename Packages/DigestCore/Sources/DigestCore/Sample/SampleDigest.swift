@@ -14,12 +14,12 @@ public enum SampleDigest {
 
         let events = [
             CalendarEntry(id: "e1", title: "Coffee with Priya", start: at(9, 30), end: at(10, 15), calendarName: "Personal", calendarID: "personal", location: "Corner café"),
-            CalendarEntry(id: "e2", title: "Portfolio review with Sam", start: at(13), end: at(14), calendarName: "Personal", calendarID: "personal", attendees: ["Sam Rivera"], notes: "Bring the case study draft.\nhttps://zoom.us/j/123456"),
+            CalendarEntry(id: "e2", title: "Design review with Sam", start: at(13), end: at(14), calendarName: "Personal", calendarID: "personal", attendees: ["Sam Rivera"], notes: "Bring the floor plan sketches.\nhttps://zoom.us/j/123456"),
             CalendarEntry(id: "e3", title: "Soccer pickup", start: at(16, 30), end: at(17), calendarName: "Family", calendarID: "family", location: "Lincoln Park, field 3", mapPoint: MapPoint(latitude: 37.78, longitude: -122.50), notes: "Maya has the orange slices this week. Practice can run late if it rains, so check the team chat before leaving."),
             CalendarEntry(id: "e4", title: "Family dinner", start: at(18, 30), end: at(20), calendarName: "Family", calendarID: "family", attendees: ["Maya", "Leo", "Grandma", "Uncle Ben"]),
             CalendarEntry(id: "e5", title: "Run with Alex", start: at(8, dayOffset: 1), end: at(9, dayOffset: 1), calendarName: "Personal", calendarID: "personal"),
             CalendarEntry(id: "e6", title: "School pickup", start: at(15, 15, dayOffset: 1), end: at(15, 45, dayOffset: 1), calendarName: "Family", calendarID: "family"),
-            CalendarEntry(id: "e7", title: "Call with recruiter", start: at(11, dayOffset: 2), end: at(11, 30, dayOffset: 2), calendarName: "Personal", calendarID: "personal"),
+            CalendarEntry(id: "e7", title: "Call with the contractor", start: at(11, dayOffset: 2), end: at(11, 30, dayOffset: 2), calendarName: "Personal", calendarID: "personal"),
             CalendarEntry(id: "e8", title: "Book club", start: at(17, dayOffset: 2), end: at(18, 30, dayOffset: 2), calendarName: "Personal", calendarID: "personal"),
             CalendarEntry(id: "e9", title: "Grandma visiting", start: day(3), end: day(4), isAllDay: true, calendarName: "Family", calendarID: "family"),
             CalendarEntry(id: "e10", title: "Dentist", start: at(8, 30, dayOffset: 3), end: at(9, 15, dayOffset: 3), calendarName: "Family", calendarID: "family"),
@@ -39,14 +39,19 @@ public enum SampleDigest {
         ]
 
         let news = [
-            FeedEntry(id: "n1", title: "Hospitals are quietly rebuilding their patient portals", sourceName: "Healthcare Dive", published: at(6, 40), summary: "A look at why health systems are rethinking the front door to care."),
-            FeedEntry(id: "n2", title: "What product managers can learn from small teams", sourceName: "Lenny's Newsletter", published: at(5, 55)),
-            FeedEntry(id: "n3", title: "On-device models are getting good enough", sourceName: "Simon Willison's Weblog", published: at(22, 10, dayOffset: -1), summary: "Notes from a week of running small models locally."),
+            FeedEntry(id: "n1", title: "Why city trees are getting smarter about water", sourceName: "Field Notes", published: at(6, 40), summary: "Street trees are being planted with sensors and deeper soil pits, and the early results suggest they need far less watering than anyone expected."),
+            FeedEntry(id: "n2", title: "The case for a shorter grocery list", sourceName: "Kitchen Table", published: at(6, 5), summary: "Cooking from a handful of staples is cheaper, calmer and wastes less food. Here is how one family made the switch without…"),
+            FeedEntry(id: "n3", title: "Libraries are lending more than books now", sourceName: "Civic Weekly", published: at(5, 30)),
+            FeedEntry(id: "n4", title: "A beginner's guide to reading the night sky", sourceName: "Starlight Notes", published: at(21, 15, dayOffset: -1), summary: "Five constellations you can find from a city balcony this month."),
+            FeedEntry(id: "n5", title: "What a year of walking to work taught me", sourceName: "The Slow Web", published: at(19, 40, dayOffset: -1), summary: "Forty minutes each way, in every kind of weather."),
+            FeedEntry(id: "n6", title: "How small towns are reviving their main streets", sourceName: "Civic Weekly", published: at(17, 10, dayOffset: -1), summary: "Pop-up shops, shared kitchens and a lot of patience."),
+            FeedEntry(id: "n7", title: "Notes on keeping a paper notebook", sourceName: "The Slow Web", published: at(14, 30, dayOffset: -1), summary: "Why writing things down by hand still helps."),
         ]
 
         let episodes = [
-            FeedEntry(id: "p1", title: "The AI hype cycle, one year later", sourceName: "Hard Fork", published: at(4), summary: "A year after the peak, Kevin and Casey look at which AI products people still use every day, which ones quietly vanished, and what the next twelve months might bring for everyone else."),
-            FeedEntry(id: "p2", title: "How great product teams run planning", sourceName: "Lenny's Podcast", published: at(21, dayOffset: -1), summary: "A conversation about planning that respects the team's attention."),
+            FeedEntry(id: "p1", title: "The science of a good night's sleep", sourceName: "Everyday Science", published: at(4), summary: "What actually happens while we sleep, why the hour before bed matters more than the hour we wake, and three small changes researchers say are worth trying this week."),
+            FeedEntry(id: "p2", title: "Starting a garden from scratch", sourceName: "Back Yard Hours", published: at(21, dayOffset: -1), summary: "Soil, sun and patience: a first season, start to finish."),
+            FeedEntry(id: "p3", title: "The quiet history of the public library", sourceName: "Long Story Short", published: at(9, dayOffset: -2), summary: "How lending libraries spread, one town at a time."),
         ]
 
         return Digest(date: now, weather: weather(now: now, calendar: calendar), weatherPlace: weatherPlace, events: events, todos: todos, news: news, episodes: episodes)
