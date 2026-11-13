@@ -103,7 +103,7 @@ public enum ApplePodcasts {
     // MARK: Top shows
 
     /// How many chart shows setup and Settings offer.
-    public static let topLimit = 10
+    public static let topLimit = 12
 
     /// The most popular shows in Apple Podcasts right now, from Apple's public charts feed, which
     /// needs no key; only the country code is sent. The chart doesn't carry feed addresses, so the
@@ -126,11 +126,11 @@ public enum ApplePodcasts {
         return []
     }
 
-    /// Asks for twice the shows wanted, since a few may lack an https feed. The second address is
+    /// Asks for 25 (one of the sizes the chart offers), since a few may lack an https feed. The second address is
     /// the feed's older name, in case one of them is moved.
     static func chartURLs(country: String) -> [URL] {
         ["rss.marketingtools.apple.com", "rss.applemarketingtools.com"].compactMap {
-            URL(string: "https://\($0)/api/v2/\(country)/podcasts/top/\(topLimit * 2)/podcasts.json")
+            URL(string: "https://\($0)/api/v2/\(country)/podcasts/top/25/podcasts.json")
         }
     }
 

@@ -96,7 +96,7 @@ private let chart = """
 
 @Test func topChartSendsOnlyTheCountry() {
     let urls = ApplePodcasts.chartURLs(country: "gb")
-    #expect(urls.first?.absoluteString == "https://rss.marketingtools.apple.com/api/v2/gb/podcasts/top/20/podcasts.json")
+    #expect(urls.first?.absoluteString == "https://rss.marketingtools.apple.com/api/v2/gb/podcasts/top/25/podcasts.json")
     #expect(urls.allSatisfy { $0.query == nil })
 }
 

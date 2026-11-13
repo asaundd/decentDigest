@@ -2,7 +2,7 @@ import DigestCore
 import SwiftData
 import SwiftUI
 
-/// Step 4: Podcasts. Apple Podcasts search, then Apple's current top 10; none is followed until picked.
+/// Step 4: Podcasts. Apple Podcasts search, then Apple's current top 12; none is followed until picked.
 struct PodcastsStep: View {
     var back: () -> Void
     var skip: () -> Void
@@ -42,7 +42,7 @@ struct PodcastsStep: View {
     }
 }
 
-/// Follow shows found with Apple's podcast search or picked from Apple's current top 10. Only the
+/// Follow shows found with Apple's podcast search or picked from Apple's current top 12. Only the
 /// typed words, and for the chart the country, are sent to Apple. Everything here needs a
 /// connection, so offline it says so and offers nothing to pick. Used in setup and in Settings.
 struct PodcastPicker: View {
@@ -140,12 +140,12 @@ struct PodcastPicker: View {
                 : chart
             if !searching && !offline {
                 if !top.isEmpty || chartLoading || (chart.isEmpty && chartFailed) {
-                    ListHeading("Top 10 on Apple Podcasts")
+                    ListHeading("Top 12 on Apple Podcasts")
                 }
                 if top.isEmpty && chartLoading {
                     quiet("Loading…")
                 } else if chart.isEmpty && chartFailed {
-                    quiet("The top 10 couldn't be loaded just now. You can still search for a show above.")
+                    quiet("The top 12 couldn't be loaded just now. You can still search for a show above.")
                 }
                 ForEach(top) { show in
                     row(title: show.title, subtitle: show.author, feed: .init(kind: .podcast, feedURL: show.feedURL, title: show.title, appleID: show.id))
@@ -228,7 +228,7 @@ struct PodcastPicker: View {
     }
 }
 
-/// Apple's top 10, kept for the rest of the launch so setup and Settings don't ask again. The
+/// Apple's top 12, kept for the rest of the launch so setup and Settings don't ask again. The
 /// lookup runs on its own, so a view that redraws or goes away (as setup's does while the network
 /// monitor settles) never cancels it; every caller waits for the same one.
 @MainActor
