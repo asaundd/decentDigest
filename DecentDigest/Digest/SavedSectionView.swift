@@ -94,7 +94,8 @@ struct SavedSectionView: View {
             return Headline(
                 id: item.itemID,
                 title: item.title,
-                detail: item.sourceTitle,
+                // Saved holds both kinds, so an episode says what it is.
+                detail: item.sourceTitle.isEmpty ? "Episode" : "Episode · \(item.sourceTitle)",
                 summary: item.summary,
                 fullText: cached?.fullText,
                 link: item.linkURL,

@@ -2,8 +2,7 @@ import DigestCore
 import SwiftData
 import SwiftUI
 
-/// Step 4: Podcasts. Apple Podcasts search, then the suggested shows from the library; none is
-/// followed until picked.
+/// Step 4: Podcasts. Apple Podcasts search, then Apple's current top 10; none is followed until picked.
 struct PodcastsStep: View {
     var back: () -> Void
     var skip: () -> Void
@@ -20,7 +19,7 @@ struct PodcastsStep: View {
         OnboardingStep(
             number: 4,
             title: "Podcasts",
-            intro: "Select the podcasts you follow. New episodes and their descriptions will show in your digest and open in the Apple Podcasts app.",
+            intro: "Add the podcasts you follow. New episodes and their descriptions will show in your digest and open in the Apple Podcasts app.",
             canContinue: !followed.isEmpty,
             skipQuestion: followed.isEmpty ? nil : SkipQuestion(
                 title: "Skip Podcasts?",
@@ -43,14 +42,14 @@ struct PodcastsStep: View {
     }
 }
 
-/// Follow shows found with Apple's podcast search or picked from the suggestions. Only the typed
-/// words are sent to Apple. Used in setup and in Settings.
+/// Follow shows found with Apple's podcast search or picked from Apple's current top 10. Only the
+/// typed words, and for the chart the country, are sent to Apple. Everything here needs a
+/// connection, so offline it says so and offers nothing to pick. Used in setup and in Settings.
 struct PodcastPicker: View {
-    /// Settings lists every show you follow first, then the suggestions you don't.
+    /// Settings lists every show you follow first, then the chart's shows you don't.
     var inSettings = false
     /// In Settings, Following shows 4 shows, then "N more · Show all".
     @State private var showsAllFollowed = false
-    static let suggested = (try? FeedLibrary.bundled())?.suggestedPodcasts() ?? []
 
     @Environment(\.modelContext) private var context
     @Environment(NetworkStatus.self) private var network: NetworkStatus?
@@ -61,6 +60,8 @@ struct PodcastPicker: View {
     @State private var isSearching = false
     @State private var searchedFor = ""
     @State private var isOffline = false
+    @State private var chart: [ApplePodcasts.Show] = TopShows.cached ?? []
+    @State private var chartLoading = false
     @FocusState private var searchFocused: Bool
 
     private var followed: [Source] {
@@ -90,7 +91,7 @@ struct PodcastPicker: View {
                 }
             }
             if offline {
-                OfflineNote(text: OfflineMessage.search(inSetup: !inSettings))
+                OfflineNote(text: OfflineMessage.podcasts(inSetup: !inSettings))
             }
 
             // Search mode starts with the tap, not the first letter: the lists step aside for a
@@ -106,7 +107,7 @@ struct PodcastPicker: View {
                     if isSearching && results.isEmpty {
                         quiet("Searching…")
                     } else if !isSearching && results.isEmpty && searchedFor == query {
-                        quiet(isOffline ? OfflineMessage.search(inSetup: !inSettings) : "No shows found.")
+                        quiet(isOffline ? OfflineMessage.podcasts(inSetup: !inSettings) : "No shows found.")
                     }
                 }
                 .padding(.top, 6)
@@ -115,7 +116,7 @@ struct PodcastPicker: View {
             // In setup, shows followed from a search, so they can be unfollowed here too.
             // In Settings, every show followed.
             let extra = followed.filter { source in
-                inSettings || !Self.suggested.contains { Following.key(for: $0.feedUrl) == Following.key(for: source.feedURL) }
+                inSettings || !chart.contains { Following.key(for: $0.feedURL) == Following.key(for: source.feedURL) }
             }
             if !searching && !extra.isEmpty {
                 let limited = inSettings && !showsAllFollowed
@@ -133,17 +134,39 @@ struct PodcastPicker: View {
                 PlainRule(spacing: 20)
             }
 
-            let suggestions = inSettings
-                ? Self.suggested.filter { !Following.isFollowing($0.feedUrl, in: followed) }
-                : Self.suggested
-            if !searching {
-                if !suggestions.isEmpty {
-                    ListHeading("Suggested")
+            let top = inSettings
+                ? chart.filter { !Following.isFollowing($0.feedURL, in: followed) }
+                : chart
+            if !searching && !offline {
+                if !top.isEmpty || chartLoading {
+                    ListHeading("Top 10 on Apple Podcasts")
                 }
-                ForEach(suggestions) { show in
-                    row(title: show.title, subtitle: show.description, feed: .init(kind: .podcast, feedURL: show.feedUrl, title: show.title, category: show.category, appleID: show.appleId))
+                if top.isEmpty && chartLoading {
+                    quiet("Loading…")
+                }
+                ForEach(top) { show in
+                    row(title: show.title, subtitle: show.author, feed: .init(kind: .podcast, feedURL: show.feedURL, title: show.title, appleID: show.id))
                 }
             }
+        }
+        // Loads the chart once per launch, and again when the connection comes back.
+        .task(id: network?.isOffline == true) {
+            await loadChart()
+        }
+    }
+
+    private func loadChart() async {
+        if let cached = TopShows.cached {
+            chart = cached
+            return
+        }
+        guard network?.isOffline != true, !chartLoading else { return }
+        chartLoading = true
+        let shows = (try? await ApplePodcasts.topShows(country: Locale.current.region?.identifier)) ?? []
+        chartLoading = false
+        if !shows.isEmpty {
+            TopShows.cached = shows
+            chart = shows
         }
     }
 
@@ -201,4 +224,10 @@ struct PodcastPicker: View {
         searchedFor = term
         isSearching = false
     }
+}
+
+/// Apple's top 10, kept for the rest of the launch so setup and Settings don't ask again.
+@MainActor
+enum TopShows {
+    static var cached: [ApplePodcasts.Show]?
 }

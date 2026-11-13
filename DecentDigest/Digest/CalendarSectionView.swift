@@ -72,8 +72,8 @@ struct CalendarSectionView: View {
             // Always shown, for Calendar ↗.
             ListFooter(
                 hidden: DayPlanner.hiddenCount(groups),
-                phrase: { $0 == 1 ? "more event this week" : "more events this week" },
-                empty: "No other events this week",
+                phrase: { $0 == 1 ? "more event" : "more events" },
+                empty: "No other events",
                 showsAll: showsAll,
                 app: ListFooter.Link(title: "Calendar ↗", spoken: "Open Calendar") { openURL(AgendaLinks.calendar(at: .now)) }
             ) {

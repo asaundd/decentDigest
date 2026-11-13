@@ -52,11 +52,6 @@ struct SettingsView: View {
 
                     SettingsLabel("Your data")
                         .padding(.top, 28)
-                    Text("What you follow, save, and read is stored on your device and in your own iCloud. It's never shared with developers.")
-                        .font(.footnote)
-                        .foregroundStyle(Theme.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.bottom, 4)
                     SettingsRow(title: "Cloud sync", value: ICloudStatus.isSignedIn ? "On" : "Off", page: .sync)
                     SettingsDivider()
                     SettingsRow(title: "Reading history", value: preferences.keepsReadingHistory ? "On" : "Off", page: .history)
@@ -498,8 +493,6 @@ struct AgendaSettingsPage: View {
 
 /// Settings › Cloud sync (iCloud): whether it's on, how to change that, and what it covers.
 struct ICloudSyncPage: View {
-    @Environment(\.openURL) private var openURL
-
     var body: some View {
         SettingsPage(title: "Cloud sync", subtitle: "Decent digest keeps what you follow, save, and read in your own iCloud, so it's the same on each device you use and comes back on a new one.") {
             ChoiceRow(title: "Sync", subtitle: "On when you're signed in to iCloud.") {
@@ -511,11 +504,8 @@ struct ICloudSyncPage: View {
                 .foregroundStyle(Theme.secondary)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 6)
-            TextLink("Open the Settings app ↗") {
-                if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
-            }
-            .padding(.top, 6)
             ListHeading("What syncs")
+                .padding(.bottom, 6)
             VStack(alignment: .leading, spacing: 6) {
                 DashLine("The sites and shows you follow")
                 DashLine("Your saved items")

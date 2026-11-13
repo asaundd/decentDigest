@@ -20,21 +20,9 @@ public struct FeedLibrary: Decodable, Sendable {
         public var popularityRank: Int?
     }
 
-    /// A podcast offered in the library. Its Apple Podcasts id lets Open ↗ open episodes in Podcasts.
-    public struct Podcast: Decodable, Sendable, Identifiable, Hashable {
-        public var id: String
-        public var title: String
-        public var appleId: String
-        public var feedUrl: String
-        public var category: String
-        public var description: String?
-        public var verified: Bool?
-    }
-
     public var version: Int
     public var categories: [Category]
     public var feeds: [Feed]
-    public var podcasts: [Podcast]?
 
     /// Loads the library bundled with DigestCore.
     public static func bundled() throws -> FeedLibrary {
@@ -49,11 +37,6 @@ public struct FeedLibrary: Decodable, Sendable {
         feeds
             .filter { $0.category == categoryID && $0.verified == true && $0.feedUrl.hasPrefix("https://") }
             .sorted { ($0.popularityRank ?? .max) < ($1.popularityRank ?? .max) }
-    }
-
-    /// The shows suggested in setup: verified, https only, in library order. None is followed until picked.
-    public func suggestedPodcasts() -> [Podcast] {
-        (podcasts ?? []).filter { $0.verified == true && $0.feedUrl.hasPrefix("https://") }
     }
 
     /// Library feeds whose name or site matches what the reader typed, best first.

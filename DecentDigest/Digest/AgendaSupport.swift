@@ -80,9 +80,9 @@ struct MoreLine: View {
     }
 }
 
-/// The gray line at the foot of a list: what waits ("4 more events this week"), then quiet links for
+/// The gray line at the foot of a list: what waits ("4 more events"), then quiet links for
 /// Show all or Show less and the app the section comes from, joined by dots:
-/// "4 more events this week · Show all · Calendar ↗". Used by Calendar, To do, News and Podcasts.
+/// "4 more events · Show all · Calendar ↗". Used by Calendar, To do, News and Podcasts.
 /// News ends it with Refresh, which reads "Refreshing…" in gray while feeds are checked.
 struct ListFooter: View {
     struct Link {
@@ -167,7 +167,7 @@ struct ListFooter: View {
 }
 
 extension ListFooter {
-    /// "4 more events this week · Show all", "Show less", or "No other events this week" when nothing
+    /// "4 more events · Show all", "Show less", or "No other events" when nothing
     /// waits, each followed by the app link. `showTitle` replaces "Show all" for a list that opens
     /// only part of the way ("Show 25").
     init(hidden: Int, phrase: (Int) -> String, empty: String?, showsAll: Bool, showTitle: String = "Show all", app: Link?, refresh: Link? = nil, isRefreshing: Bool = false, toggle: @escaping () -> Void) {

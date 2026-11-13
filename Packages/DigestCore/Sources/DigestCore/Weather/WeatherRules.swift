@@ -60,6 +60,11 @@ public enum WeatherRules {
         // right weekday when the device is in another time zone.
         let secondName = AgendaFormat.dayName(second.date.addingTimeInterval(12 * 3_600), now: today.date, calendar: calendar, locale: locale)
 
+        // Rain, snow or storms today and tomorrow too comes first: "Rain again tomorrow."
+        if let again = wetAgain(report, first: first, second: second, secondName: secondName, unit: unit) {
+            return again
+        }
+
         let tomorrowChange = change(from: today, to: first)
         let laterChange = change(from: today, to: second)
 
@@ -77,6 +82,33 @@ public enum WeatherRules {
             guard !next.isEmpty else { return opening }
             return opening + " " + sentence(next, when: secondName, days: [second], unit: unit)
         }
+    }
+
+    /// When today is wet and tomorrow is too: "Rain again tomorrow.", "Storms again tomorrow and
+    /// Wednesday.", "Rain again tomorrow, and colder." A different kind reads plainly ("Snow
+    /// tomorrow.", "Storms likely tomorrow."). Then what changes the day after, if anything. Nil when
+    /// today or tomorrow is dry.
+    static func wetAgain(_ report: WeatherReport, first: WeatherDay, second: WeatherDay, secondName: String, unit: TemperatureUnit) -> String? {
+        let today = report.today
+        let todaySky = today.sky.isWet ? today.sky : report.sky
+        guard todaySky.isWet, first.sky.isWet else { return nil }
+        let kind = word(for: first.sky)
+        let opening: String
+        if word(for: todaySky) == kind {
+            opening = "\(kind) again"
+        } else {
+            opening = first.sky == .storm ? "Storms likely" : kind
+        }
+        let alsoNext = second.sky.isWet && word(for: second.sky) == kind
+        var text = opening + (alsoNext ? " tomorrow and \(secondName)" : " tomorrow")
+        text += temperatureSuffix(change(from: today, to: first).temperature) + "."
+        if !alsoNext {
+            let next = change(from: first, to: second)
+            if !next.isEmpty {
+                text += " " + sentence(next, when: secondName, days: [second], unit: unit)
+            }
+        }
+        return text
     }
 
     // MARK: The rest of the week
@@ -250,16 +282,19 @@ public enum WeatherRules {
             return capitalized(temperatureWords(lead, when: when, days: days, unit: unit)) + "."
         }
         // Temperature comes second when rain, snow or storms lead.
-        if let temperature = change.temperature {
-            switch temperature {
-            case .warmer: text += ", and warmer"
-            case .colder: text += ", and colder"
-            case .hot: text += ", and hot"
-            case .freeze: text += ", with a freeze"
-            default: break
-            }
-        }
+        text += temperatureSuffix(change.temperature)
         return text + "."
+    }
+
+    /// ", and colder" after rain, snow or storms; empty when the temperature holds.
+    private static func temperatureSuffix(_ temperature: Change.Lead?) -> String {
+        switch temperature {
+        case .warmer: ", and warmer"
+        case .colder: ", and colder"
+        case .hot: ", and hot"
+        case .freeze: ", with a freeze"
+        default: ""
+        }
     }
 
     private static func temperatureWords(_ lead: Change.Lead, when: String, days: [WeatherDay], unit: TemperatureUnit) -> String {

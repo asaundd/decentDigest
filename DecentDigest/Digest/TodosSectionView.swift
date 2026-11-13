@@ -78,8 +78,8 @@ struct TodosSectionView: View {
             // Always shown, for Reminders ↗.
             ListFooter(
                 hidden: plan.hiddenCount,
-                phrase: { $0 == 1 ? "more item this week" : "more items this week" },
-                empty: isEmpty(plan, days: days) ? nil : "No other items this week",
+                phrase: { $0 == 1 ? "more item" : "more items" },
+                empty: isEmpty(plan, days: days) ? nil : "No other items",
                 showsAll: showsAll,
                 app: ListFooter.Link(title: "Reminders ↗", spoken: "Open Reminders") { openURL(AgendaLinks.reminders) }
             ) {

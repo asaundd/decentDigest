@@ -513,7 +513,7 @@ struct SearchBox: View {
     }
 }
 
-/// A small gray heading over a list in setup, such as "Topics" or "Suggested".
+/// A small gray heading over a list in setup, such as "Topics" or "Following".
 struct ListHeading: View {
     var text: String
 
@@ -562,6 +562,13 @@ enum OfflineMessage {
         inSetup
             ? "You're offline. Connect to the internet to search, or skip for now."
             : "You're offline. Connect to the internet to search."
+    }
+
+    /// Everything in Podcasts comes from Apple Podcasts, so offline there is nothing to add.
+    static func podcasts(inSetup: Bool) -> String {
+        inSetup
+            ? "You're offline. Adding podcasts requires a connection, so skip for now and add them later in Settings."
+            : "You're offline. Adding podcasts requires a connection."
     }
 
     /// News' search still finds sites in the built-in library; only a pasted address needs the web.

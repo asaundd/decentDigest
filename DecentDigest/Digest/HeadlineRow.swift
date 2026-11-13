@@ -436,18 +436,27 @@ private struct LinkButtonStyle: PrimitiveButtonStyle {
     }
 }
 
-/// The gray line under a title, "Source · 3h", on one line: a long source name is cut with … and
-/// the age stays whole.
+/// The gray line under a title, "Source · 3h" (or "Episode · Show" in Saved), on one line: the
+/// longer part is cut with … and the shorter one stays whole.
 private struct DetailLine: View {
     var detail: String
 
     var body: some View {
         HStack(spacing: 0) {
             if let split = detail.range(of: " · ", options: .backwards) {
-                Text(detail[..<split.lowerBound])
-                    .lineLimit(1)
-                Text(detail[split.lowerBound...])
-                    .fixedSize()
+                let start = detail[..<split.lowerBound]
+                let end = detail[split.lowerBound...]
+                if start.count <= end.count {
+                    Text(start)
+                        .fixedSize()
+                    Text(end)
+                        .lineLimit(1)
+                } else {
+                    Text(start)
+                        .lineLimit(1)
+                    Text(end)
+                        .fixedSize()
+                }
             } else {
                 Text(detail)
                     .lineLimit(1)
