@@ -10,7 +10,7 @@ final class DesignLab {
 
     /// The Settings button at the top right of the digest.
     enum ButtonStyle: String, CaseIterable, Identifiable {
-        case glass = "A", shadow = "B", halo = "C", disc = "D", closeCircle = "E"
+        case glass = "A", shadow = "B", halo = "C", disc = "D", closeCircle = "E", frostedDisc = "F"
         var id: String { rawValue }
         var name: String {
             switch self {
@@ -19,6 +19,7 @@ final class DesignLab {
             case .halo: "C. Floating Dd, paper halo"
             case .disc: "D. Flat paper disc"
             case .closeCircle: "E. Gray circle, like Settings' ✕"
+            case .frostedDisc: "F. Frosted paper disc"
             }
         }
     }

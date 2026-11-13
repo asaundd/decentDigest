@@ -134,7 +134,7 @@ struct SettingsButton: View {
                     RadialGradient(colors: [Theme.page, Theme.page.opacity(0.9), Theme.page.opacity(0)], center: .center, startRadius: 0, endRadius: 30)
                         .frame(width: 60, height: 60)
                 )
-        case .disc:
+        case .disc, .frostedDisc:
             LogoMark(color: Theme.logoButton).frame(width: 20)
         case .closeCircle:
             // The same gray circle as Settings' ✕.
@@ -158,6 +158,15 @@ private struct ButtonBackground: ViewModifier {
         case .disc:
             content
                 .background(Theme.page, in: Circle())
+                .overlay(Circle().strokeBorder(Theme.rule, lineWidth: 1))
+        case .frostedDisc:
+            // The flat disc, but see-through: words passing under it blur softly, tinted with the page.
+            content
+                .background {
+                    Circle()
+                        .fill(.ultraThinMaterial)
+                        .overlay(Circle().fill(Theme.page.opacity(0.45)))
+                }
                 .overlay(Circle().strokeBorder(Theme.rule, lineWidth: 1))
         case .shadow, .halo, .closeCircle:
             content
