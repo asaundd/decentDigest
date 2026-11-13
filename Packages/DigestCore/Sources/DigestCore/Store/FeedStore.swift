@@ -16,7 +16,7 @@ public actor FeedStore {
     public func refresh(force: Bool = false, only kind: SourceKind? = nil, keepsHistory: Bool = true, now: Date = .now, fetcher: FeedFetcher = FeedFetcher()) async -> Outcome {
         // Records that iCloud brought in twice are folded together first, so a feed followed
         // on two devices is fetched once.
-        try? SyncDuplicates.merge(in: modelContext)
+        _ = try? SyncDuplicates.merge(in: modelContext)
         let jobs: [Job]
         do {
             jobs = try dueJobs(force: force, kind: kind, now: now)
