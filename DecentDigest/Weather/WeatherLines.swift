@@ -205,8 +205,10 @@ struct WeatherLines: View {
             Text("For")
                 .foregroundStyle(Theme.secondary)
                 .accessibilityHidden(true)
-            FooterLink(place.name, still: true, wraps: wraps, action: openSettings)
-                .accessibilityLabel(place.isCurrentLocation ? "For \(place.name), current location" : "For \(place.name)")
+            // Mid-line after "For", the unnamed place reads in lowercase: "For your location".
+            let name = place.name == LocationPlaces.unnamed ? place.name.lowercased() : place.name
+            FooterLink(name, still: true, wraps: wraps, action: openSettings)
+                .accessibilityLabel(place.isCurrentLocation ? "For \(name), current location" : "For \(name)")
                 .accessibilityHint("Changes where the weather is for")
             if place.isCurrentLocation {
                 Image(systemName: "location")
