@@ -374,9 +374,9 @@ private func threeTodos() -> [TodoEntry] {
 
 @Test func offlineWeatherSaysWhenItIsFrom() {
     let us = Locale(identifier: "en_US")
-    #expect(WeatherRules.offlineNote(fetchedAt: at(9, 40), now: at(13), calendar: utc, locale: us) == "Offline · Weather from 9:40a")
-    #expect(WeatherRules.offlineNote(fetchedAt: at(21, 5, day: -1), now: at(13), calendar: utc, locale: us) == "Offline · Weather from yesterday 9:05p")
-    #expect(WeatherRules.offlineNote(fetchedAt: at(8, day: -3), now: at(13), calendar: utc, locale: us).hasPrefix("Offline · Weather from "))
+    #expect(WeatherRules.offlineNote(fetchedAt: at(9, 40), now: at(13), calendar: utc, locale: us) == "Weather from 9:40a")
+    #expect(WeatherRules.offlineNote(fetchedAt: at(21, 5, day: -1), now: at(13), calendar: utc, locale: us) == "Weather from yesterday 9:05p")
+    #expect(WeatherRules.offlineNote(fetchedAt: at(8, day: -3), now: at(13), calendar: utc, locale: us).hasPrefix("Weather from "))
 }
 
 @Test func offlineErrorsAreToldApart() {

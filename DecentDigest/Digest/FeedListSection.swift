@@ -151,7 +151,7 @@ struct FeedListSection: View {
     private var isOffline: Bool { network?.isOffline == true || (isEpisodes ? podcastsOffline : newsOffline) }
 
     private var emptyMessage: String {
-        if isOffline { return isEpisodes ? "Offline. New episodes will show once you're connected." : "Offline. New items will show once you're connected." }
+        if isOffline { return isEpisodes ? "New episodes will show once you're connected." : "New items will show once you're connected." }
         return isEpisodes ? "No new episodes right now." : "Nothing new right now."
     }
 
