@@ -69,6 +69,6 @@ public enum DigestStore {
         "n1": "Jonathan Wosen", "n3": "Claire Vo", "n4": "James O'Donnell", "n5": "Meghana Keshavan", "n7": "James O'Donnell",
     ]
 
-    private static let sampleMinutes = ["p1": 59, "p2": 86]
+    private static let sampleMinutes = ["p1": 59, "p2": 86, "p3": 86, "p4": 164]
 }
 #endif
