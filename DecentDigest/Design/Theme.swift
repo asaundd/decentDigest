@@ -12,16 +12,21 @@ enum Theme {
     static let rule = Color(light: 0xDFE0DC, dark: 0x343937)
     /// Links and actions: a gray blue, so a link reads as one at a glance.
     static let accent = Color(light: 0x4A5D73, dark: 0xB8C4D2)
-    /// The logo and the full-width buttons in setup (Get started, Continue, Open my digest).
+    /// The logo, and the full-width buttons in setup in light mode.
     static let slate = Color(light: 0x3C3C4C, dark: 0xCECED5)
+    /// The full-width buttons in setup (Get started, Continue, Open my digest): slate, and in dark mode
+    /// a mid slate with light words, so the button doesn't glare on the dark page.
+    static let buttonFill = Color(light: 0x3C3C4C, dark: 0x50506A)
+    static let buttonText = Color(light: 0xFAF9F6, dark: 0xECEDEA)
     /// Events and to-dos under a day's name: a touch lighter than ink, so the day names lead.
     static let itemInk = Color(light: 0x3A3F40, dark: 0xD3D5D1)
     /// Events that are over and to-dos just checked off: lighter than secondary, struck through.
     static let past = Color(light: 0xA7ABA9, dark: 0x6C726F)
     // An expanded headline sits on a card a shade lighter than the page; its actions share that color.
     static let expandedFill = Color(light: 0xFFFEFC, dark: 0x202524)
-    /// A faint edge and shadow that lift the expanded card off the page.
-    static let expandedRing = Color(light: 0x1A1D1E, dark: 0x000000).opacity(0.06)
+    /// A faint edge and shadow that lift the expanded card off the page. A shadow can't show on the dark
+    /// page, so in dark mode the edge is a faint light hairline instead.
+    static let expandedRing = Color(light: 0x1A1D1E, lightOpacity: 0.06, dark: 0xFFFFFF, darkOpacity: 0.08)
     static let expandedShadow = Color(light: 0x1A1D1E, dark: 0x000000).opacity(0.06)
     /// A pale slate tint behind the event happening now.
     static let nowTint = Color(light: 0xE8E8EE, dark: 0x2A2C33)
@@ -33,7 +38,7 @@ enum Theme {
     static let panelFill = expandedFill
     static let panelShadow = Color.black.opacity(0.14)
     /// The faint wash over the digest while the panel is open.
-    static let scrim = Color.black.opacity(0.12)
+    static let scrim = Color(light: 0x000000, lightOpacity: 0.12, dark: 0x000000, darkOpacity: 0.4)
 
     /// The Dd logo on the Settings button: quiet, but still easy to find.
     static let logoButton = Color(light: 0x8C918F, dark: 0x6F7573)
@@ -75,6 +80,15 @@ extension Color {
     init(light: UInt32, dark: UInt32) {
         self.init(uiColor: UIColor { traits in
             UIColor(hex: traits.userInterfaceStyle == .dark ? dark : light)
+        })
+    }
+
+    /// The same, with its own opacity for each appearance.
+    init(light: UInt32, lightOpacity: CGFloat, dark: UInt32, darkOpacity: CGFloat) {
+        self.init(uiColor: UIColor { traits in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(hex: dark).withAlphaComponent(darkOpacity)
+                : UIColor(hex: light).withAlphaComponent(lightOpacity)
         })
     }
 }

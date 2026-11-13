@@ -210,10 +210,10 @@ struct PrimaryButton: View {
         Button(action: action) {
             Text(title)
                 .font(.body.weight(.semibold))
-                .foregroundStyle(isEnabled ? Theme.page : Theme.buttonDimmedText)
+                .foregroundStyle(isEnabled ? Theme.buttonText : Theme.buttonDimmedText)
                 .frame(maxWidth: .infinity, minHeight: 50)
                 .background(
-                    isEnabled ? Theme.slate : Theme.buttonDimmedFill,
+                    isEnabled ? Theme.buttonFill : Theme.buttonDimmedFill,
                     in: RoundedRectangle(cornerRadius: 12, style: .continuous)
                 )
                 .contentShape(Rectangle())
