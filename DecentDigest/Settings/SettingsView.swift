@@ -76,7 +76,7 @@ struct SettingsView: View {
             Button("Delete", role: .destructive) { deleteAll() }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This unfollows every site and show, deletes your saved items and reading history, and forgets your city, on this device and in your iCloud, so your other devices clear too. Your calendar, to-do and weather choices stay. This can't be undone.")
+            Text("This unfollows every site and show, deletes your saved items and reading history, and forgets your city, on this device and in your iCloud, so your other devices clear too. Which sections show and your calendar and list choices stay. This can't be undone.")
         }
         .alert("Start setup over?", isPresented: $confirmsStartOver) {
             Button("Keep my choices") { showWelcome() }
