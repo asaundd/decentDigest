@@ -58,15 +58,6 @@ struct WeatherLines: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 8)
 
-            if model.isOffline || network?.isOffline == true, !model.isSample {
-                // The last forecast still shows; this says when it is from.
-                Text(WeatherRules.offlineNote(fetchedAt: report.fetchedAt, now: .now))
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 4)
-            }
-
             if model.isSample {
                 // Debug builds only, until WeatherKit is turned on for the app.
                 Text("Sample weather: WeatherKit isn't set up for this build.")
@@ -75,9 +66,12 @@ struct WeatherLines: View {
                     .padding(.top, 4)
             }
 
-            if !report.days.isEmpty {
-                // Show week, then Show less in the same place once the week is open.
-                weekToggle
+            // Offline, the last forecast still shows, and the line with Show week says when it is
+            // from: "Weather from 9:40a · Show week".
+            let fromNote = (model.isOffline || network?.isOffline == true) && !model.isSample
+                ? WeatherRules.offlineNote(fetchedAt: report.fetchedAt, now: .now) : nil
+            if fromNote != nil || !report.days.isEmpty {
+                toggleLine(note: fromNote, hasWeek: !report.days.isEmpty)
                     .padding(.top, 4)
             }
             if showsWeek {
@@ -149,6 +143,34 @@ struct WeatherLines: View {
     }
 
     /// Show week, or Show less once the week is open. A footer link, like Show all.
+    /// Show week (Show less once open), after when the forecast is from while offline. On a narrow
+    /// screen or at large text sizes the link drops under the note.
+    @ViewBuilder
+    private func toggleLine(note: String?, hasWeek: Bool) -> some View {
+        if let note {
+            let noteText = Text(note)
+                .font(.subheadline)
+                .foregroundStyle(Theme.secondary)
+            if hasWeek {
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        noteText.fixedSize()
+                        dot.font(.subheadline)
+                        weekToggle
+                    }
+                    VStack(alignment: .leading, spacing: 0) {
+                        noteText.fixedSize(horizontal: false, vertical: true)
+                        weekToggle
+                    }
+                }
+            } else {
+                noteText
+            }
+        } else {
+            weekToggle
+        }
+    }
+
     private var weekToggle: some View {
         FooterLink(showsWeek ? "Show less" : "Show week", still: true) {
             // A clean swap: the label and the week change at once, with no fade or slide.
