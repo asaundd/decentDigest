@@ -50,10 +50,9 @@ public enum SampleDigest {
         ]
 
         let episodes = [
-            FeedEntry(id: "p1", title: "Why PMs are suddenly valuable again | Tulsee Doshi (Head of Product, Gemini)", sourceName: "Lenny's Podcast", published: at(4), summary: "The head of product for Google's Gemini models on how frontier models get built, what product managers do inside a model lab, and why the role matters more as models improve."),
-            FeedEntry(id: "p3", title: "Designing for Agents — Zeno Rocha, Resend", sourceName: "Latent Space: The AI Engineer Podcast", published: at(20, dayOffset: -1), summary: "The founder of Resend on optimizing for AI agents as customers, after a coding agent picked Resend on its own to send email."),
-            FeedEntry(id: "p4", title: "What Frontier Labs Buy: A Data Deep Dive with Handshake AI — Garrett Lord & Team", sourceName: "Latent Space: The AI Engineer Podcast", published: at(16, dayOffset: -2), summary: "How Handshake built a fast-growing business supplying AI training data, and what frontier labs actually pay for."),
-            FeedEntry(id: "p2", title: "An 86-minute guide to finding PMF | Rob Snyder (Author, The Power of Pull)", sourceName: "Lenny's Podcast", published: at(9, dayOffset: -3), summary: "A step-by-step framework for finding product-market fit, from first idea to first customer deals."),
+            FeedEntry(id: "p1", title: "Open models have real benefits. Do they outweigh the risks?", sourceName: "MIT Technology Review Narrated", published: at(5), summary: "Why the debate over open and closed AI models is more complicated than it seems. Written by Grace Huckins."),
+            FeedEntry(id: "p2", title: "Designing for Agents — Zeno Rocha, Resend", sourceName: "Latent Space: The AI Engineer Podcast", published: at(20, dayOffset: -1), summary: "The founder of Resend on optimizing for AI agents as customers, after a coding agent picked Resend on its own to send email."),
+            FeedEntry(id: "p3", title: "Why PMs are suddenly valuable again | Tulsee Doshi (Head of Product, Gemini)", sourceName: "Lenny's Podcast", published: at(8, dayOffset: -2), summary: "The head of product for Google's Gemini models on how frontier models get built, what product managers do inside a model lab, and why the role matters more as models improve."),
         ]
 
         return Digest(date: now, weather: weather(now: now, calendar: calendar), weatherPlace: weatherPlace, events: events, todos: todos, news: news, episodes: episodes)
