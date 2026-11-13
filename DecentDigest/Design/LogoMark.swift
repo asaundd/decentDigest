@@ -136,6 +136,12 @@ struct SettingsButton: View {
                 )
         case .disc:
             LogoMark(color: Theme.logoButton).frame(width: 20)
+        case .closeCircle:
+            // The same gray circle as Settings' ✕.
+            LogoMark(color: Theme.secondary)
+                .frame(width: 18)
+                .frame(width: 36, height: 36)
+                .background(Theme.fieldFill, in: Circle())
         }
     }
 }
@@ -153,7 +159,7 @@ private struct ButtonBackground: ViewModifier {
             content
                 .background(Theme.page, in: Circle())
                 .overlay(Circle().strokeBorder(Theme.rule, lineWidth: 1))
-        case .shadow, .halo:
+        case .shadow, .halo, .closeCircle:
             content
         }
     }

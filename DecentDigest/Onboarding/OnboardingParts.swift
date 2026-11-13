@@ -213,7 +213,7 @@ struct PrimaryButton: View {
                 .foregroundStyle(isEnabled ? Theme.page : Theme.buttonDimmedText)
                 .frame(maxWidth: .infinity, minHeight: 50)
                 .background(
-                    isEnabled ? Theme.accent : Theme.buttonDimmedFill,
+                    isEnabled ? Theme.slate : Theme.buttonDimmedFill,
                     in: RoundedRectangle(cornerRadius: 12, style: .continuous)
                 )
                 .contentShape(Rectangle())
@@ -580,25 +580,15 @@ struct OfflineNote: View {
     var text: String
 
     var body: some View {
-        if DesignLab.shared.offlineNotesOnTint {
-            // Trying it on the pale slate of the bar under the date (Design lab).
-            Text(text)
-                .font(.subheadline)
-                .foregroundStyle(Theme.ink)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.vertical, 6)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 10)
-                .background(Theme.nowTint, in: RoundedRectangle(cornerRadius: 6))
-                .padding(.horizontal, -10)
-                .padding(.top, 8)
-        } else {
-            Text(text)
-                .font(.subheadline)
-                .foregroundStyle(Theme.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.top, 8)
-        }
+        // On the pale slate of the bar under the date, as wide as the search box above it.
+        Text(text)
+            .font(.subheadline)
+            .foregroundStyle(Theme.ink)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.vertical, 6)
+            .padding(.horizontal, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.nowTint, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .padding(.top, 8)
     }
 }
