@@ -17,6 +17,8 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \Source.sortOrder) private var sources: [Source]
     @State private var confirmsStartOver = false
+    @State private var confirmsDeleteAll = false
+    @State private var deletedAll = false
 
     enum Page: Hashable {
         case weather, calendar, todos, news, podcasts, sync, history
@@ -52,14 +54,11 @@ struct SettingsView: View {
 
                     SettingsLabel("Your data")
                         .padding(.top, 28)
-                    Text("What you follow, save, and read is stored on your device and in your own iCloud. It's never shared with developers.")
-                        .font(.footnote)
-                        .foregroundStyle(Theme.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.bottom, 4)
                     SettingsRow(title: "Cloud sync", value: ICloudStatus.isSignedIn ? "On" : "Off", page: .sync)
                     SettingsDivider()
                     SettingsRow(title: "Reading history", value: preferences.keepsReadingHistory ? "On" : "Off", page: .history)
+                    SettingsDivider()
+                    deleteAllRow
 
                     SectionRule()
                     footer
@@ -73,6 +72,12 @@ struct SettingsView: View {
             }
         }
         .tint(Theme.accent)
+        .alert("Delete all your data?", isPresented: $confirmsDeleteAll) {
+            Button("Delete", role: .destructive) { deleteAll() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This unfollows every site and show, deletes your saved items and reading history, and forgets your city, on this device and in your iCloud, so your other devices clear too. Which sections show and your calendar and list choices stay. This can't be undone.")
+        }
         .alert("Start setup over?", isPresented: $confirmsStartOver) {
             Button("Keep my choices") { showWelcome() }
             Button("Clear my choices", role: .destructive) { startOver() }
@@ -80,6 +85,35 @@ struct SettingsView: View {
         } message: {
             Text("Keep your choices to look them over, or clear them to set up from the beginning. Clearing unfollows every site and show and forgets your city. Saved items and reading history stay.")
         }
+    }
+
+    /// Settings › Your data: deletes everything followed, saved and read, after a question.
+    @ViewBuilder
+    private var deleteAllRow: some View {
+        if deletedAll {
+            Text("All your data was deleted.")
+                .foregroundStyle(Theme.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 11)
+        } else {
+            Button {
+                confirmsDeleteAll = true
+            } label: {
+                Text("Delete all my data")
+                    .foregroundStyle(Theme.ink)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 11)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(StillButtonStyle())
+            .accessibilityHint("Asks first, then deletes what you follow, save and read, here and in iCloud")
+        }
+    }
+
+    private func deleteAll() {
+        try? MyData.deleteAll(in: context)
+        Task { await weather.clearCity() }
+        deletedAll = true
     }
 
     /// A fresh start: nothing followed, every section and list shown, no typed city. Saved items and
@@ -121,7 +155,7 @@ struct SettingsView: View {
 
     private func count(of kind: SourceKind, shown: Bool, one: String, many: String) -> String {
         guard shown else { return "Off" }
-        let count = sources.filter { $0.kind == kind.rawValue && !$0.isMuted }.count
+        let count = sources.filter { $0.kind == kind.rawValue }.count
         return count == 0 ? "None" : "\(count) \(count == 1 ? one : many)"
     }
 
@@ -205,19 +239,6 @@ struct SettingsView: View {
                     #endif
                 }
             }
-            #if DEBUG
-            // A test-only page for trying designs on the phone.
-            NavigationLink {
-                DesignLabView()
-            } label: {
-                Text("Design lab")
-                    .font(Theme.actionFont)
-                    .underline()
-                    .foregroundStyle(Theme.accent)
-                    .padding(.vertical, 4)
-            }
-            .buttonStyle(.borderless)
-            #endif
         }
     }
 }
@@ -370,9 +391,11 @@ struct SettingsRow: View {
     var body: some View {
         NavigationLink(value: page) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
+                // The name always shows in full; a long value is cut with ….
                 Text(title)
                     .font(.body)
                     .foregroundStyle(Theme.ink)
+                    .fixedSize()
                 Spacer(minLength: 12)
                 if let value {
                     Text(value)
@@ -509,8 +532,6 @@ struct AgendaSettingsPage: View {
 
 /// Settings › Cloud sync (iCloud): whether it's on, how to change that, and what it covers.
 struct ICloudSyncPage: View {
-    @Environment(\.openURL) private var openURL
-
     var body: some View {
         SettingsPage(title: "Cloud sync", subtitle: "Decent digest keeps what you follow, save, and read in your own iCloud, so it's the same on each device you use and comes back on a new one.") {
             ChoiceRow(title: "Sync", subtitle: "On when you're signed in to iCloud.") {
@@ -522,11 +543,8 @@ struct ICloudSyncPage: View {
                 .foregroundStyle(Theme.secondary)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 6)
-            TextLink("Open the Settings app ↗") {
-                if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
-            }
-            .padding(.top, 6)
             ListHeading("What syncs")
+                .padding(.bottom, 6)
             VStack(alignment: .leading, spacing: 6) {
                 DashLine("The sites and shows you follow")
                 DashLine("Your saved items")
@@ -559,7 +577,7 @@ struct ReadingHistoryPage: View {
             VStack(alignment: .leading, spacing: 8) {
                 DashLine("It stays on your device and in your own iCloud, and is never shared with developers.")
                 DashLine("Today it keeps your lists tidy, so news and episodes you've already opened, saved, or marked don't come back.")
-                DashLine("A later update will use it, on your device, to put the news and episodes you care about most at the top.")
+                DashLine("When turned off, reading history is still briefly saved until the item expires a week after it came out, so your digest matches across multiple devices. Saved items still stay saved until you remove them.")
             }
             PlainRule(spacing: 20)
             if cleared {

@@ -124,9 +124,7 @@ struct HeadlineRow: View {
                             // Bold to regular is an instant change, never animated.
                             .animation(nil, value: headline.isUnread)
                             .foregroundStyle(Theme.ink)
-                        Text(headline.detail)
-                            .font(.subheadline)
-                            .foregroundStyle(Theme.secondary)
+                        DetailLine(detail: headline.detail)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     if let marker = headline.marker {
@@ -144,7 +142,11 @@ struct HeadlineRow: View {
             .accessibilityValue(Text(headline.isUnread ? "Unread" : "Read"))
             .accessibilityHint(Text(isExpanded ? "Shows less" : "Shows details and actions"))
             .accessibilityAddTraits(.isButton)
+            // On the part VoiceOver lands on, so a closed row can be marked without opening it.
             .accessibilityActions {
+                ForEach(Array(actions.choices.reversed()), id: \.self) { choice in
+                    Button(choice.label) { actions.choose(choice) }
+                }
                 if let save = actions.save {
                     Button("Save", action: save)
                 }
@@ -174,7 +176,6 @@ struct HeadlineRow: View {
     private var noSummary: some View {
         Text("No summary available.")
             .font(.callout)
-            .italic()
             .foregroundStyle(Theme.secondary)
     }
 
@@ -192,7 +193,7 @@ struct HeadlineRow: View {
                         .foregroundStyle(Theme.secondary)
                 }
                 Spacer(minLength: 0)
-                JudgmentButtons(actions: actions)
+                ActionButtons(actions: actions)
             }
             .padding(.leading, DashColumn.width)
             .padding(.trailing, -RibbonButton.gap)
@@ -213,12 +214,10 @@ struct HeadlineRow: View {
             // Line up with the title, past the dash column.
             .padding(.horizontal, DashColumn.width)
 
-            HStack(spacing: 16) {
-                ActionLinks(actions: actions)
-            }
-            .padding(.leading, DashColumn.width)
-            .padding(.top, 2)
-            .padding(.bottom, 6)
+            WrappingActionLinks(actions: actions)
+                .padding(.leading, DashColumn.width)
+                .padding(.top, 2)
+                .padding(.bottom, 6)
         }
     }
 }
@@ -237,14 +236,14 @@ struct ActionRibbon: View {
             HStack(spacing: 16) {
                 ActionLinks(actions: actions)
                 Spacer(minLength: 0)
-                JudgmentButtons(actions: actions)
+                ActionButtons(actions: actions)
             }
             // At large text sizes the links sit above the buttons.
             VStack(alignment: .leading, spacing: 0) {
-                HStack(spacing: 16) { ActionLinks(actions: actions) }
+                WrappingActionLinks(actions: actions)
                 HStack {
                     Spacer(minLength: 0)
-                    JudgmentButtons(actions: actions)
+                    ActionButtons(actions: actions)
                 }
             }
         }
@@ -252,6 +251,18 @@ struct ActionRibbon: View {
         .padding(.leading, leadingPadding)
         .padding(.trailing, trailingPadding - RibbonButton.gap)
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// The text actions on one line, or one under another when they don't fit (large text sizes).
+struct WrappingActionLinks: View {
+    var actions: HeadlineActions
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 16) { ActionLinks(actions: actions) }
+            VStack(alignment: .leading, spacing: 0) { ActionLinks(actions: actions) }
+        }
     }
 }
 
@@ -279,7 +290,7 @@ struct ActionLinks: View {
 
 /// Small square buttons for Save (when offered), then ↓ Not relevant and ↑ Relevant (the same order as
 /// the swipe), or ✓ Read when reading history is off.
-struct JudgmentButtons: View {
+struct ActionButtons: View {
     var actions: HeadlineActions
 
     var body: some View {
@@ -376,8 +387,8 @@ extension View {
 /// An action shown as a plain link: slate, semibold, underlined. No outline or fill.
 struct TextLink: View {
     var title: String
-    /// True for a link whose label changes when tapped (Show week / Show less): it skips the
-    /// pressed dimming, which otherwise fades back in on the new label.
+    /// True for a link whose label changes when tapped: it skips the pressed dimming, which
+    /// otherwise fades back in on the new label.
     var still = false
     var action: () -> Void
 
@@ -422,5 +433,36 @@ private struct LinkButtonStyle: PrimitiveButtonStyle {
             Button(role: configuration.role, action: configuration.trigger) { configuration.label }
                 .buttonStyle(.borderless)
         }
+    }
+}
+
+/// The gray line under a title, "Source · 3h" (or "Episode · Show" in Saved), on one line: the
+/// longer part is cut with … and the shorter one stays whole.
+private struct DetailLine: View {
+    var detail: String
+
+    var body: some View {
+        HStack(spacing: 0) {
+            if let split = detail.range(of: " · ", options: .backwards) {
+                let start = detail[..<split.lowerBound]
+                let end = detail[split.lowerBound...]
+                if start.count <= end.count {
+                    Text(start)
+                        .fixedSize()
+                    Text(end)
+                        .lineLimit(1)
+                } else {
+                    Text(start)
+                        .lineLimit(1)
+                    Text(end)
+                        .fixedSize()
+                }
+            } else {
+                Text(detail)
+                    .lineLimit(1)
+            }
+        }
+        .font(.subheadline)
+        .foregroundStyle(Theme.secondary)
     }
 }

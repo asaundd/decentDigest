@@ -213,7 +213,7 @@ struct PrimaryButton: View {
                 .foregroundStyle(isEnabled ? Theme.page : Theme.buttonDimmedText)
                 .frame(maxWidth: .infinity, minHeight: 50)
                 .background(
-                    isEnabled ? Theme.accent : Theme.buttonDimmedFill,
+                    isEnabled ? Theme.slate : Theme.buttonDimmedFill,
                     in: RoundedRectangle(cornerRadius: 12, style: .continuous)
                 )
                 .contentShape(Rectangle())
@@ -226,7 +226,7 @@ struct PrimaryButton: View {
 }
 
 /// A row in a setup list: a name over an optional gray line on the left, and an action on the right
-/// (Allow, Follow, ✓ Following, Choose…).
+/// (Allow, ✓ Allowed, Follow, Unfollow, Use).
 struct ChoiceRow<Trailing: View>: View {
     var title: String
     var subtitle: String?
@@ -322,8 +322,8 @@ struct FollowLink: View {
 /// A link that undoes a choice (Unfollow, Hide): gray, with a faint underline a little below the text.
 struct QuietLink: View {
     var title: String
-    /// True for a link whose label changes when tapped (Show week / Show less): it skips the pressed
-    /// dimming, which otherwise fades back in on the new label.
+    /// True for a link whose label changes when tapped: it skips the pressed dimming, which
+    /// otherwise fades back in on the new label.
     var still = false
     var action: () -> Void
 
@@ -360,11 +360,14 @@ struct FooterLink: View {
     /// True for a link whose label changes when tapped (Show all / Show less): it skips the pressed
     /// dimming, which otherwise fades back in on the new label.
     var still = false
+    /// True to let a long label wrap onto more lines instead of staying on one.
+    var wraps = false
     var action: () -> Void
 
-    init(_ title: String, still: Bool = false, action: @escaping () -> Void) {
+    init(_ title: String, still: Bool = false, wraps: Bool = false, action: @escaping () -> Void) {
         self.title = title
         self.still = still
+        self.wraps = wraps
         self.action = action
     }
 
@@ -373,7 +376,7 @@ struct FooterLink: View {
             Text(title)
                 .font(Theme.actionFont)
                 .foregroundStyle(Theme.accent)
-                .fixedSize()
+                .fixedSize(horizontal: !wraps, vertical: true)
                 .padding(.vertical, 4)
                 .contentShape(Rectangle())
         }
@@ -412,6 +415,8 @@ struct SearchBox: View {
     var submitLabel: SubmitLabel = .done
     /// Shows Paste beside Cancel while the box is empty, for boxes where pasting is likely.
     var offersPaste = false
+    /// Grayed out and not tappable, for a search that needs a connection while offline.
+    var isDisabled = false
     var onSubmit: () -> Void = {}
 
     @Environment(SearchReveal.self) private var reveal: SearchReveal?
@@ -419,6 +424,7 @@ struct SearchBox: View {
     var body: some View {
         HStack(spacing: 12) {
             field
+                .disabled(isDisabled)
             if offersPaste && isFocused.wrappedValue && text.isEmpty {
                 // Apple's own Paste control, so iOS doesn't ask before pasting. Styled as close
                 // to Cancel as iOS allows.
@@ -468,7 +474,10 @@ struct SearchBox: View {
 
     private var field: some View {
         HStack(spacing: 8) {
-            TextField(placeholder, text: $text)
+            // Disabled, the box loses its fill and keeps only a dashed outline, its words in a light gray.
+            TextField(text: $text, prompt: Text(placeholder).foregroundStyle(isDisabled ? Theme.past : Theme.secondary)) {
+                Text(placeholder)
+            }
                 .keyboardType(keyboard)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
@@ -493,11 +502,18 @@ struct SearchBox: View {
         .padding(.trailing, text.isEmpty ? 12 : 6)
         .padding(.vertical, text.isEmpty ? 10 : 6)
         .frame(minHeight: 44)
-        .background(Theme.fieldFill, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(isDisabled ? Color.clear : Theme.fieldFill, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay {
+            if isDisabled {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .strokeBorder(Theme.rule, style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+            }
+        }
+        .accessibilityValue(isDisabled ? "Unavailable while offline" : "")
     }
 }
 
-/// A small gray heading over a list in setup, such as "Topics" or "Suggested".
+/// A small gray heading over a list in setup, such as "Topics" or "Following".
 struct ListHeading: View {
     var text: String
 
@@ -537,5 +553,42 @@ struct DashLine: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+}
+
+/// What a search in setup or Settings says when the device has no connection.
+enum OfflineMessage {
+    static func search(inSetup: Bool) -> String {
+        inSetup
+            ? "You're offline. Connect to the internet to search, or skip for now."
+            : "You're offline. Connect to the internet to search."
+    }
+
+    /// Everything in Podcasts comes from Apple Podcasts, so offline there is nothing to add.
+    static func podcasts(inSetup: Bool) -> String {
+        inSetup
+            ? "You're offline. Adding podcasts requires a connection, so skip for now and add them later in Settings."
+            : "You're offline. Adding podcasts requires a connection."
+    }
+
+    /// News' search still finds sites in the built-in library; only a pasted address needs the web.
+    static let newsSearch = "You're offline. You can still search the sites listed here, but adding a new site by its address requires a connection."
+}
+
+/// The gray note shown under a search box while offline, before anything is typed.
+struct OfflineNote: View {
+    var text: String
+
+    var body: some View {
+        // On the pale slate of the bar under the date, as wide as the search box above it.
+        Text(text)
+            .font(.subheadline)
+            .foregroundStyle(Theme.ink)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.vertical, 6)
+            .padding(.horizontal, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.nowTint, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .padding(.top, 8)
     }
 }

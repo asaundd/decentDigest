@@ -5,7 +5,7 @@ import SwiftUI
 /// `progress` below 1 draws only part of it, stroke by stroke, left to right and top to bottom,
 /// for the launch animation.
 struct LogoMark: View {
-    var color: Color = Theme.accent
+    var color: Color = Theme.slate
     var progress: Double = 1
 
     var body: some View {
@@ -98,7 +98,9 @@ enum LaunchIntro {
     static var hasPlayed = false
 }
 
-/// The round see-through button with the Dd logo, pinned at the top right of the digest. Opens Settings.
+/// The Dd logo in a round glass button pinned at the top right of the digest: clear glass tinted
+/// with the page color, so it doesn't lift lighter than the paper, ringed with an even hairline so
+/// the edge reads the same all the way round. Opens Settings.
 struct SettingsButton: View {
     var action: () -> Void
 
@@ -110,8 +112,8 @@ struct SettingsButton: View {
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        // Clear glass, so the page shows through more than the regular kind.
-        .glassEffect(.clear.interactive(), in: .circle)
+        .glassEffect(.clear.tint(Theme.page.opacity(0.55)).interactive(), in: .circle)
+        .overlay(Circle().strokeBorder(Theme.rule, lineWidth: 0.5).allowsHitTesting(false))
         .accessibilityLabel("Settings")
     }
 }

@@ -32,6 +32,9 @@ public final class WeatherModel {
     public private(set) var credit: WeatherCredit?
     /// True when the forecast couldn't be fetched and sample weather is showing instead (debug builds only).
     public private(set) var isSample = false
+    /// True while the last forecast or city lookup failed for want of a connection. The last forecast
+    /// keeps showing, with a note saying when it is from.
+    public private(set) var isOffline = false
 
     private let provider: any WeatherProvider
     private let places: any PlaceProvider
@@ -39,6 +42,9 @@ public final class WeatherModel {
     private let now: () -> Date
     private let sampleOnFailure: Bool
     @ObservationIgnored private var isLoading = false
+    /// Set by the app from `NetworkStatus`. WeatherKit's errors don't always say a missing connection
+    /// was the cause, so a failure while the device is offline counts as offline too.
+    @ObservationIgnored public var deviceIsOffline: @MainActor () -> Bool = { false }
 
     /// - Parameter sampleOnFailure: show sample weather when the forecast can't be fetched,
     ///   so the layout can be checked before WeatherKit is set up.
@@ -76,7 +82,8 @@ public final class WeatherModel {
         }
         let date = now()
         let reuseFor = force ? WeatherRules.pullRefreshInterval : WeatherRules.refreshInterval
-        if !isSample, let report, place == target,
+        // A forecast kept from before going offline is fetched again once the connection is back.
+        if !isSample, !isOffline, let report, place == target,
            date.timeIntervalSince(report.fetchedAt) < reuseFor {
             // The page opened with a cached forecast; it still needs the Apple Weather credit.
             if credit == nil { credit = await provider.credit() }
@@ -87,12 +94,15 @@ public final class WeatherModel {
             let fresh = try await provider.report(latitude: target.latitude, longitude: target.longitude, now: date)
             report = fresh
             isSample = false
+            isOffline = false
             save(fresh, forKey: Keys.report)
             save(target, forKey: Keys.place)
             if credit == nil { credit = await provider.credit() }
         } catch {
+            isOffline = Connectivity.isOffline(error) || deviceIsOffline()
             // Keep the last forecast if there is one; it still says roughly the right thing.
-            if report == nil, sampleOnFailure {
+            // Sample weather stands in only while WeatherKit isn't set up, never for want of a connection.
+            if report == nil, sampleOnFailure, !isOffline {
                 report = SampleDigest.weather(now: date)
                 isSample = true
             }
@@ -112,7 +122,15 @@ public final class WeatherModel {
     @discardableResult
     public func setCity(_ text: String) async -> Bool {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, let found = try? await places.place(named: trimmed) else { return false }
+        guard !trimmed.isEmpty else { return false }
+        let found: WeatherPlace?
+        do {
+            found = try await places.place(named: trimmed)
+        } catch {
+            isOffline = Connectivity.isOffline(error) || deviceIsOffline()
+            return false
+        }
+        guard let found else { return false }
         typedCity = found
         save(found, forKey: Keys.typedCity)
         await reload(force: true)

@@ -62,11 +62,14 @@ private struct LeaveSwipe: ViewModifier {
     var closing: (() -> Void)?
     var perform: (RowAction) -> Void
 
-    /// Each action's share of the open strip.
-    private static let actionWidth: CGFloat = 84
+    /// Each action's share of the open strip at the default text size.
+    private static let baseActionWidth: CGFloat = 84
     /// A short flick this far opens the strip, whether it holds one action or two: the same effort as
     /// opening ✓ Read alone.
-    private static let opensAt: CGFloat = (actionWidth + Theme.margin) * 0.5
+    private static let opensAt: CGFloat = (baseActionWidth + Theme.margin) * 0.5
+
+    /// Each action's share of the open strip; it grows with the text size so "Not relevant" fits.
+    @ScaledMetric(relativeTo: .caption) private var actionWidth: CGFloat = 84
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scrollHold) private var scrollHold
@@ -87,7 +90,7 @@ private struct LeaveSwipe: ViewModifier {
     private var primary: RowAction { stripActions.last ?? .read }
 
     /// How far a short swipe rests open: the actions, then the page margin.
-    private var openWidth: CGFloat { Self.actionWidth * CGFloat(stripActions.count) + Theme.margin }
+    private var openWidth: CGFloat { actionWidth * CGFloat(stripActions.count) + Theme.margin }
 
     /// Past this, letting go does the right-most action.
     private var fullThreshold: CGFloat { max(openWidth + 50, width * 0.6) }
@@ -115,11 +118,6 @@ private struct LeaveSwipe: ViewModifier {
             .onChange(of: request, initial: true) { _, action in
                 if let action { commit(action) }
             }
-            .accessibilityActions {
-                ForEach(Array(stripActions.reversed()), id: \.self) { action in
-                    Button(action.label) { commit(action) }
-                }
-            }
     }
 
     // MARK: The strip behind the row
@@ -141,7 +139,7 @@ private struct LeaveSwipe: ViewModifier {
                     ForEach(stripActions, id: \.self) { action in
                         Button { commit(action) } label: {
                             actionLabel(action, color: Theme.secondary)
-                                .frame(width: Self.actionWidth)
+                                .frame(width: actionWidth)
                                 .frame(maxHeight: .infinity)
                                 .contentShape(Rectangle())
                         }
@@ -211,14 +209,15 @@ private struct LeaveSwipe: ViewModifier {
         guard committed == nil else { return }
         swipeGuard.restsOpen = false
         commitHaptic += 1
+        // Set first, so a second tap or swipe can't record the action twice.
+        exitX = dragX
+        committed = action
         if reduceMotion {
             scrollHold?.hold()
             perform(action)
             return
         }
-        exitX = dragX
         frozenHeight = height
-        committed = action
         let rowWidth = width
 
         Task { @MainActor in

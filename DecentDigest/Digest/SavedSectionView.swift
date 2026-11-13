@@ -14,7 +14,8 @@ struct SavedSectionView: View {
     @Environment(\.scrollHold) private var scrollHold
 
     @Query private var items: [FeedItem]
-    @Query private var states: [ItemState]
+    /// Only the records of saved items, not the whole reading history.
+    @Query(filter: #Predicate<ItemState> { $0.statusRaw == "saved" }) private var states: [ItemState]
     @Query private var sources: [Source]
     @AppStorage(DigestPreferences.readingHistoryOffKey) private var historyOff = false
 
@@ -23,17 +24,27 @@ struct SavedSectionView: View {
     @State private var pendingReveal: String?
     /// Rows playing their leaving animation, and what was chosen for each.
     @State private var leaving: [String: RowAction] = [:]
+    @State private var showsAll = false
+    @State private var titlePlace = TitlePlace()
+
+    /// Like News, Saved shows a few rows, then "N more · Show all".
+    private let limit = NewsRules.itemsShown
 
     var body: some View {
         Text(DigestSection.saved.title)
             .font(Theme.sectionTitleFont)
             .accessibilityAddTraits(.isHeader)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .tracksPlace(in: titlePlace)
             .padding(.bottom, Theme.titleToFirstItem - HeadlineRow.verticalPadding)
             .digestRow()
 
-        ForEach(saved, id: \.itemID) { item in
-            let row = self.headline(for: item)
+        let shown = Array(saved.prefix(showsAll ? NewsRules.expandedLimit : limit))
+        // Looked up once per redraw, not once per row.
+        let shownIDs = Set(shown.map(\.itemID))
+        let cached = Dictionary(items.lazy.filter { shownIDs.contains($0.itemID) }.map { ($0.itemID, $0) }, uniquingKeysWith: { first, _ in first })
+        ForEach(shown, id: \.itemID) { item in
+            let row = self.headline(for: item, cached: cached[item.itemID])
             HeadlineRow(
                 headline: row,
                 isExpanded: expandedIDs.contains(item.itemID),
@@ -55,17 +66,36 @@ struct SavedSectionView: View {
                 finish(item, as: choice)
             }
         }
+
+        if saved.count > limit {
+            ListFooter(
+                hidden: showsAll ? 0 : saved.count - shown.count,
+                phrase: { _ in "more" },
+                empty: nil,
+                showsAll: showsAll,
+                showTitle: NewsRules.showMoreTitle(count: saved.count),
+                app: nil
+            ) {
+                let folding = showsAll
+                showsAll.toggle()
+                // Show less brings the list's title back when the reader had scrolled past it.
+                if folding { scrollHold?.bringBack(titleTop: titlePlace.top) }
+            }
+            .padding(.top, 4)
+            .digestRow()
+        }
     }
 
-    private func headline(for item: SavedItem) -> Headline {
-        // The full post is only on this device while the feed still lists it.
-        let cached = items.first { $0.itemID == item.itemID }
+    /// - Parameter cached: the item as the feed last sent it; the full post is only on this device
+    ///   while the feed still lists it.
+    private func headline(for item: SavedItem, cached: FeedItem?) -> Headline {
         let opened = states.first { $0.itemID == item.itemID }?.openedAt != nil
         if item.isEpisode {
             return Headline(
                 id: item.itemID,
                 title: item.title,
-                detail: item.sourceTitle,
+                // Saved holds both kinds, so an episode says what it is.
+                detail: item.sourceTitle.isEmpty ? "Episode" : "Episode · \(item.sourceTitle)",
                 summary: item.summary,
                 fullText: cached?.fullText,
                 link: item.linkURL,

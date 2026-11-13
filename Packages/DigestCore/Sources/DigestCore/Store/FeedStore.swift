@@ -5,20 +5,27 @@ import SwiftData
 /// The one place that writes fetched feeds into SwiftData, off the main thread.
 @ModelActor
 public actor FeedStore {
-    /// Fetches every followed feed and show that is due, stores new items and prunes expired ones.
+    /// Merges records doubled by iCloud sync, fetches every followed feed and show that is due,
+    /// stores new items and prunes expired ones.
     /// - Parameters:
     ///   - force: fetch every source now, even if it was fetched recently.
+    ///   - only: fetch only news feeds or only shows; nil fetches both.
     ///   - keepsHistory: false when reading history is off, so expired items leave no record.
-    /// - Returns: how many feeds were fetched.
+    /// - Returns: how many feeds were checked, and whether none could be reached for want of a connection.
     @discardableResult
-    public func refresh(force: Bool = false, keepsHistory: Bool = true, now: Date = .now, fetcher: FeedFetcher = FeedFetcher()) async -> Int {
+    public func refresh(force: Bool = false, only kind: SourceKind? = nil, keepsHistory: Bool = true, now: Date = .now, fetcher: FeedFetcher = FeedFetcher()) async -> Outcome {
+        // Records that iCloud brought in twice are folded together first, so a feed followed
+        // on two devices is fetched once.
+        _ = try? SyncDuplicates.merge(in: modelContext)
         let jobs: [Job]
         do {
-            jobs = try dueJobs(force: force, now: now)
+            jobs = try dueJobs(force: force, kind: kind, now: now)
         } catch {
-            return 0
+            return Outcome(checked: 0, offline: false)
         }
-        guard !jobs.isEmpty else { return 0 }
+        guard !jobs.isEmpty else { return Outcome(checked: 0, offline: false) }
+        var reached = 0
+        var offline = 0
 
         await withTaskGroup(of: (Job, Swift.Result<FeedFetcher.Result, Error>).self) { group in
             var queue = jobs.makeIterator()
@@ -27,6 +34,10 @@ public actor FeedStore {
                 group.addTask { await Self.run(job, with: fetcher) }
             }
             for await (job, result) in group {
+                switch result {
+                case .success: reached += 1
+                case .failure(let error): if Connectivity.isOffline(error) { offline += 1 }
+                }
                 store(result, for: job, now: now)
                 // Save per feed so headlines appear as each feed arrives.
                 try? modelContext.save()
@@ -38,34 +49,56 @@ public actor FeedStore {
 
         try? prune(now: now, keepsHistory: keepsHistory)
         try? modelContext.save()
-        return jobs.count
+        return Outcome(checked: jobs.count, offline: reached == 0 && offline > 0)
+    }
+
+    public struct Outcome: Sendable {
+        /// Feeds checked, whether or not they answered.
+        public var checked: Int
+        /// True when no feed answered because the device has no connection.
+        public var offline: Bool
     }
 
     /// Deletes cached items past the expiry window. Items shown but never touched are recorded as ignored,
     /// unless reading history is off: then the record of an expired item goes too (saved items keep theirs).
-    /// An expired item is never fetched again, so nothing comes back.
+    /// A dated item that has expired is never stored again, so nothing comes back. An item the feed sent
+    /// without a date would come back as new while the feed still lists it, so its record always stays.
+    /// Then the history drops records untouched for 12 months.
     public func prune(now: Date = .now, keepsHistory: Bool = true) throws {
         let cutoff = NewsRules.expiryCutoff(now: now)
         let expired = try modelContext.fetch(FetchDescriptor<FeedItem>(predicate: #Predicate { $0.publishedAt < cutoff }))
-        guard !expired.isEmpty else { return }
-        let expiredIDs = Set(expired.map(\.itemID))
-        if !keepsHistory {
-            let saved = Set(try modelContext.fetch(FetchDescriptor<SavedItem>()).map(\.itemID))
-            for state in try modelContext.fetch(FetchDescriptor<ItemState>())
-            where expiredIDs.contains(state.itemID) && !saved.contains(state.itemID) {
-                modelContext.delete(state)
+        if !expired.isEmpty {
+            let expiredIDs = Set(expired.map(\.itemID))
+            let undatedIDs = Set(expired.filter(\.undated).map(\.itemID))
+            let saved = keepsHistory ? [] : Set(try modelContext.fetch(FetchDescriptor<SavedItem>()).map(\.itemID))
+            for state in try modelContext.fetch(FetchDescriptor<ItemState>()) where expiredIDs.contains(state.itemID) {
+                if !keepsHistory, !undatedIDs.contains(state.itemID), !saved.contains(state.itemID) {
+                    modelContext.delete(state)
+                } else if state.resolvedAt == nil, state.status.isUnread {
+                    state.status = .ignored
+                    state.resolvedAt = now
+                }
             }
             for item in expired { modelContext.delete(item) }
-            try modelContext.save()
-            return
         }
-        let states = try modelContext.fetch(FetchDescriptor<ItemState>(predicate: #Predicate { $0.resolvedAt == nil }))
-        for state in states where expiredIDs.contains(state.itemID) && state.status.isUnread {
-            state.status = .ignored
-            state.resolvedAt = now
-        }
-        for item in expired { modelContext.delete(item) }
+        try pruneHistory(now: now)
         try modelContext.save()
+    }
+
+    /// Deletes reading records with nothing newer than 12 months, so the history stays a steady size.
+    /// Saved items keep theirs.
+    func pruneHistory(now: Date = .now) throws {
+        let cutoff = NewsRules.historyCutoff(now: now)
+        // Only records first shown before the cutoff can qualify.
+        let old = try modelContext.fetch(FetchDescriptor<ItemState>(predicate: #Predicate { state in
+            state.firstShownAt.flatMap { $0 < cutoff } ?? true
+        }))
+        guard !old.isEmpty else { return }
+        let saved = Set(try modelContext.fetch(FetchDescriptor<SavedItem>()).map(\.itemID))
+        for state in old where !saved.contains(state.itemID) && state.status != .saved {
+            let last = [state.firstShownAt, state.openedAt, state.resolvedAt].compactMap { $0 }.max() ?? .distantPast
+            if last < cutoff { modelContext.delete(state) }
+        }
     }
 
     // MARK: Private
@@ -86,13 +119,12 @@ public actor FeedStore {
         }
     }
 
-    private func dueJobs(force: Bool, now: Date) throws -> [Job] {
-        let sources = try modelContext.fetch(FetchDescriptor<Source>(
-            predicate: #Predicate { !$0.isMuted },
-            sortBy: [SortDescriptor(\.sortOrder)]
-        ))
+    private func dueJobs(force: Bool, kind: SourceKind?, now: Date) throws -> [Job] {
+        let sources = try modelContext.fetch(FetchDescriptor<Source>(sortBy: [SortDescriptor(\.sortOrder)]))
         let states = Dictionary(try modelContext.fetch(FetchDescriptor<FetchState>()).map { ($0.sourceID, $0) }, uniquingKeysWith: { first, _ in first })
         return sources.compactMap { source in
+            let sourceKind = SourceKind(rawValue: source.kind) ?? .news
+            if let kind, sourceKind != kind { return nil }
             let state = states[source.id]
             if !force, let last = state?.lastFetchedAt, now.timeIntervalSince(last) < NewsRules.refreshInterval {
                 return nil
@@ -101,7 +133,7 @@ public actor FeedStore {
             let hasCutoff = state?.backfillCutoff != nil
             return Job(
                 sourceID: source.id,
-                kind: SourceKind(rawValue: source.kind) ?? .news,
+                kind: sourceKind,
                 feedURL: source.feedURL,
                 etag: hasCutoff ? state?.etag : nil,
                 lastModified: hasCutoff ? state?.lastModified : nil
@@ -166,7 +198,8 @@ public actor FeedStore {
         for item in items {
             let itemID = ItemID.make(feedURL: feedURL, guidOrLink: item.identity)
             if let existing = known[itemID] {
-                // Fill in text an earlier version of the app didn't keep, and titles it read wrongly.
+                // A later fetch can carry more than the first: a corrected title, the full text, the author,
+                // the length or the guid.
                 if existing.title != item.title, !item.title.isEmpty { existing.title = item.title }
                 if existing.fullText == nil, let fullText = item.fullText { existing.fullText = fullText }
                 if existing.author == nil, let author = item.author { existing.author = author }
@@ -190,6 +223,7 @@ public actor FeedStore {
                 durationSeconds: item.durationSeconds,
                 guid: item.guid
             )
+            feedItem.undated = item.published == nil
             modelContext.insert(feedItem)
             known[itemID] = feedItem
         }

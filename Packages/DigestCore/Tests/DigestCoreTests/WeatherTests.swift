@@ -65,6 +65,33 @@ private func line(_ report: WeatherReport, unit: TemperatureUnit = .fahrenheit) 
     #expect(line(r) == "Tomorrow and Wednesday look about the same.")
 }
 
+@Test func rainAgainTomorrowComesFirst() {
+    let r = report(day(0, 55, 45, .rain), [day(1, 56, 46, .rain), day(2, 57, 46, .cloudy)])
+    #expect(line(r) == "Rain again tomorrow. Dry Wednesday.")
+}
+
+@Test func wetAgainNamesBothDaysAndTheTemperature() {
+    let r = report(day(0, 60, 45, .storm), [day(1, 50, 40, .storm), day(2, 49, 40, .storm)])
+    #expect(line(r) == "Storms again tomorrow and Wednesday, and colder.")
+}
+
+@Test func snowAgainTomorrow() {
+    let r = report(day(0, 30, 20, .snow), [day(1, 29, 19, .snow), day(2, 31, 20, .snow)])
+    #expect(line(r) == "Snow again tomorrow and Wednesday.")
+}
+
+@Test func aDifferentKindIsNotAgain() {
+    let r = report(day(0, 36, 30, .rain), [day(1, 33, 28, .snow), day(2, 34, 28, .snow)])
+    #expect(line(r) == "Snow tomorrow and Wednesday.")
+    let storms = report(day(0, 70, 60, .rain), [day(1, 71, 60, .storm), day(2, 72, 61, .cloudy)])
+    #expect(line(storms) == "Storms likely tomorrow. Dry Wednesday.")
+}
+
+@Test func rainNowCountsAsWetToday() {
+    let r = report(day(0, 55, 45, .cloudy), [day(1, 56, 46, .rain), day(2, 57, 46, .rain)], now: .rain)
+    #expect(line(r) == "Rain again tomorrow and Wednesday.")
+}
+
 @Test func noLineWithoutTwoMoreDays() {
     let r = report(day(0, 60, 45, .clear), [day(1, 67, 46, .clear)])
     #expect(line(r) == nil)
@@ -99,7 +126,7 @@ private func week(_ today: WeatherDay, _ days: [(Double, Sky)]) -> String? {
 
 @Test func weekLineNamesTemperatureBeforeTheWeekend() {
     let line = week(day(0, 60, 46, .cloudy), [(60, .cloudy), (60, .cloudy), (70, .cloudy), (70, .cloudy), (70, .clear), (70, .clear)])
-    #expect(line == "Warmer from Thursday.")
+    #expect(line == "Warmer starting Thursday.")
 }
 
 @Test func stormsShareTheLineWithOneMore() {
@@ -115,7 +142,7 @@ private func week(_ today: WeatherDay, _ days: [(Double, Sky)]) -> String? {
 
 @Test func weekLineNamesATurnInTemperature() {
     let line = week(day(0, 60, 46, .cloudy), [(61, .cloudy), (62, .cloudy), (70, .cloudy), (70, .cloudy), (62, .cloudy), (62, .cloudy)])
-    #expect(line == "Warmer from Thursday.")
+    #expect(line == "Warmer starting Thursday.")
 }
 
 @Test func quietWeekHasNoWeekLine() {

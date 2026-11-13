@@ -7,6 +7,9 @@ import MapKit
 /// Location is optional: without it the reader can type a city instead.
 @MainActor
 public final class LocationPlaces: NSObject, PlaceProvider {
+    /// The place's name when the device's location can't be put into words (offline, say).
+    public static let unnamed = "Your location"
+
     private let manager = CLLocationManager()
     private var accessWaiters: [CheckedContinuation<Void, Never>] = []
     private var locationWaiters: [CheckedContinuation<CLLocationCoordinate2D, Error>] = []
@@ -36,7 +39,7 @@ public final class LocationPlaces: NSObject, PlaceProvider {
             locationWaiters.append(continuation)
             if locationWaiters.count == 1 { manager.requestLocation() }
         }
-        let name = (try? await Self.name(latitude: coordinate.latitude, longitude: coordinate.longitude)) ?? "your location"
+        let name = (try? await Self.name(latitude: coordinate.latitude, longitude: coordinate.longitude)) ?? Self.unnamed
         return WeatherPlace(name: name, latitude: coordinate.latitude, longitude: coordinate.longitude, isCurrentLocation: true)
     }
 

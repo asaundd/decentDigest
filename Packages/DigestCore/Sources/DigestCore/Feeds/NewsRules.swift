@@ -4,14 +4,28 @@ import Foundation
 public enum NewsRules {
     /// Headlines shown in the News section.
     public static let itemsShown = 5
+    /// News, Podcasts and Saved open to at most this many rows. Past it, the footer offers
+    /// "Show 25" instead of "Show all", so a long list never fills the page.
+    public static let expandedLimit = 25
+
+    /// The footer's link for opening a list of `count` rows: all of them, or the first 25.
+    public static func showMoreTitle(count: Int) -> String {
+        count > expandedLimit ? "Show \(expandedLimit)" : "Show all"
+    }
     /// Items older than this are not shown and leave the cache.
     public static let expiryDays = 7
     /// A source is fetched again only after this long, unless the reader pulls to refresh.
     public static let refreshInterval: TimeInterval = 15 * 60
     /// Feeds fetched at the same time.
     public static let maxConcurrentFetches = 6
-    /// Sites followed when the reader chooses a topic in setup.
-    public static let starterFeedsPerCategory = 2
+
+    /// How long the reading history keeps a record, from the last time anything happened to it.
+    public static let historyMonths = 12
+
+    /// Records with nothing newer than this are deleted (saved items keep theirs).
+    public static func historyCutoff(now: Date, calendar: Calendar = .current) -> Date {
+        calendar.date(byAdding: .month, value: -historyMonths, to: now) ?? now.addingTimeInterval(-365 * 86_400)
+    }
 
     public static func expiryCutoff(now: Date, calendar: Calendar = .current) -> Date {
         calendar.date(byAdding: .day, value: -expiryDays, to: now) ?? now.addingTimeInterval(-Double(expiryDays) * 86_400)
@@ -73,9 +87,3 @@ public enum NewsRules {
     }
 }
 
-extension FeedLibrary {
-    /// What choosing a topic in setup follows: its most popular sites.
-    public func topicPicks(in categoryID: String, count: Int = NewsRules.starterFeedsPerCategory) -> [Feed] {
-        Array(starterFeeds(in: categoryID).filter { $0.defaultFollow != false }.prefix(count))
-    }
-}

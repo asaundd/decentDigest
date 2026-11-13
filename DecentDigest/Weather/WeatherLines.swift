@@ -12,12 +12,25 @@ struct WeatherLines: View {
     var openSettings: () -> Void
 
     @Environment(\.openURL) private var openURL
+    @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(NetworkStatus.self) private var network: NetworkStatus?
     @State private var showsWeek = false
+    /// The temperature now, 40pt at the default text size, growing with it.
+    @ScaledMetric(relativeTo: .largeTitle) private var temperatureSize: CGFloat = 40
 
     var body: some View {
         // With no location and no city, the date stands alone.
-        if let report = model.report, let place = model.place {
+        let offline = model.isOffline || network?.isOffline == true
+        // Sample weather (debug builds without WeatherKit) never stands in while offline.
+        if let report = model.report, let place = model.place, !(model.isSample && offline) {
             forecast(report, place: place, unit: .current())
+        } else if model.hasPlaceSource, offline {
+            // Weather is on, but no forecast has ever arrived.
+            Text("Weather will show once you're connected.")
+                .font(.subheadline)
+                .foregroundStyle(Theme.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, 14)
         }
     }
 
@@ -25,7 +38,7 @@ struct WeatherLines: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .center, spacing: 14) {
                 Text(unit.degrees(report.temperature))
-                    .font(.system(size: 40, weight: .light))
+                    .font(.system(size: temperatureSize, weight: .light))
                     .monospacedDigit()
                 VStack(alignment: .leading, spacing: 1) {
                     Text(WeatherRules.todayPhrase(report, now: .now))
@@ -53,9 +66,12 @@ struct WeatherLines: View {
                     .padding(.top, 4)
             }
 
-            if !report.days.isEmpty {
-                // Show week, then Show less in the same place once the week is open.
-                weekToggle
+            // Offline, the last forecast still shows, and the line with Show week says when it is
+            // from: "Weather from 9:40a · Show week".
+            let fromNote = (model.isOffline || network?.isOffline == true) && !model.isSample
+                ? WeatherRules.offlineNote(fetchedAt: report.fetchedAt, now: .now) : nil
+            if fromNote != nil || !report.days.isEmpty {
+                toggleLine(note: fromNote, hasWeek: !report.days.isEmpty)
                     .padding(.top, 4)
             }
             if showsWeek {
@@ -70,7 +86,38 @@ struct WeatherLines: View {
 
     /// One bullet per day: the day's name, then the condition and low to high, all regular weight.
     /// Spaced like the Calendar and To do rows.
+    @ViewBuilder
     private func week(_ days: [WeatherDay], unit: TemperatureUnit) -> some View {
+        if typeSize.isAccessibilitySize {
+            stackedWeek(days, unit: unit)
+        } else {
+            gridWeek(days, unit: unit)
+        }
+    }
+
+    /// At the largest text sizes each day takes two lines: its name, then the condition and low to high.
+    private func stackedWeek(_ days: [WeatherDay], unit: TemperatureUnit) -> some View {
+        VStack(alignment: .leading, spacing: 2 * AgendaMetrics.rowPadding) {
+            ForEach(Array(days.prefix(WeatherRules.weekDays))) { day in
+                HStack(alignment: .firstTextBaseline, spacing: 0) {
+                    Text("–")
+                        .foregroundStyle(Theme.secondary)
+                        .frame(width: DashColumn.width, alignment: .leading)
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(day.date.addingTimeInterval(12 * 3_600), format: .dateTime.weekday(.wide))
+                        Text("\(day.condition) \(WeatherRules.lowToHigh(day, unit: unit))")
+                            .foregroundStyle(Theme.itemInk)
+                    }
+                }
+                .accessibilityElement(children: .combine)
+            }
+        }
+        .font(.subheadline)
+        .monospacedDigit()
+    }
+
+    private func gridWeek(_ days: [WeatherDay], unit: TemperatureUnit) -> some View {
         Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: 0, verticalSpacing: 2 * AgendaMetrics.rowPadding) {
             ForEach(Array(days.prefix(WeatherRules.weekDays))) { day in
                 GridRow {
@@ -96,6 +143,34 @@ struct WeatherLines: View {
     }
 
     /// Show week, or Show less once the week is open. A footer link, like Show all.
+    /// Show week (Show less once open), after when the forecast is from while offline. On a narrow
+    /// screen or at large text sizes the link drops under the note.
+    @ViewBuilder
+    private func toggleLine(note: String?, hasWeek: Bool) -> some View {
+        if let note {
+            let noteText = Text(note)
+                .font(.subheadline)
+                .foregroundStyle(Theme.secondary)
+            if hasWeek {
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        noteText.fixedSize()
+                        dot.font(.subheadline)
+                        weekToggle
+                    }
+                    VStack(alignment: .leading, spacing: 0) {
+                        noteText.fixedSize(horizontal: false, vertical: true)
+                        weekToggle
+                    }
+                }
+            } else {
+                noteText
+            }
+        } else {
+            weekToggle
+        }
+    }
+
     private var weekToggle: some View {
         FooterLink(showsWeek ? "Show less" : "Show week", still: true) {
             // A clean swap: the label and the week change at once, with no fade or slide.
@@ -121,7 +196,8 @@ struct WeatherLines: View {
                 appLink(afterDot: true)
             }
             VStack(alignment: .leading, spacing: 0) {
-                placeLink(place)
+                // A long city name wraps here instead of being cut.
+                placeLink(place, wraps: true)
                 appLink(afterDot: false)
             }
         }
@@ -146,13 +222,15 @@ struct WeatherLines: View {
             .accessibilityHidden(true)
     }
 
-    private func placeLink(_ place: WeatherPlace) -> some View {
+    private func placeLink(_ place: WeatherPlace, wraps: Bool = false) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 4) {
             Text("For")
                 .foregroundStyle(Theme.secondary)
                 .accessibilityHidden(true)
-            FooterLink(place.name, still: true, action: openSettings)
-                .accessibilityLabel(place.isCurrentLocation ? "For \(place.name), current location" : "For \(place.name)")
+            // Mid-line after "For", the unnamed place reads in lowercase: "For your location".
+            let name = place.name == LocationPlaces.unnamed ? place.name.lowercased() : place.name
+            FooterLink(name, still: true, wraps: wraps, action: openSettings)
+                .accessibilityLabel(place.isCurrentLocation ? "For \(name), current location" : "For \(name)")
                 .accessibilityHint("Changes where the weather is for")
             if place.isCurrentLocation {
                 Image(systemName: "location")
@@ -161,7 +239,7 @@ struct WeatherLines: View {
                     .accessibilityHidden(true)
             }
         }
-        .fixedSize()
+        .fixedSize(horizontal: !wraps, vertical: true)
     }
 }
 

@@ -16,7 +16,7 @@ struct CalendarSectionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.titleToFirstItem - DayHeader.firstTopPadding) {
             // Calendar ↗ sits on the footer line.
-            SectionHeader(title: DigestSection.calendar.title) { EmptyView() }
+            SectionHeader(title: DigestSection.calendar.title)
 
             // The digest shows this section only once Calendar access is on.
             if model.calendarAccess == .granted, !model.hasLoaded {
@@ -72,8 +72,8 @@ struct CalendarSectionView: View {
             // Always shown, for Calendar ↗.
             ListFooter(
                 hidden: DayPlanner.hiddenCount(groups),
-                phrase: { $0 == 1 ? "more event this week" : "more events this week" },
-                empty: "No other events this week",
+                phrase: { $0 == 1 ? "more event" : "more events" },
+                empty: "No other events",
                 showsAll: showsAll,
                 app: ListFooter.Link(title: "Calendar ↗", spoken: "Open Calendar") { openURL(AgendaLinks.calendar(at: .now)) }
             ) {
@@ -203,7 +203,7 @@ struct EventRow: View {
                     .padding(.top, 6)
             }
 
-            HStack(spacing: 12) {
+            HStack(spacing: 16) {
                 TextLink("Open ↗", action: open)
                     .accessibilityLabel("Open in Calendar")
                 if let directions {
