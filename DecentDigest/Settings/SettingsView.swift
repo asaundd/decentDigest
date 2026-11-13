@@ -244,10 +244,10 @@ struct SettingsView: View {
 }
 
 /// Where the Privacy and Send feedback links go. Left out of the footer when nil.
-/// Placeholders for now: replace with the real privacy page and feedback address before release.
+/// The privacy page and the feedback address on the app's website.
 enum AppLinks {
-    static let privacy: URL? = URL(string: "https://example.com/privacy")
-    static let feedback: URL? = URL(string: "mailto:feedback@example.com?subject=Decent%20digest")
+    static let privacy: URL? = URL(string: "https://decentdigest.com/privacy")
+    static let feedback: URL? = URL(string: "mailto:hello@decentdigest.com?subject=Decent%20digest")
 }
 
 enum AppVersion {
