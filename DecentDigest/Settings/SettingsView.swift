@@ -17,6 +17,8 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \Source.sortOrder) private var sources: [Source]
     @State private var confirmsStartOver = false
+    @State private var confirmsDeleteAll = false
+    @State private var deletedAll = false
 
     enum Page: Hashable {
         case weather, calendar, todos, news, podcasts, sync, history
@@ -55,6 +57,8 @@ struct SettingsView: View {
                     SettingsRow(title: "Cloud sync", value: ICloudStatus.isSignedIn ? "On" : "Off", page: .sync)
                     SettingsDivider()
                     SettingsRow(title: "Reading history", value: preferences.keepsReadingHistory ? "On" : "Off", page: .history)
+                    SettingsDivider()
+                    deleteAllRow
 
                     SectionRule()
                     footer
@@ -68,6 +72,12 @@ struct SettingsView: View {
             }
         }
         .tint(Theme.accent)
+        .alert("Delete all your data?", isPresented: $confirmsDeleteAll) {
+            Button("Delete", role: .destructive) { deleteAll() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This unfollows every site and show, deletes your saved items and reading history, and forgets your city, on this device and in your iCloud, so your other devices clear too. Your calendar, to-do and weather choices stay. This can't be undone.")
+        }
         .alert("Start setup over?", isPresented: $confirmsStartOver) {
             Button("Keep my choices") { showWelcome() }
             Button("Clear my choices", role: .destructive) { startOver() }
@@ -75,6 +85,35 @@ struct SettingsView: View {
         } message: {
             Text("Keep your choices to look them over, or clear them to set up from the beginning. Clearing unfollows every site and show and forgets your city. Saved items and reading history stay.")
         }
+    }
+
+    /// Settings › Your data: deletes everything followed, saved and read, after a question.
+    @ViewBuilder
+    private var deleteAllRow: some View {
+        if deletedAll {
+            Text("All your data was deleted.")
+                .foregroundStyle(Theme.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 11)
+        } else {
+            Button {
+                confirmsDeleteAll = true
+            } label: {
+                Text("Delete all my data")
+                    .foregroundStyle(Theme.ink)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 11)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(StillButtonStyle())
+            .accessibilityHint("Asks first, then deletes what you follow, save and read, here and in iCloud")
+        }
+    }
+
+    private func deleteAll() {
+        try? MyData.deleteAll(in: context)
+        Task { await weather.clearCity() }
+        deletedAll = true
     }
 
     /// A fresh start: nothing followed, every section and list shown, no typed city. Saved items and
