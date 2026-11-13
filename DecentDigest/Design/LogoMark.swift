@@ -118,7 +118,7 @@ struct SettingsButton: View {
     @ViewBuilder
     private func mark(_ style: DesignLab.ButtonStyle) -> some View {
         switch style {
-        case .glass:
+        case .glass, .paperGlass:
             LogoMark(color: Theme.logoButton).frame(width: 22)
         case .shadow:
             // Just the logo, lifted off the page by a soft shadow under its lines.
@@ -159,6 +159,12 @@ private struct ButtonBackground: ViewModifier {
             content
                 .background(Theme.page, in: Circle())
                 .overlay(Circle().strokeBorder(Theme.rule, lineWidth: 1))
+        case .paperGlass:
+            // Today's clear glass, tinted with the page color so it doesn't lift lighter than the
+            // paper, and ringed with an even hairline so the edge reads the same all the way round.
+            content
+                .glassEffect(.clear.tint(Theme.page.opacity(0.55)).interactive(), in: .circle)
+                .overlay(Circle().strokeBorder(Theme.rule, lineWidth: 0.5).allowsHitTesting(false))
         case .frostedDisc:
             // The flat disc, but see-through: words passing under it blur softly, tinted with the page.
             content
