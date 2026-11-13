@@ -158,6 +158,8 @@ public final class FetchState {
     public var lastModified: String?
     public var lastFetchedAt: Date?
     public var lastError: String?
+    /// Failed fetches in a row, not counting ones made offline. It slows the next try
+    /// (`NewsRules.retryInterval`) and, from `NewsRules.failingAfter`, marks the feed in Settings.
     public var failureCount: Int = 0
     /// Set on the first successful fetch: items published before it are never added,
     /// so a new source starts with today's items (or yesterday's) instead of its whole backlog.
@@ -165,6 +167,12 @@ public final class FetchState {
 
     public init(sourceID: String) {
         self.sourceID = sourceID
+    }
+
+    /// The sources whose feeds have failed `NewsRules.failingAfter` times in a row, shown as
+    /// "Couldn't load" in Settings.
+    public static func failing(_ states: [FetchState]) -> Set<String> {
+        Set(states.filter { $0.failureCount >= NewsRules.failingAfter }.map(\.sourceID))
     }
 }
 #endif

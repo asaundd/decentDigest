@@ -40,3 +40,18 @@ import Testing
     #expect(Following.key(for: "https://a.com/feed") != Following.key(for: "https://b.com/feed"))
 }
 #endif
+
+@Test func localAndNumericAddressesAreRefused() throws {
+    #expect(FeedFinder.address(from: "192.168.1.1") == nil)
+    #expect(FeedFinder.address(from: "https://10.0.0.5/feed") == nil)
+    #expect(FeedFinder.address(from: "https://[::1]/feed") == nil)
+    #expect(FeedFinder.address(from: "localhost/feed") == nil)
+    #expect(FeedFinder.address(from: "printer.local") == nil)
+    #expect(FeedFinder.address(from: "example.com")?.absoluteString == "https://example.com")
+    let html = """
+    <link rel="alternate" type="application/rss+xml" href="https://192.168.1.1/feed">
+    <link rel="alternate" type="application/rss+xml" href="https://example.com/feed">
+    """
+    let links = FeedFinder.feedLinks(inHTML: html, base: try #require(URL(string: "https://example.com")))
+    #expect(links.map(\.absoluteString) == ["https://example.com/feed"])
+}

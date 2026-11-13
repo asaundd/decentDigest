@@ -54,6 +54,7 @@ struct PodcastPicker: View {
     @Environment(\.modelContext) private var context
     @Environment(NetworkStatus.self) private var network: NetworkStatus?
     @Query(sort: \Source.sortOrder) private var sources: [Source]
+    @Query private var fetchStates: [FetchState]
 
     @State private var text = ""
     @State private var results: [ApplePodcasts.Show] = []
@@ -123,8 +124,9 @@ struct PodcastPicker: View {
                 let limited = inSettings && !showsAllFollowed
                 let shownFollowing = limited ? Array(extra.prefix(4)) : extra
                 ListHeading("Following")
+                let failing = inSettings ? FetchState.failing(fetchStates) : []
                 ForEach(shownFollowing) { source in
-                    row(title: source.title, subtitle: nil, feed: .init(kind: .podcast, feedURL: source.feedURL, title: source.title, appleID: source.appleID))
+                    row(title: source.title, subtitle: failing.contains(source.id) ? "Couldn't load" : nil, feed: .init(kind: .podcast, feedURL: source.feedURL, title: source.title, appleID: source.appleID))
                 }
                 if inSettings && extra.count > 4 {
                     ListFooter(hidden: extra.count - shownFollowing.count, phrase: { _ in "more" }, empty: nil, showsAll: showsAllFollowed, app: nil) {

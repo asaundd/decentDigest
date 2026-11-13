@@ -53,6 +53,11 @@ public enum FeedParser {
     public static let summaryLimit = 600
     /// Full posts are cut at this many characters.
     public static let fullTextLimit = 50_000
+    /// Titles are cut at this many characters.
+    public static let titleLimit = 300
+    /// The most text kept from any one element, in bytes, before it is cleaned: well past the longest
+    /// full post, so a hostile or broken feed can't fill memory.
+    static let fieldLimit = 400_000
     /// A feed keeps at most this many items, the newest. Real feeds send 10 to 100.
     public static let maxItems = 200
 
@@ -145,11 +150,17 @@ public enum FeedParser {
         }
 
         func parser(_ parser: XMLParser, foundCharacters string: String) {
-            if !texts.isEmpty { texts[texts.count - 1] += string }
+            add(string)
         }
 
         func parser(_ parser: XMLParser, foundCDATA CDATABlock: Data) {
-            if !texts.isEmpty { texts[texts.count - 1] += String(decoding: CDATABlock, as: UTF8.self) }
+            add(String(decoding: CDATABlock, as: UTF8.self))
+        }
+
+        /// Adds text to the open element, up to `fieldLimit`.
+        private func add(_ string: String) {
+            guard !texts.isEmpty, texts[texts.count - 1].utf8.count < FeedParser.fieldLimit else { return }
+            texts[texts.count - 1] += string
         }
 
         func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
@@ -157,7 +168,7 @@ public enum FeedParser {
             let raw = texts.popLast() ?? ""
             // Pass the text up to a parent that holds text, not to the feed, channel or item around it.
             if let parent = path.dropLast().last, !Self.containers.contains(parent), !texts.isEmpty {
-                texts[texts.count - 1] += raw
+                add(raw)
             }
             let value = raw.trimmingCharacters(in: .whitespacesAndNewlines)
             defer {
@@ -167,7 +178,7 @@ public enum FeedParser {
             guard let current else {
                 // Feed-level title: a direct child of <channel> (RSS) or <feed> (Atom).
                 if name == "title", feedTitle == nil, let parent = path.dropLast().last, parent == "channel" || parent == "feed" {
-                    feedTitle = HTMLText.plain(value)
+                    feedTitle = HTMLText.plain(value, limit: FeedParser.titleLimit)
                 }
                 return
             }
@@ -217,7 +228,7 @@ public enum FeedParser {
         var duration: Int?
 
         func build() -> ParsedItem? {
-            let cleanTitle = HTMLText.plain(title)
+            let cleanTitle = HTMLText.plain(title, limit: FeedParser.titleLimit)
             let source = summary ?? content ?? itunesSummary
             let cleanSummary = source.map { HTMLText.plain($0, limit: FeedParser.summaryLimit) }
             guard !cleanTitle.isEmpty || link != nil else { return nil }

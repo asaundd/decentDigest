@@ -16,6 +16,20 @@ public enum NewsRules {
     public static let expiryDays = 7
     /// A source is fetched again only after this long, unless the reader pulls to refresh.
     public static let refreshInterval: TimeInterval = 15 * 60
+    /// A feed that has failed this many times in a row is marked "Couldn't load" in Settings.
+    public static let failingAfter = 3
+    /// The longest a failing feed waits before it is tried again.
+    public static let longestRetry: TimeInterval = 24 * 60 * 60
+
+    /// How long a source waits before its next fetch: the usual 15 minutes, doubled after each failure
+    /// in a row (30 minutes, an hour, two hours…) up to once a day, so a feed that keeps failing isn't
+    /// tried over and over. A failure for want of a connection doesn't count.
+    public static func retryInterval(failures: Int) -> TimeInterval {
+        guard failures > 0 else { return refreshInterval }
+        let doubled = refreshInterval * pow(2, Double(min(failures, 16)))
+        return min(doubled, longestRetry)
+    }
+
     /// Feeds fetched at the same time.
     public static let maxConcurrentFetches = 6
 
