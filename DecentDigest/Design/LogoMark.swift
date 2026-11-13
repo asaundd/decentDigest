@@ -98,85 +98,23 @@ enum LaunchIntro {
     static var hasPlayed = false
 }
 
-/// The Dd logo button pinned at the top right of the digest: today a round see-through button; debug
-/// builds can try other looks in the Design lab. Opens Settings.
+/// The Dd logo in a round glass button pinned at the top right of the digest: clear glass tinted
+/// with the page color, so it doesn't lift lighter than the paper, ringed with an even hairline so
+/// the edge reads the same all the way round. Opens Settings.
 struct SettingsButton: View {
     var action: () -> Void
 
     var body: some View {
-        let style = DesignLab.shared.button
         Button(action: action) {
-            mark(style)
+            LogoMark(color: Theme.logoButton)
+                .frame(width: 22)
                 .frame(width: 44, height: 44)
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .modifier(ButtonBackground(style: style))
+        .glassEffect(.clear.tint(Theme.page.opacity(0.55)).interactive(), in: .circle)
+        .overlay(Circle().strokeBorder(Theme.rule, lineWidth: 0.5).allowsHitTesting(false))
         .accessibilityLabel("Settings")
-    }
-
-    @ViewBuilder
-    private func mark(_ style: DesignLab.ButtonStyle) -> some View {
-        switch style {
-        case .glass, .paperGlass:
-            LogoMark(color: Theme.logoButton).frame(width: 22)
-        case .shadow:
-            // Just the logo, lifted off the page by a soft shadow under its lines.
-            LogoMark(color: Theme.logoButton)
-                .frame(width: 26)
-                .shadow(color: .black.opacity(0.22), radius: 1, y: 1)
-                .shadow(color: .black.opacity(0.12), radius: 5, y: 3)
-        case .halo:
-            // Just the logo, with the page color fading out around it.
-            LogoMark(color: Theme.logoButton)
-                .frame(width: 26)
-                .background(
-                    RadialGradient(colors: [Theme.page, Theme.page.opacity(0.9), Theme.page.opacity(0)], center: .center, startRadius: 0, endRadius: 30)
-                        .frame(width: 60, height: 60)
-                )
-        case .disc, .frostedDisc:
-            LogoMark(color: Theme.logoButton).frame(width: 20)
-        case .closeCircle:
-            // The same gray circle as Settings' ✕.
-            LogoMark(color: Theme.secondary)
-                .frame(width: 18)
-                .frame(width: 36, height: 36)
-                .background(Theme.fieldFill, in: Circle())
-        }
-    }
-}
-
-/// Clear glass for today's button, a flat paper disc for D, nothing for the floating logos.
-private struct ButtonBackground: ViewModifier {
-    var style: DesignLab.ButtonStyle
-
-    func body(content: Content) -> some View {
-        switch style {
-        case .glass:
-            // Clear glass, so the page shows through more than the regular kind.
-            content.glassEffect(.clear.interactive(), in: .circle)
-        case .disc:
-            content
-                .background(Theme.page, in: Circle())
-                .overlay(Circle().strokeBorder(Theme.rule, lineWidth: 1))
-        case .paperGlass:
-            // Today's clear glass, tinted with the page color so it doesn't lift lighter than the
-            // paper, and ringed with an even hairline so the edge reads the same all the way round.
-            content
-                .glassEffect(.clear.tint(Theme.page.opacity(0.55)).interactive(), in: .circle)
-                .overlay(Circle().strokeBorder(Theme.rule, lineWidth: 0.5).allowsHitTesting(false))
-        case .frostedDisc:
-            // The flat disc, but see-through: words passing under it blur softly, tinted with the page.
-            content
-                .background {
-                    Circle()
-                        .fill(.ultraThinMaterial)
-                        .overlay(Circle().fill(Theme.page.opacity(0.45)))
-                }
-                .overlay(Circle().strokeBorder(Theme.rule, lineWidth: 1))
-        case .shadow, .halo, .closeCircle:
-            content
-        }
     }
 }
 
