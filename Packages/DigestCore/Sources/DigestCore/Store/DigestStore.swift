@@ -35,7 +35,7 @@ public enum DigestStore {
             let sample = SampleDigest.make(now: now)
             var sources: [String: Source] = [:]
             let entries = sample.news.map { ($0, SourceKind.news) } + sample.episodes.map { ($0, SourceKind.podcast) }
-            for (index, (entry, kind)) in entries.enumerated() {
+            for (entry, kind) in entries {
                 let source: Source
                 if let existing = sources[entry.sourceName] {
                     source = existing
@@ -50,37 +50,25 @@ public enum DigestStore {
                     title: entry.title,
                     link: "https://example.com/\(entry.id)",
                     summary: entry.summary,
-                    fullText: entry.id == "n1" ? sampleFullPost : nil,
-                    author: kind == .news ? sampleAuthors[index % sampleAuthors.count] : nil,
+                    author: sampleAuthors[entry.id],
                     publishedAt: entry.published,
-                    durationSeconds: kind == .podcast ? [42, 58, 35][index % 3] * 60 : nil
+                    durationSeconds: sampleMinutes[entry.id].map { $0 * 60 }
                 ))
             }
             if let last = sample.news.last, let source = sources[last.sourceName] {
                 context.insert(ItemState(itemID: last.id, sourceID: source.id, status: .read, firstShownAt: now))
             }
-            context.insert(SavedItem(itemID: "saved-1", sourceID: "", sourceTitle: "Civic Weekly", title: "The long view on city buses", link: "https://example.com/saved-1", summary: "How a few small changes to routes and stops made buses the fastest way across town.", author: "Jordan Lee", publishedAt: now.addingTimeInterval(-3 * 86_400)))
+            context.insert(SavedItem(itemID: "saved-1", sourceID: "", sourceTitle: "Simon Willison's Weblog", title: "Browse tools.simonwillison.net by tag", link: "https://example.com/saved-1", summary: "The home page of a collection of small single-purpose web tools can now be browsed by the libraries and browser features each one uses.", author: nil, publishedAt: now.addingTimeInterval(-3 * 86_400)))
             return container
         } catch {
             fatalError("Preview container failed: \(error)")
         }
     }
 
-    private static let sampleAuthors = ["Maria Chen", "Sam Okafor", "Ruth Alvarez", "Theo Brandt"]
+    private static let sampleAuthors = [
+        "n1": "Jonathan Wosen", "n3": "Claire Vo", "n4": "James O'Donnell", "n5": "Meghana Keshavan", "n7": "James O'Donnell",
+    ]
 
-    /// A full post for the first sample headline, long enough to read as one.
-    private static let sampleFullPost = """
-    Walk down almost any new block in the city and you will pass young trees standing in neat squares of mulch. What you won't see is what sits underneath: wider, deeper pits filled with a loose soil mix, and in a growing number of them, a small sensor that reports how wet the ground is.
-
-    For years, new street trees were watered on a schedule. A truck came by every week or two through the first summers, whether the tree needed it or not. Some drowned, more went thirsty, and a surprising share never made it past their third year.
-
-    The sensors change that. Crews now see which blocks are dry and which are fine, and send the truck only where it's needed. In the first neighborhoods to try it, watering trips fell by almost half, and the share of trees that survived their first three years went up.
-
-    The deeper pits matter just as much. Roots that have room to spread find water on their own after a rain, and the soil holds it for longer. A tree planted this way can go weeks without help once it settles in.
-
-    None of this is expensive. The sensors cost less than a single replacement tree, and the soil mix is a small change to work crews already do. The harder part, the people running these programs say, is patience: a street tree takes a decade to really earn its keep, and the results of choices made today won't be clear for years.
-
-    Still, the early numbers are encouraging. More trees are living past the tricky first years, the trucks are making fewer trips, and on a hot afternoon, the blocks that were planted this way are already a little cooler.
-    """
+    private static let sampleMinutes = ["p1": 59, "p2": 86]
 }
 #endif

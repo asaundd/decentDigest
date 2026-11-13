@@ -38,20 +38,20 @@ public enum SampleDigest {
             TodoEntry(id: "t8", title: "Buy a birthday card for Mom", listName: "Family", listID: "family", listOrder: 1),
         ]
 
+        // Recent real titles from public feeds, with short summaries written for the sample.
         let news = [
-            FeedEntry(id: "n1", title: "Why city trees are getting smarter about water", sourceName: "Field Notes", published: at(6, 40), summary: "Street trees are being planted with sensors and deeper soil pits, and the early results suggest they need far less watering than anyone expected."),
-            FeedEntry(id: "n2", title: "The case for a shorter grocery list", sourceName: "Kitchen Table", published: at(6, 5), summary: "Cooking from a handful of staples is cheaper, calmer and wastes less food. Here is how one family made the switch without…"),
-            FeedEntry(id: "n3", title: "Libraries are lending more than books now", sourceName: "Civic Weekly", published: at(5, 30)),
-            FeedEntry(id: "n4", title: "A beginner's guide to reading the night sky", sourceName: "Starlight Notes", published: at(21, 15, dayOffset: -1), summary: "Five constellations you can find from a city balcony this month."),
-            FeedEntry(id: "n5", title: "What a year of walking to work taught me", sourceName: "The Slow Web", published: at(19, 40, dayOffset: -1), summary: "Forty minutes each way, in every kind of weather."),
-            FeedEntry(id: "n6", title: "How small towns are reviving their main streets", sourceName: "Civic Weekly", published: at(17, 10, dayOffset: -1), summary: "Pop-up shops, shared kitchens and a lot of patience."),
-            FeedEntry(id: "n7", title: "Notes on keeping a paper notebook", sourceName: "The Slow Web", published: at(14, 30, dayOffset: -1), summary: "Why writing things down by hand still helps."),
+            FeedEntry(id: "n1", title: "Scientists debut map of basal ganglia, a key brain region involved in an array of diseases", sourceName: "STAT", published: at(6, 40), summary: "A large research collaboration has produced the most detailed cell map yet of the basal ganglia, a brain region tied to a range of psychiatric and neurological disorders."),
+            FeedEntry(id: "n2", title: "Gemini Decisions API", sourceName: "Simon Willison's Weblog", published: at(6, 5), summary: "Notes on Google's new multimodal model for yes-or-no answers, multiple choice and rubric scoring, and how its pricing compares."),
+            FeedEntry(id: "n3", title: "Claude Code + Obsidian: My family's AI brain | Scott Farrar", sourceName: "Lenny's Newsletter", published: at(5, 30), summary: "A walkthrough of a household knowledge system built with Claude Code and Obsidian, covering appliances, insurance and the family's to-dos."),
+            FeedEntry(id: "n4", title: "The backlash about data centers might really just be about electricity", sourceName: "MIT Technology Review", published: at(21, 15, dayOffset: -1), summary: "Local opposition to new data centers may have less to do with AI itself than with power use and strain on the grid."),
+            FeedEntry(id: "n5", title: "Blackstone backs Pfizer's bet on monthly obesity treatment", sourceName: "STAT", published: at(19, 40, dayOffset: -1), summary: "Pfizer is bringing in Blackstone to help fund its push into a once-a-month obesity drug."),
+            FeedEntry(id: "n6", title: "aws-emulator", sourceName: "Simon Willison's Weblog", published: at(17, 10, dayOffset: -1), summary: "An official emulator for running tests against local copies of AWS services."),
+            FeedEntry(id: "n7", title: "Nvidia privately confirmed it could track chips to fight smuggling, even as industry publicly questioned feasibility", sourceName: "MIT Technology Review", published: at(14, 30, dayOffset: -1), summary: "Chip-location tracking may be more feasible than the industry has said in public."),
         ]
 
         let episodes = [
-            FeedEntry(id: "p1", title: "The science of a good night's sleep", sourceName: "Everyday Science", published: at(4), summary: "What actually happens while we sleep, why the hour before bed matters more than the hour we wake, and three small changes researchers say are worth trying this week."),
-            FeedEntry(id: "p2", title: "Starting a garden from scratch", sourceName: "Back Yard Hours", published: at(21, dayOffset: -1), summary: "Soil, sun and patience: a first season, start to finish."),
-            FeedEntry(id: "p3", title: "The quiet history of the public library", sourceName: "Long Story Short", published: at(9, dayOffset: -2), summary: "How lending libraries spread, one town at a time."),
+            FeedEntry(id: "p1", title: "Why PMs are suddenly valuable again | Tulsee Doshi (Head of Product, Gemini)", sourceName: "Lenny's Podcast", published: at(4), summary: "The head of product for Google's Gemini models on how frontier models get built, what product managers do inside a model lab, and why the role matters more as models improve."),
+            FeedEntry(id: "p2", title: "An 86-minute guide to finding PMF | Rob Snyder (Author, The Power of Pull)", sourceName: "Lenny's Podcast", published: at(9, dayOffset: -2), summary: "A step-by-step framework for finding product-market fit, from first idea to first customer deals."),
         ]
 
         return Digest(date: now, weather: weather(now: now, calendar: calendar), weatherPlace: weatherPlace, events: events, todos: todos, news: news, episodes: episodes)
