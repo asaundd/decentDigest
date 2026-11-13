@@ -687,7 +687,6 @@
     },
     {
       "id": "nature",
-      "defaultFollow": false,
       "title": "Nature",
       "siteUrl": "https://www.nature.com/nature",
       "feedUrl": "https://www.nature.com/nature.rss",
@@ -898,74 +897,6 @@
       "verified": false,
       "verifiedAt": null,
       "note": "Site blocked our checker; confirm on device before shipping."
-    }
-  ],
-  "podcasts": [
-    {
-      "id": "hard-fork",
-      "title": "Hard Fork",
-      "appleId": "1528594034",
-      "feedUrl": "https://feeds.simplecast.com/6HKOhNgS",
-      "category": "tech",
-      "description": "A weekly look at the future of tech, from The New York Times.",
-      "verified": true,
-      "verifiedAt": "2026-11-09",
-      "defaultFollow": true
-    },
-    {
-      "id": "lennys-podcast",
-      "title": "Lenny's Podcast",
-      "appleId": "1627920305",
-      "feedUrl": "https://api.substack.com/feed/podcast/10845.rss",
-      "category": "product",
-      "description": "Interviews with product leaders on building products and careers.",
-      "verified": true,
-      "verifiedAt": "2026-11-09",
-      "defaultFollow": true
-    },
-    {
-      "id": "decoder",
-      "title": "Decoder with Nilay Patel",
-      "appleId": "1011668648",
-      "feedUrl": "https://feeds.megaphone.fm/recodedecode",
-      "category": "tech",
-      "description": "Long conversations with leaders about how their companies work.",
-      "verified": true,
-      "verifiedAt": "2026-11-09",
-      "defaultFollow": true
-    },
-    {
-      "id": "latent-space",
-      "title": "Latent Space",
-      "appleId": "1674008350",
-      "feedUrl": "https://podcast.latent.space/feed.xml",
-      "category": "ai",
-      "description": "The AI engineer's podcast.",
-      "verified": true,
-      "verifiedAt": "2026-11-09",
-      "defaultFollow": false
-    },
-    {
-      "id": "vergecast",
-      "title": "The Vergecast",
-      "appleId": "430333725",
-      "feedUrl": "https://feeds.megaphone.fm/vergecast",
-      "category": "tech",
-      "description": "The Verge's weekly show on tech news.",
-      "verified": true,
-      "verifiedAt": "2026-11-09",
-      "defaultFollow": false
-    },
-    {
-      "id": "acquired",
-      "title": "Acquired",
-      "appleId": "1050462261",
-      "feedUrl": "https://feeds.transistor.fm/acquired",
-      "category": "product",
-      "description": "Long histories of great companies. New episodes are occasional.",
-      "verified": true,
-      "verifiedAt": "2026-11-09",
-      "defaultFollow": false
     }
   ]
 }

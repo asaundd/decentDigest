@@ -73,11 +73,31 @@ private let lookup = """
     #expect(show?.absoluteString == "https://podcasts.apple.com/us/podcast/hard-fork/id1528594034?uo=4")
 }
 
-@Test func libraryHasSuggestedShows() throws {
-    let library = try FeedLibrary.bundled()
-    let shows = library.suggestedPodcasts()
-    #expect(shows.count == 6)
-    #expect(shows.allSatisfy { $0.feedUrl.hasPrefix("https://") && Int($0.appleId) != nil })
+private let chart = """
+{"feed":{"title":"Top Shows","country":"us","results":[
+ {"artistName":"The New York Times","id":"1200361736","name":"The Daily","kind":"podcasts"},
+ {"artistName":"Someone","id":"1528594034","name":"Hard Fork","kind":"podcasts"},
+ {"artistName":"Nobody","id":"not-a-number","name":"Odd","kind":"podcasts"}
+]}}
+"""
+
+@Test func topChartKeepsItsOrder() throws {
+    let ids = try #require(ApplePodcasts.chartIDs(fromChart: Data(chart.utf8)))
+    #expect(ids == ["1200361736", "1528594034"])
+    #expect(ApplePodcasts.chartIDs(fromChart: Data("nope".utf8)) == nil)
+    // The lookup may answer in its own order; the chart's order wins, and strays are left out.
+    let looked = [
+        ApplePodcasts.Show(id: "1528594034", title: "Hard Fork", feedURL: "https://example.com/a"),
+        ApplePodcasts.Show(id: "999", title: "Stray", feedURL: "https://example.com/b"),
+        ApplePodcasts.Show(id: "1200361736", title: "The Daily", feedURL: "https://example.com/c"),
+    ]
+    #expect(ApplePodcasts.inChartOrder(looked, ids: ids).map(\.title) == ["The Daily", "Hard Fork"])
+}
+
+@Test func topChartSendsOnlyTheCountry() {
+    let urls = ApplePodcasts.chartURLs(country: "gb")
+    #expect(urls.first?.absoluteString == "https://rss.marketingtools.apple.com/api/v2/gb/podcasts/top/25/podcasts.json")
+    #expect(urls.allSatisfy { $0.query == nil })
 }
 
 private let search = """

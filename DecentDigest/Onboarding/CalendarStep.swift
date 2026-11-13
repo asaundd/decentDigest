@@ -3,7 +3,7 @@ import SwiftUI
 import UIKit
 
 /// Step 2: Calendar and Reminders. One Allow link per app; once allowed, that app's calendars or
-/// lists open underneath, all ticked, and a tap leaves one off the page.
+/// lists open underneath, all shown, each with Hide to leave it off the digest.
 struct CalendarStep: View {
     var agenda: AgendaModel
     var back: () -> Void
@@ -59,7 +59,7 @@ struct CalendarStep: View {
     }
 }
 
-/// An app the digest reads from, with Allow (iOS then asks), ✓ Allowed, or Open Settings ↗ once declined.
+/// An app the digest reads from, with Allow (iOS then asks), ✓ Allowed, or Turn on in the Settings app ↗ once declined.
 struct AppAccessRow: View {
     var appName: String
     /// The gray line before access is on.
@@ -81,7 +81,7 @@ struct AppAccessRow: View {
             case .granted:
                 DoneNote(text: "Allowed")
             case .denied:
-                TextLink("Open Settings ↗") {
+                TextLink("Turn on in the Settings app ↗") {
                     if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
                 }
                 .accessibilityHint("Access can be turned on for Decent digest in the Settings app")
@@ -151,6 +151,17 @@ struct AgendaListPicker: View {
         return order.map { ($0, byName[$0] ?? []) }
     }
 
+    private func listName(_ list: AgendaList, note: String?, included: Bool) -> Text {
+        let name = Text(list.title)
+            .font(.callout)
+            .foregroundStyle(included ? Theme.itemInk : Theme.secondary)
+        guard let note else { return name }
+        let noteText = Text(note)
+            .font(.subheadline)
+            .foregroundStyle(Theme.secondary)
+        return Text("\(name)  \(noteText)")
+    }
+
     private func row(_ list: AgendaList, note: String?) -> some View {
         let included = !excluded.contains(list.id)
         return HStack(alignment: .firstTextBaseline, spacing: 12) {
@@ -159,15 +170,9 @@ struct AgendaListPicker: View {
                     .foregroundStyle(Theme.secondary)
                     .frame(width: DashColumn.width, alignment: .leading)
                     .accessibilityHidden(true)
-                Text(list.title)
-                    .font(.callout)
-                    .foregroundStyle(included ? Theme.itemInk : Theme.secondary)
-                    .padding(.trailing, 8)
-                if let note {
-                    Text(note)
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.secondary)
-                }
+                // One run of text, so a long name wraps and Hide or Show stays on the right.
+                listName(list, note: note, included: included)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             Group {

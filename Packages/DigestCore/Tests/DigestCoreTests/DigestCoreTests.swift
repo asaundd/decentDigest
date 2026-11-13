@@ -6,6 +6,8 @@ import Testing
     let a = ItemID.make(feedURL: "https://example.com/feed", guidOrLink: "post-1")
     let b = ItemID.make(feedURL: "https://example.com/feed", guidOrLink: "post-1")
     let c = ItemID.make(feedURL: "https://example.com/feed", guidOrLink: "post-2")
+    // However the address was typed, the same feed gives the same ids.
+    #expect(ItemID.make(feedURL: "http://www.Example.com/feed/", guidOrLink: "post-1") == a)
     #expect(a == b)
     #expect(a != c)
     #expect(a.count == 64)
@@ -54,16 +56,6 @@ import Testing
     #expect(shown.map(\.itemID) == ["opened"])
 }
 
-@Test func choosingATopicFollowsItsTwoMostPopularSites() throws {
-    let library = try FeedLibrary.bundled()
-    for category in library.categories {
-        let picks = library.topicPicks(in: category.id)
-        #expect(picks.count == NewsRules.starterFeedsPerCategory)
-        #expect(picks.allSatisfy { $0.feedUrl.hasPrefix("https://") && $0.category == category.id })
-        #expect(!picks.contains { $0.id == "nature" })
-    }
-}
-
 @Test func topicNamesAreSentenceCase() throws {
     let library = try FeedLibrary.bundled()
     #expect(library.categories.map(\.name).contains("Healthtech and digital health"))
@@ -110,4 +102,9 @@ import Testing
     #expect(reopened.appearance == .dark)
     reopened.showAllSections()
     #expect(DigestPreferences.Section.allCases.allSatisfy { DigestPreferences(defaults: defaults).isShown($0) })
+}
+
+@Test func longListsOpenToTwentyFive() {
+    #expect(NewsRules.showMoreTitle(count: 25) == "Show all")
+    #expect(NewsRules.showMoreTitle(count: 26) == "Show 25")
 }

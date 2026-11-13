@@ -13,22 +13,26 @@ struct DigestView: View {
     var weather: WeatherModel
     /// Which sections the reader set up, and whether setup is done.
     var preferences: DigestPreferences
-    /// Fetches news and podcasts. `true` means the reader pulled to refresh.
-    var refresh: @Sendable (Bool) async -> Void = { _ in }
+    /// Fetches news and podcasts, or only one of them. `true` means the reader asked for it
+    /// (pull to refresh, Refresh all, or News' Refresh).
+    var refresh: @Sendable (Bool, SourceKind?) async -> Void = { _, _ in }
     var sectionOrder: [DigestSection] = DigestSection.allCases
 
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(NetworkStatus.self) private var network: NetworkStatus?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query(sort: \SavedItem.savedAt, order: .reverse) private var saved: [SavedItem]
     @State private var panel: PanelRequest?
     @State private var showsWeatherSettings = false
     @State private var showsSettings = false
-    /// Setup replayed from Show welcome again in Settings.
+    /// Setup replayed from Start setup over in Settings.
     @State private var showsSetup = false
-    /// Set when Show welcome again closes Settings, so setup opens once Settings has gone.
+    /// Set when Start setup over closes Settings, so setup opens once Settings has gone.
     @State private var setupAfterSettings = false
-    /// True while feeds are being checked, so News can say so.
+    /// True while feeds are being checked, so News and Podcasts can say so.
     @State private var isRefreshing = false
+    /// Set while only one list's feeds are checked (News' Refresh), so the other doesn't say so.
+    @State private var refreshingOnly: SourceKind?
     /// Where the visible list ends on screen.
     @State private var listBottom: CGFloat = .infinity
     /// False until the launch animation lets the page show, whole.
@@ -92,15 +96,25 @@ struct DigestView: View {
             } action: { _, offset in
                 scrollHold.offset = offset
             }
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                geometry.contentInsets.top
+            } action: { _, inset in
+                scrollHold.topInset = inset
+            }
             .scrollPosition($scrollPosition)
             .environment(\.scrollHold, scrollHold)
-            .onAppear { scrollHold.onHold = { holdPlace() } }
+            .onAppear {
+                scrollHold.onHold = { holdPlace() }
+                scrollHold.scrollBy = { delta in
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        scrollPosition.scrollTo(y: scrollHold.offset + delta)
+                    }
+                }
+            }
             // Pull to refresh on the digest only. Set here, on the page's own scroll view, so it
             // doesn't reach the scroll views in Settings and setup, where a pull down closes the sheet.
             .refreshable {
-                await reloadAgenda()
-                await reloadWeather(force: true)
-                await runRefresh(force: true)
+                await refreshAll()
             }
             .foregroundStyle(Theme.ink)
             .tint(Theme.accent)
@@ -163,6 +177,18 @@ struct DigestView: View {
         }
         .onChange(of: preferences.appearance, initial: true) { _, appearance in
             AppearanceStyle.apply(appearance)
+        }
+        // Back online: finish what couldn't be checked while offline, so the offline notes clear.
+        // Only what failed is checked again; nothing else is fetched.
+        .onChange(of: network?.isOffline) { wasOffline, isOffline in
+            guard wasOffline == true, isOffline == false else { return }
+            let missed = SourceKind.allCases.filter { UserDefaults.standard.bool(forKey: NewsRefresher.offlineKey($0)) }
+            if !missed.isEmpty {
+                Task { await runRefresh(force: true, only: missed.count == 1 ? missed[0] : nil) }
+            }
+            if weather.isOffline {
+                Task { await reloadWeather(force: true) }
+            }
         }
         .onChange(of: scenePhase, initial: true) { _, phase in
             // Checked-off to-dos still showing leave when the app goes away.
@@ -265,12 +291,10 @@ struct DigestView: View {
     }
 
     private func reloadAgenda() async {
-        await SlowLoading.pause()
         await agenda.reload()
     }
 
     private func reloadWeather(force: Bool = false) async {
-        await SlowLoading.pause()
         await weather.reload(force: force)
     }
 
@@ -282,6 +306,13 @@ struct DigestView: View {
             Text(Date.now, format: .dateTime.weekday(.wide).month(.wide).day())
                 .font(Theme.dateFont)
                 .accessibilityAddTraits(.isHeader)
+                // Clear of the Settings button at the top right; a long date wraps instead.
+                .padding(.trailing, 52)
+                .fixedSize(horizontal: false, vertical: true)
+            if network?.isOffline == true {
+                OfflineBar()
+                    .padding(.top, 8)
+            }
             // Weather is the page's opening lines, not a titled section.
             if preferences.isShown(.weather) {
                 WeatherLines(model: weather) { showsWeatherSettings = true }
@@ -290,7 +321,7 @@ struct DigestView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// Setup shows on first launch, and again from Show welcome again in Settings.
+    /// Setup shows on first launch, and again from Start setup over in Settings.
     private var setupBinding: Binding<Bool> {
         Binding(
             get: { !preferences.hasFinishedSetup || showsSetup },
@@ -310,13 +341,26 @@ struct DigestView: View {
         }
     }
 
-    /// Fetches news. The page draws right away; headlines appear as each feed arrives.
-    private func runRefresh(force: Bool) async {
+    /// Fetches news and podcasts, or only `kind`. The page draws right away; items appear as each
+    /// feed arrives.
+    private func runRefresh(force: Bool, only kind: SourceKind? = nil) async {
         guard !isRefreshing else { return }
         isRefreshing = true
-        await SlowLoading.pause()
-        await refresh(force)
+        refreshingOnly = kind
+        await refresh(force, kind)
         isRefreshing = false
+        refreshingOnly = nil
+    }
+
+    /// Pull to refresh, and Refresh all at the foot of the page: everything on the page, read again.
+    private func refreshAll() async {
+        await reloadAgenda()
+        await reloadWeather(force: true)
+        await runRefresh(force: true)
+    }
+
+    private func refreshes(_ kind: SourceKind) -> Bool {
+        isRefreshing && (refreshingOnly == nil || refreshingOnly == kind)
     }
 
     /// Scrolls an expanded row up only when its bottom is hidden, so rows higher on the screen stay put.
@@ -338,40 +382,57 @@ struct DigestView: View {
             // Rows set their own margins, so swipes can reach the page's edge.
             TodosSectionView(model: agenda)
         case .news:
-            FeedListSection(kind: .news, isRefreshing: isRefreshing, refresh: { await runRefresh(force: true) }, panel: $panel, reveal: reveal)
+            FeedListSection(kind: .news, isRefreshing: refreshes(.news), refresh: {
+                Task { await runRefresh(force: true, only: .news) }
+            }, panel: $panel, reveal: reveal)
         case .podcasts:
-            FeedListSection(kind: .podcast, isRefreshing: isRefreshing, refresh: { await runRefresh(force: true) }, panel: $panel, reveal: reveal)
+            FeedListSection(kind: .podcast, isRefreshing: refreshes(.podcast), panel: $panel, reveal: reveal)
         case .saved:
             SavedSectionView(saved: saved, panel: $panel, reveal: reveal)
         }
     }
 
-    /// The end of the page, on one line: the small logo and name, like the foot of Settings, then the
-    /// weather credit. On a narrow screen or at large text sizes the credit drops to a second line.
+    /// The end of the page, on one line: Refresh all on the left, the weather credit on the right.
+    /// No logo or name, since the Dd button sits at the top. On a narrow screen or at large text
+    /// sizes the credit drops to a second line.
     private var footer: some View {
         ViewThatFits(in: .horizontal) {
             HStack(alignment: .center, spacing: 16) {
-                appName
-                weatherCredit
+                refreshPart
                 Spacer(minLength: 0)
+                weatherCredit
             }
             VStack(alignment: .leading, spacing: 12) {
-                appName
+                refreshPart
                 weatherCredit
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var appName: some View {
-        HStack(alignment: .center, spacing: 8) {
-            LogoMark(color: Theme.secondary)
-                .frame(width: 22)
-                .accessibilityHidden(true)
-            Text("Decent digest")
-                .font(Theme.wordmarkFont)
+    /// Left out while offline; the bar under the date says why.
+    @ViewBuilder
+    private var refreshPart: some View {
+        if network?.isOffline != true {
+            refreshAllLink
+        }
+    }
+
+    /// Does what pulling down at the top does, for a reader at the foot of the page. Reads
+    /// "Refreshing…" in gray while anything is being checked.
+    @ViewBuilder
+    private var refreshAllLink: some View {
+        if isRefreshing {
+            Text("Refreshing…")
+                .font(.subheadline)
                 .foregroundStyle(Theme.secondary)
                 .fixedSize()
+                .padding(.vertical, 4)
+        } else {
+            FooterLink("Refresh all", still: true) {
+                Task { await refreshAll() }
+            }
+            .accessibilityHint("Checks for new events, to-dos, weather, news and episodes")
         }
     }
 
@@ -382,6 +443,23 @@ struct DigestView: View {
             WeatherCreditLine(credit: credit)
                 .fixedSize()
         }
+    }
+}
+
+/// Under the date while the device has no connection: one line on the same pale slate as the event
+/// happening now. Everything on the page is what was saved; nothing is fetched until it is back.
+struct OfflineBar: View {
+    var body: some View {
+        Text("You're offline. Showing only what's saved on this device.")
+            .font(.subheadline)
+            .foregroundStyle(Theme.ink)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.vertical, 6)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            // The tint reaches past the text on both sides, so the words line up with the page's.
+            .padding(.horizontal, 10)
+            .background(Theme.nowTint, in: RoundedRectangle(cornerRadius: 6))
+            .padding(.horizontal, -10)
     }
 }
 

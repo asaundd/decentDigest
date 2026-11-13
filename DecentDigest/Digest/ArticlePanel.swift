@@ -19,16 +19,17 @@ struct ArticlePanel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .firstTextBaseline) {
+            // The same round ✕ as Settings, then where the item came from.
+            HStack(spacing: 4) {
+                CloseButton(action: onClose)
                 Text(headline.detail)
                     .font(.subheadline)
                     .foregroundStyle(Theme.secondary)
-                Spacer()
-                TextLink("Done", action: onClose)
+                    .lineLimit(1)
+                Spacer(minLength: 0)
             }
-            .padding(.horizontal, Theme.margin)
-            .padding(.top, 12)
-            .padding(.bottom, 4)
+            .padding(.horizontal, Theme.margin - 4)
+            .padding(.top, 8)
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 10) {
@@ -116,7 +117,7 @@ struct ArticlePanelHost: View {
                 Theme.scrim
                     .ignoresSafeArea()
                     .onTapGesture { close() }
-                    .accessibilityLabel("Close article")
+                    .accessibilityLabel("Close")
                     .accessibilityAddTraits(.isButton)
                     .transition(.opacity)
                 ArticlePanel(headline: request.headline, actions: request.actions, onClose: close)

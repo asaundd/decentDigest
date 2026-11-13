@@ -80,9 +80,10 @@ struct MoreLine: View {
     }
 }
 
-/// The gray line at the foot of a list: what waits ("4 more events this week"), then quiet links for
+/// The gray line at the foot of a list: what waits ("4 more events"), then quiet links for
 /// Show all or Show less and the app the section comes from, joined by dots:
-/// "4 more events this week · Show all · Calendar ↗". Used by Calendar, To do, News and Podcasts.
+/// "4 more events · Show all · Calendar ↗". Used by Calendar, To do, News and Podcasts.
+/// News ends it with Refresh, which reads "Refreshing…" in gray while feeds are checked.
 struct ListFooter: View {
     struct Link {
         var title: String
@@ -94,6 +95,9 @@ struct ListFooter: View {
     var text: String?
     var toggle: Link?
     var app: Link?
+    var refresh: Link? = nil
+    /// True while the refresh runs: the link gives way to a gray "Refreshing…".
+    var isRefreshing = false
 
     var body: some View {
         // On a narrow screen or at large text sizes the links drop under the text.
@@ -119,7 +123,7 @@ struct ListFooter: View {
                 .foregroundStyle(Theme.secondary)
                 .fixedSize()
                 .padding(.vertical, 4)
-            if toggle != nil || app != nil { dot }
+            if toggle != nil || app != nil || refresh != nil { dot }
         }
         links
     }
@@ -128,10 +132,21 @@ struct ListFooter: View {
     private var links: some View {
         if let toggle {
             link(toggle)
-            if app != nil { dot }
+            if app != nil || refresh != nil { dot }
         }
         if let app {
             link(app)
+            if refresh != nil { dot }
+        }
+        if let refresh {
+            if isRefreshing {
+                Text("Refreshing…")
+                    .foregroundStyle(Theme.secondary)
+                    .fixedSize()
+                    .padding(.vertical, 4)
+            } else {
+                link(refresh)
+            }
         }
     }
 
@@ -152,32 +167,29 @@ struct ListFooter: View {
 }
 
 extension ListFooter {
-    /// "4 more events this week · Show all", "Show less", or "No other events this week" when nothing
-    /// waits, each followed by the app link.
-    init(hidden: Int, phrase: (Int) -> String, empty: String?, showsAll: Bool, app: Link?, toggle: @escaping () -> Void) {
+    /// "4 more events · Show all", "Show less", or "No other events" when nothing
+    /// waits, each followed by the app link. `showTitle` replaces "Show all" for a list that opens
+    /// only part of the way ("Show 25").
+    init(hidden: Int, phrase: (Int) -> String, empty: String?, showsAll: Bool, showTitle: String = "Show all", app: Link?, refresh: Link? = nil, isRefreshing: Bool = false, toggle: @escaping () -> Void) {
         if hidden > 0 {
-            self.init(text: "\(hidden) \(phrase(hidden))", toggle: Link(title: "Show all", action: toggle), app: app)
+            self.init(text: "\(hidden) \(phrase(hidden))", toggle: Link(title: showTitle, action: toggle), app: app, refresh: refresh, isRefreshing: isRefreshing)
         } else if showsAll {
-            self.init(text: nil, toggle: Link(title: "Show less", action: toggle), app: app)
+            self.init(text: nil, toggle: Link(title: "Show less", action: toggle), app: app, refresh: refresh, isRefreshing: isRefreshing)
         } else {
-            self.init(text: empty, toggle: nil, app: app)
+            self.init(text: empty, toggle: nil, app: app, refresh: refresh, isRefreshing: isRefreshing)
         }
     }
 }
 
-/// A section title with an optional action at the right end of the row.
-struct SectionHeader<Action: View>: View {
+/// A section's Georgia title. Title rows carry no links.
+struct SectionHeader: View {
     var title: String
-    @ViewBuilder var action: Action
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(title)
-                .font(Theme.sectionTitleFont)
-                .accessibilityAddTraits(.isHeader)
-            Spacer()
-            action
-        }
+        Text(title)
+            .font(Theme.sectionTitleFont)
+            .accessibilityAddTraits(.isHeader)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -197,8 +209,10 @@ struct QuietLine: View {
     }
 }
 
-/// Faint, still bars at about the height of a list's rows, shown in place of the rows when the first
-/// read of them takes longer than 0.6s. The rows replace them in place. No shimmer.
+/// Faint bars standing in for a section's rows while a slow first read finishes. Top to bottom,
+/// each bar turns a shade darker and stays so, like a list being written out, slower than the
+/// launch logo draws; once the last one has, they all lighten together and it starts again.
+/// With Reduce Motion on, the bars stay still.
 struct PlaceholderBars: View {
     /// Each bar's share of the line.
     var widths: [CGFloat] = [0.72, 0.48, 0.6]
@@ -206,26 +220,62 @@ struct PlaceholderBars: View {
     /// Before this, nothing shows: most reads finish while the launch logo is still on screen.
     var delay: Duration = .milliseconds(600)
 
+    /// Time between one bar darkening and the next.
+    static let step: Double = 0.28
+    /// How long each bar takes to darken.
+    static let darken: Double = 0.25
+    /// How long all the bars stay dark once the last one has darkened.
+    static let hold: Double = 0.3
+    /// How long they take to lighten again, all together.
+    static let lighten: Double = 0.3
+    /// The rest before the shade starts again at the top.
+    static let pause: Double = 0.4
+
     @State private var shows = false
+    @State private var start = Date.now
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ForEach(Array(widths.enumerated()), id: \.offset) { _, width in
-                GeometryReader { proxy in
-                    RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(Theme.placeholder)
-                        .frame(width: proxy.size.width * width, height: 10)
-                        .frame(maxHeight: .infinity)
+        TimelineView(.animation(paused: reduceMotion || !shows)) { context in
+            let elapsed = context.date.timeIntervalSince(start)
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(Array(widths.enumerated()), id: \.offset) { index, width in
+                    GeometryReader { proxy in
+                        let bar = RoundedRectangle(cornerRadius: 3, style: .continuous)
+                        bar.fill(Theme.placeholder)
+                            // The passing shade is the rule color laid over the bar.
+                            .overlay(bar.fill(Theme.rule).opacity(reduceMotion ? 0 : Self.shade(bar: index, of: widths.count, at: elapsed)))
+                            .frame(width: proxy.size.width * width, height: 10)
+                            .frame(maxHeight: .infinity)
+                    }
+                    .frame(height: rowHeight)
                 }
-                .frame(height: rowHeight)
             }
         }
         .opacity(shows ? 1 : 0)
         .task {
             try? await Task.sleep(for: delay)
+            start = .now
             shows = true
         }
         .accessibilityElement()
         .accessibilityLabel("Loading")
+    }
+
+    /// How dark one bar is `elapsed` seconds into the loop, from 0 (resting) to 1. Each bar darkens
+    /// in turn and stays dark until the last one has, then they all lighten together.
+    static func shade(bar: Int, of count: Int, at elapsed: TimeInterval) -> Double {
+        let allDark = Double(max(count - 1, 0)) * step + darken
+        let lightensAt = allDark + hold
+        let cycle = lightensAt + lighten + pause
+        let local = elapsed.truncatingRemainder(dividingBy: cycle)
+        let level: Double
+        if local >= lightensAt {
+            level = 1 - min((local - lightensAt) / lighten, 1)
+        } else {
+            level = min(max((local - Double(bar) * step) / darken, 0), 1)
+        }
+        // Eased, so each change starts and ends gently.
+        return level * level * (3 - 2 * level)
     }
 }

@@ -7,10 +7,10 @@ import SwiftUI
 struct FeedListSection: View {
     /// News or podcasts.
     var kind: SourceKind = .news
-    /// True while feeds are being checked.
+    /// True while this list's feeds are being checked.
     var isRefreshing: Bool
-    /// Checks every feed now.
-    var refresh: () async -> Void
+    /// News' Refresh link on its footer line: checks every news feed now. Nil for Podcasts.
+    var refresh: (() -> Void)? = nil
     @Binding var panel: PanelRequest?
     /// Scrolls an expanded row into view if its bottom (on screen) is past the visible area.
     var reveal: (String, CGFloat) -> Void
@@ -18,19 +18,21 @@ struct FeedListSection: View {
     @Environment(\.modelContext) private var context
     @Environment(\.openURL) private var openURL
     @Environment(\.scrollHold) private var scrollHold
+    @Environment(NetworkStatus.self) private var network: NetworkStatus?
 
     @Query(sort: \FeedItem.publishedAt, order: .reverse) private var items: [FeedItem]
     @Query private var sources: [Source]
     @Query private var states: [ItemState]
     @AppStorage(NewsRefresher.listStartedAtKey) private var listStartedAt: Double = 0
     @AppStorage(DigestPreferences.readingHistoryOffKey) private var historyOff = false
+    @AppStorage(NewsRefresher.offlineKey(.news)) private var newsOffline = false
+    @AppStorage(NewsRefresher.offlineKey(.podcast)) private var podcastsOffline = false
 
-    /// Set once the reader has refreshed, so the link can say the list is current.
-    @State private var refreshedByReader = false
     /// Open rows stay open until the reader closes them.
     @State private var expandedIDs: Set<String> = []
     @State private var pendingReveal: String?
     @State private var showsAll = false
+    @State private var titlePlace = TitlePlace()
     /// Rows playing their leaving animation, and what was chosen for each.
     @State private var leaving: [String: RowAction] = [:]
     /// Rows closing up as they leave. They no longer count toward the rows shown, so the next one
@@ -39,43 +41,31 @@ struct FeedListSection: View {
 
     var body: some View {
         let eligible = eligibleEntries
-        let shown = showsAll ? eligible : visible(eligible)
+        // Bars stand in while the first feeds arrive. Rows already showing stay while feeds are checked.
+        let waiting = isRefreshing && eligible.isEmpty
+        // Show all opens the list up to 25 rows, never further.
+        let shown = waiting ? [] : visible(eligible, limit: showsAll ? NewsRules.expandedLimit : limit)
         let staying = eligible.count(where: { !closing.contains($0.item.itemID) })
         let remaining = staying - shown.count(where: { !closing.contains($0.item.itemID) })
 
-        HStack(alignment: .firstTextBaseline) {
-            Text(isEpisodes ? DigestSection.podcasts.title : DigestSection.news.title)
-                .font(Theme.sectionTitleFont)
-                .accessibilityAddTraits(.isHeader)
-            Spacer()
-            // Podcasts ↗ sits on the footer line.
-            if !isEpisodes {
-                TextLink(isRefreshing ? "Checking…" : (refreshedByReader ? "Up to date" : "Refresh")) {
-                    Task {
-                        await refresh()
-                        refreshedByReader = true
-                    }
-                }
-                .disabled(isRefreshing)
-                .accessibilityHint("Checks your feeds for new items")
-            }
-        }
-        .padding(.bottom, Theme.titleToFirstItem - HeadlineRow.verticalPadding)
+        Text(isEpisodes ? DigestSection.podcasts.title : DigestSection.news.title)
+            .font(Theme.sectionTitleFont)
+            .accessibilityAddTraits(.isHeader)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .tracksPlace(in: titlePlace)
+            .padding(.bottom, Theme.titleToFirstItem - HeadlineRow.verticalPadding)
         .digestRow()
 
-        if eligible.isEmpty {
-            // On first launch the list fills in as each feed arrives.
-            HStack(spacing: 8) {
-                if isRefreshing {
-                    ProgressView()
-                        .controlSize(.small)
-                }
-                Text(emptyText)
-            }
-            .foregroundStyle(Theme.secondary)
-            .padding(.vertical, HeadlineRow.verticalPadding)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .digestRow()
+        if waiting {
+            // The rows replace the bars as each feed comes in.
+            PlaceholderBars()
+                .digestRow()
+        } else if eligible.isEmpty {
+            Text(emptyMessage)
+                .foregroundStyle(Theme.secondary)
+                .padding(.vertical, HeadlineRow.verticalPadding)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .digestRow()
         }
 
         ForEach(shown, id: \.item.itemID) { entry in
@@ -83,7 +73,7 @@ struct FeedListSection: View {
             HeadlineRow(
                 headline: row,
                 isExpanded: expandedIDs.contains(entry.item.itemID),
-                actions: actions(for: entry),
+                actions: actions(for: entry, headline: row),
                 onExpandedBottom: { bottom in
                     guard pendingReveal == entry.item.itemID else { return }
                     pendingReveal = nil
@@ -107,17 +97,25 @@ struct FeedListSection: View {
             }
         }
 
-        // News shows its line only when more wait; Podcasts always does, for Podcasts ↗.
-        let toggles = remaining > 0 || showsAll && staying > limit
-        if toggles || isEpisodes {
+        // Podcasts always shows its line, for Podcasts ↗; News for Refresh, which is left out while
+        // offline (the bar under the date says why).
+        let offersRefresh = refresh != nil && network?.isOffline != true
+        let toggles = !showsAll && remaining > 0 || showsAll && staying > limit
+        if !waiting && (toggles || isEpisodes || offersRefresh) {
             ListFooter(
-                hidden: remaining,
+                hidden: showsAll ? 0 : remaining,
                 phrase: { _ in "more" },
                 empty: nil,
                 showsAll: showsAll && staying > limit,
-                app: isEpisodes ? ListFooter.Link(title: "Podcasts ↗", spoken: "Open Podcasts") { openURL(ApplePodcasts.app) } : nil
+                showTitle: NewsRules.showMoreTitle(count: staying),
+                app: isEpisodes ? ListFooter.Link(title: "Podcasts ↗", spoken: "Open Podcasts") { openURL(ApplePodcasts.app) } : nil,
+                refresh: offersRefresh ? refresh.map { action in ListFooter.Link(title: "Refresh", spoken: "Refresh news", action: action) } : nil,
+                isRefreshing: isRefreshing
             ) {
+                let folding = showsAll
                 showsAll.toggle()
+                // Show less brings the list's title back when the reader had scrolled past it.
+                if folding { scrollHold?.bringBack(titleTop: titlePlace.top) }
             }
             .padding(.top, 4)
             .digestRow()
@@ -129,7 +127,7 @@ struct FeedListSection: View {
     private var isEpisodes: Bool { kind == .podcast }
 
     /// The first rows up to the limit, plus any closing up among them, which don't count.
-    private func visible(_ eligible: [Entry]) -> [Entry] {
+    private func visible(_ eligible: [Entry], limit: Int) -> [Entry] {
         var counted = 0
         return eligible.filter { entry in
             guard counted < limit else { return false }
@@ -142,15 +140,6 @@ struct FeedListSection: View {
 
     private var choices: [RowAction] { RowAction.choices(keepsHistory: !historyOff) }
 
-    private var emptyText: String {
-        switch (isEpisodes, isRefreshing) {
-        case (false, true): "Checking your feeds…"
-        case (false, false): "No new news right now."
-        case (true, true): "Checking your shows…"
-        case (true, false): "No new episodes right now."
-        }
-    }
-
     private struct Entry {
         var item: FeedItem
         var sourceName: String
@@ -158,16 +147,27 @@ struct FeedListSection: View {
         var status: ItemStatus
     }
 
+    /// True while offline, or while this list's last check couldn't connect.
+    private var isOffline: Bool { network?.isOffline == true || (isEpisodes ? podcastsOffline : newsOffline) }
+
+    private var emptyMessage: String {
+        if isOffline { return isEpisodes ? "New episodes will show once you're connected." : "New items will show once you're connected." }
+        return isEpisodes ? "No new episodes right now." : "Nothing new right now."
+    }
+
     private var eligibleEntries: [Entry] {
         let followed = Dictionary(
-            sources.filter { $0.kind == kind.rawValue && !$0.isMuted }.map { ($0.id, $0) },
-            uniquingKeysWith: { first, _ in first }
-        )
-        let readings = Dictionary(
-            states.map { ($0.itemID, NewsRules.Reading(status: $0.status, openedAt: $0.openedAt, resolvedAt: $0.resolvedAt)) },
+            sources.filter { $0.kind == kind.rawValue }.map { ($0.id, $0) },
             uniquingKeysWith: { first, _ in first }
         )
         let byID = Dictionary(items.map { ($0.itemID, $0) }, uniquingKeysWith: { first, _ in first })
+        // Only the records of items still on the device matter here, not the whole history.
+        let readings = Dictionary(
+            states.lazy
+                .filter { byID[$0.itemID] != nil }
+                .map { ($0.itemID, NewsRules.Reading(status: $0.status, openedAt: $0.openedAt, resolvedAt: $0.resolvedAt)) },
+            uniquingKeysWith: { first, _ in first }
+        )
         let candidates = items
             .filter { followed[$0.sourceID] != nil }
             .map { NewsRules.Candidate(itemID: $0.itemID, publishedAt: $0.publishedAt) }
@@ -211,9 +211,8 @@ struct FeedListSection: View {
         )
     }
 
-    private func actions(for entry: Entry) -> HeadlineActions {
+    private func actions(for entry: Entry, headline row: Headline) -> HeadlineActions {
         let item = entry.item
-        let row = self.headline(for: entry)
         let openAction: (() -> Void)?
         if isEpisodes {
             openAction = { openEpisode(entry) }

@@ -19,7 +19,6 @@ public final class Source {
     public var title: String = ""
     public var category: String?
     public var addedAt: Date = Date.now
-    public var isMuted: Bool = false
     public var sortOrder: Int = 0
     /// A podcast's Apple Podcasts id, so Open ↗ can open its episodes in the Podcasts app.
     public var appleID: String?
@@ -35,7 +34,7 @@ public final class Source {
     }
 }
 
-public enum SourceKind: String, Sendable {
+public enum SourceKind: String, Sendable, CaseIterable {
     case news, podcast
 }
 
@@ -56,7 +55,6 @@ public final class ItemState {
     public var statusRaw: String = ItemStatus.new.rawValue
     public var firstShownAt: Date?
     public var openedAt: Date?
-    public var readSeconds: Double?
     /// When the item left the digest (useful, not relevant or ignored).
     public var resolvedAt: Date?
 
@@ -131,6 +129,9 @@ public final class FeedItem {
     public var durationSeconds: Int?
     /// The item's guid from its feed, to find an episode in Apple Podcasts.
     public var guid: String?
+    /// True when the feed gave the item no date, so it was dated when first fetched. The feed may
+    /// list it again after it expires, so its record is kept even with reading history off.
+    public var undated: Bool = false
 
     public init(itemID: String, sourceID: String, title: String, link: String?, summary: String?, fullText: String? = nil, author: String?, publishedAt: Date, fetchedAt: Date = .now, durationSeconds: Int? = nil, guid: String? = nil) {
         self.durationSeconds = durationSeconds

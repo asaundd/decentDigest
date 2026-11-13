@@ -19,7 +19,7 @@ public enum ApplePodcasts {
               let url = URL(string: "https://itunes.apple.com/lookup?id=\(id)&entity=podcastEpisode&limit=200") else { return nil }
         var request = URLRequest(url: url, timeoutInterval: 10)
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        guard let fetched = try? await URLSession.shared.data(for: request),
+        guard let fetched = try? await WebSession.data(for: request),
               (fetched.1 as? HTTPURLResponse)?.statusCode == 200 else { return nil }
         return match(lookup: fetched.0, guid: guid, title: title)
     }
@@ -59,12 +59,19 @@ public enum ApplePodcasts {
 
     /// Searches Apple Podcasts for shows. Uses Apple's public search, which needs no key;
     /// only the typed words are sent. Shows without an https feed are left out.
-    public static func search(_ term: String) async -> [Show] {
+    /// - Throws: `Connectivity.Offline` when the device has no connection.
+    public static func search(_ term: String) async throws -> [Show] {
         guard let url = searchURL(term) else { return [] }
         var request = URLRequest(url: url, timeoutInterval: 10)
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        guard let fetched = try? await URLSession.shared.data(for: request),
-              (fetched.1 as? HTTPURLResponse)?.statusCode == 200 else { return [] }
+        let fetched: (Data, URLResponse)
+        do {
+            fetched = try await WebSession.data(for: request)
+        } catch {
+            if Connectivity.isOffline(error) { throw Connectivity.Offline() }
+            return []
+        }
+        guard (fetched.1 as? HTTPURLResponse)?.statusCode == 200 else { return [] }
         return shows(fromSearch: fetched.0)
     }
 
@@ -91,6 +98,95 @@ public enum ApplePodcasts {
                   seen.insert(feed).inserted else { return nil }
             return Show(id: String(id), title: title, author: result.artistName, feedURL: feed)
         }
+    }
+
+    // MARK: Top shows
+
+    /// How many chart shows setup and Settings offer.
+    public static let topLimit = 12
+
+    /// The most popular shows in Apple Podcasts right now, from Apple's public charts feed, which
+    /// needs no key; only the country code is sent. The chart doesn't carry feed addresses, so the
+    /// shows are then looked up by id (Apple's public lookup), keeping chart order and only shows
+    /// with an https feed.
+    /// - Parameter country: a two-letter region code; the US chart stands in when that region has none.
+    /// - Throws: `Connectivity.Offline` when the device has no connection.
+    public static func topShows(country: String?) async throws -> [Show] {
+        var regions = ["us"]
+        if let country = country?.lowercased(), country.count == 2, country != "us" {
+            regions.insert(country, at: 0)
+        }
+        for region in regions {
+            for url in chartURLs(country: region) {
+                guard let ids = try await chartIDs(from: url), !ids.isEmpty else { continue }
+                let shows = try await lookUpShows(ids: ids)
+                if !shows.isEmpty { return Array(shows.prefix(topLimit)) }
+            }
+        }
+        return []
+    }
+
+    /// Asks for 25 (one of the sizes the chart offers), since a few may lack an https feed. The second address is
+    /// the feed's older name, in case one of them is moved.
+    static func chartURLs(country: String) -> [URL] {
+        ["rss.marketingtools.apple.com", "rss.applemarketingtools.com"].compactMap {
+            URL(string: "https://\($0)/api/v2/\(country)/podcasts/top/25/podcasts.json")
+        }
+    }
+
+    /// The chart's show ids in order, or nil when this address didn't answer with a chart.
+    private static func chartIDs(from url: URL) async throws -> [String]? {
+        guard let data = try await fetch(url) else { return nil }
+        return chartIDs(fromChart: data)
+    }
+
+    /// Reads a chart response: the shows' Apple Podcasts ids, in chart order.
+    static func chartIDs(fromChart data: Data) -> [String]? {
+        guard let chart = try? JSONDecoder().decode(ChartResponse.self, from: data) else { return nil }
+        return chart.feed.results.compactMap { Int($0.id).map(String.init) }
+    }
+
+    private static func lookUpShows(ids: [String]) async throws -> [Show] {
+        var components = URLComponents(string: "https://itunes.apple.com/lookup")
+        components?.queryItems = [
+            URLQueryItem(name: "id", value: ids.joined(separator: ",")),
+            URLQueryItem(name: "entity", value: "podcast"),
+        ]
+        guard let url = components?.url, let data = try await fetch(url) else { return [] }
+        return inChartOrder(shows(fromSearch: data), ids: ids)
+    }
+
+    /// The looked-up shows in the chart's order (the lookup may answer in its own).
+    static func inChartOrder(_ shows: [Show], ids: [String]) -> [Show] {
+        let rank = Dictionary(ids.enumerated().map { ($0.element, $0.offset) }, uniquingKeysWith: { first, _ in first })
+        return shows
+            .filter { rank[$0.id] != nil }
+            .sorted { rank[$0.id, default: .max] < rank[$1.id, default: .max] }
+    }
+
+    /// A JSON answer, nil for anything but a 200, or `Connectivity.Offline` with no connection.
+    private static func fetch(_ url: URL) async throws -> Data? {
+        var request = URLRequest(url: url, timeoutInterval: 10)
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        do {
+            let (data, response) = try await WebSession.data(for: request)
+            return (response as? HTTPURLResponse)?.statusCode == 200 ? data : nil
+        } catch {
+            if Connectivity.isOffline(error) { throw Connectivity.Offline() }
+            return nil
+        }
+    }
+
+    private struct ChartResponse: Decodable {
+        struct Feed: Decodable {
+            var results: [Entry]
+        }
+
+        struct Entry: Decodable {
+            var id: String
+        }
+
+        var feed: Feed
     }
 
     private struct SearchResponse: Decodable {

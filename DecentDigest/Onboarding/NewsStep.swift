@@ -13,7 +13,7 @@ struct NewsStep: View {
     @Query private var sources: [Source]
 
     private var followed: [Source] {
-        sources.filter { $0.kind == SourceKind.news.rawValue && !$0.isMuted }
+        sources.filter { $0.kind == SourceKind.news.rawValue }
     }
 
     var body: some View {
@@ -56,6 +56,7 @@ struct NewsPicker: View {
 
     @Environment(SearchReveal.self) private var reveal: SearchReveal?
     @Environment(\.modelContext) private var context
+    @Environment(NetworkStatus.self) private var network: NetworkStatus?
     @Query(sort: \Source.sortOrder) private var sources: [Source]
 
     @State private var text = ""
@@ -64,13 +65,14 @@ struct NewsPicker: View {
     /// The last change to the box came in all at once, as a paste does.
     @State private var arrivedWhole = false
     @State private var notFound = false
+    @State private var isOffline = false
     @State private var openTopics: Set<String> = []
     @State private var fullTopics: Set<String> = []
     @State private var showsAllFollowed = false
     @FocusState private var searchFocused: Bool
 
     private var followed: [Source] {
-        sources.filter { $0.kind == SourceKind.news.rawValue && !$0.isMuted }
+        sources.filter { $0.kind == SourceKind.news.rawValue }
     }
 
     /// Sites followed by name or address rather than from a topic.
@@ -84,12 +86,13 @@ struct NewsPicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SearchBox(placeholder: "Search, or paste a site or feed address", text: $text, isFocused: $searchFocused, keyboard: .webSearch, submitLabel: .search, offersPaste: true) {
+            SearchBox(placeholder: "Search, or paste an address", text: $text, isFocused: $searchFocused, keyboard: .webSearch, submitLabel: .search, offersPaste: true) {
                 searchFocused = false
             }
             .onChange(of: text) { old, new in
                 found = nil
                 notFound = false
+                isOffline = false
                 // Several characters at once means a paste (or autofill), not typing.
                 arrivedWhole = new.count - old.count > 3
             }
@@ -97,6 +100,10 @@ struct NewsPicker: View {
             // the reader only has to tap Follow.
             .task(id: query) {
                 await lookUp(query)
+            }
+            // Offline, the library can still be searched; only adding a site by its address can't.
+            if network?.isOffline == true {
+                OfflineNote(text: OfflineMessage.newsSearch)
             }
 
             // Search mode starts with the tap, not the first letter: the lists step aside for a
@@ -138,17 +145,10 @@ struct NewsPicker: View {
             }
         }
         if inSettings && query.isEmpty && followed.count > 4 {
-            HStack(spacing: 6) {
-                if shown.count < followed.count {
-                    Text("\(followed.count - shown.count) more")
-                        .foregroundStyle(Theme.secondary)
-                    Text("·")
-                        .foregroundStyle(Theme.secondary)
-                        .accessibilityHidden(true)
-                }
-                TextLink(showsAllFollowed ? "Show less" : "Show all") { showsAllFollowed.toggle() }
+            // The same footer line as the digest's lists.
+            ListFooter(hidden: followed.count - shown.count, phrase: { _ in "more" }, empty: nil, showsAll: showsAllFollowed, app: nil) {
+                showsAllFollowed.toggle()
             }
-            .font(.subheadline)
             .padding(.top, 2)
         }
     }
@@ -264,6 +264,8 @@ struct NewsPicker: View {
                     }
                 } else if isLooking {
                     quiet("Looking for a feed…")
+                } else if isOffline {
+                    quiet("Adding a new site by its address requires a connection.")
                 } else if notFound {
                     quiet("No feed found at that address. Try the site's feed address instead.")
                 }
@@ -280,6 +282,11 @@ struct NewsPicker: View {
             isLooking = false
             return
         }
+        guard network?.isOffline != true else {
+            isLooking = false
+            isOffline = true
+            return
+        }
         isLooking = true
         // A pasted address is looked up at once; a typed one waits for a pause. (Yield first so
         // the change handler has marked how the text arrived.)
@@ -289,12 +296,20 @@ struct NewsPicker: View {
         } catch {
             return
         }
-        let result = await FeedFinder.find(address)
+        let result: FoundFeed?
+        var offline = false
+        do {
+            result = try await FeedFinder.find(address)
+        } catch {
+            result = nil
+            offline = true
+        }
         // The reader may have typed something else meanwhile.
         guard !Task.isCancelled, query == address else { return }
         isLooking = false
         found = result
-        notFound = result == nil
+        isOffline = offline
+        notFound = result == nil && !offline
     }
 
     // MARK: Rows
@@ -318,6 +333,7 @@ struct NewsPicker: View {
         text = ""
         found = nil
         notFound = false
+        isOffline = false
         searchFocused = false
     }
 

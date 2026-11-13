@@ -10,7 +10,10 @@ enum Theme {
     static let ink = Color(light: 0x1A1D1E, dark: 0xECEDEA)
     static let secondary = Color(light: 0x6F7573, dark: 0xA3A8A5)
     static let rule = Color(light: 0xDFE0DC, dark: 0x343937)
-    static let accent = Color(light: 0x3C3C4C, dark: 0xCECED5)
+    /// Links and actions: a gray blue, so a link reads as one at a glance.
+    static let accent = Color(light: 0x4A5D73, dark: 0xB8C4D2)
+    /// The logo and the full-width buttons in setup (Get started, Continue, Open my digest).
+    static let slate = Color(light: 0x3C3C4C, dark: 0xCECED5)
     /// Events and to-dos under a day's name: a touch lighter than ink, so the day names lead.
     static let itemInk = Color(light: 0x3A3F40, dark: 0xD3D5D1)
     /// Events that are over and to-dos just checked off: lighter than secondary, struck through.
@@ -55,7 +58,6 @@ enum Theme {
     // Spacing
     static let margin: CGFloat = 24
     static let ruleSpacing: CGFloat = 24
-    static let titleToList: CGFloat = 6
     /// From a section title to the first line of News, Podcasts, Saved, Calendar or To do.
     static let titleToFirstItem: CGFloat = 11
 
@@ -63,7 +65,7 @@ enum Theme {
     static let dateFont = Font.custom("Georgia", size: 30, relativeTo: .largeTitle)
     static let sectionTitleFont = Font.custom("Georgia", size: 22, relativeTo: .title2)
     static let wordmarkFont = Font.footnote
-    /// Section actions such as Refresh: slate, semibold, underlined.
+    /// Links and actions in cards, the panel and Settings: slate, semibold, underlined.
     static let actionFont = Font.subheadline.weight(.semibold)
     static let ribbonIconFont = Font.subheadline
 }

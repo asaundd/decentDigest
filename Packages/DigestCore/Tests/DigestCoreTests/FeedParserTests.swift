@@ -247,3 +247,27 @@ private func data(_ string: String) -> Data { Data(string.utf8) }
     #expect(clipped.hasSuffix("word…"))
     #expect(PostKind.clipForRow("Short.") == "Short.")
 }
+
+@Test func aHugeFeedKeepsOnlyItsNewestItems() {
+    let start = Date(timeIntervalSince1970: 1_800_000_000)
+    let items = (0..<10).map { ParsedItem(guid: "\($0)", title: "Item \($0)", published: start.addingTimeInterval(Double($0 % 5) * 60 + Double($0))) }
+    let kept = FeedParser.newest(items, limit: 4)
+    #expect(kept.map(\.guid) == ["3", "4", "8", "9"])
+    #expect(FeedParser.newest(items, limit: 20).count == 10)
+}
+
+@Test func webRequestsKeepNoCookiesOrCache() {
+    let config = WebSession.shared.configuration
+    #expect(config.httpShouldSetCookies == false)
+    #expect(config.httpCookieAcceptPolicy == .never)
+    #expect(config.urlCache == nil)
+    #expect(config.timeoutIntervalForResource == WebSession.maxSeconds)
+}
+
+@Test func authorEmailsBecomeNames() {
+    #expect(FeedParser.authorName("jane@site.com (Jane Doe)") == "Jane Doe")
+    #expect(FeedParser.authorName("Jane Doe <jane@site.com>") == "Jane Doe")
+    #expect(FeedParser.authorName("noreply@site.com") == nil)
+    #expect(FeedParser.authorName("Jane Doe") == "Jane Doe")
+    #expect(FeedParser.authorName("Jane Doe (guest)") == "Jane Doe (guest)")
+}
