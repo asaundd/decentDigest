@@ -26,7 +26,7 @@ struct WeatherLines: View {
             forecast(report, place: place, unit: .current())
         } else if model.hasPlaceSource, offline {
             // Weather is on, but no forecast has ever arrived.
-            Text("Offline. Weather will show once you're connected.")
+            Text("Weather will show once you're connected.")
                 .font(.subheadline)
                 .foregroundStyle(Theme.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
