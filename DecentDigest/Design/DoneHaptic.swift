@@ -20,13 +20,13 @@ enum DoneHaptic: String, CaseIterable, Identifiable {
     case sharpClick
 
     /// What the app plays. Debug builds can try the others in Design lab.
-    static let standard: DoneHaptic = .rigid
+    static let standard: DoneHaptic = .sharpClick
 
     var id: String { rawValue }
 
     var name: String {
         switch self {
-        case .light: "Light (current)"
+        case .light: "Light"
         case .rigid: "Rigid"
         case .rigidFull: "Rigid, full strength"
         case .medium: "Medium"
