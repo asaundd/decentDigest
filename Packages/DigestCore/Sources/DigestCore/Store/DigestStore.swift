@@ -25,7 +25,8 @@ public enum DigestStore {
         return try ModelContainer(for: Schema(syncedModels + localModels), configurations: [synced, local])
     }
 
-    /// An in-memory container filled with sample headlines and episodes, for previews.
+    /// An in-memory container filled with sample headlines and episodes, for previews and the
+    /// debug-only demo mode used for screenshots.
     @MainActor
     public static func previewContainer(now: Date = .now) -> ModelContainer {
         do {
@@ -49,19 +50,25 @@ public enum DigestStore {
                     title: entry.title,
                     link: "https://example.com/\(entry.id)",
                     summary: entry.summary,
-                    author: nil,
+                    author: sampleAuthors[entry.id],
                     publishedAt: entry.published,
-                    durationSeconds: kind == .podcast ? 58 * 60 : nil
+                    durationSeconds: sampleMinutes[entry.id].map { $0 * 60 }
                 ))
             }
             if let last = sample.news.last, let source = sources[last.sourceName] {
                 context.insert(ItemState(itemID: last.id, sourceID: source.id, status: .read, firstShownAt: now))
             }
-            context.insert(SavedItem(itemID: "saved-1", sourceID: "", sourceTitle: "Stratechery", title: "The long view on platform shifts", link: "https://example.com/saved-1", summary: "A sample saved headline.", author: "Ben Thompson", publishedAt: now.addingTimeInterval(-3 * 86_400)))
+            context.insert(SavedItem(itemID: "saved-1", sourceID: "", sourceTitle: "Simon Willison's Weblog", title: "Browse tools.simonwillison.net by tag", link: "https://example.com/saved-1", summary: "The home page of a collection of small single-purpose web tools can now be browsed by the libraries and browser features each one uses.", author: nil, publishedAt: now.addingTimeInterval(-3 * 86_400)))
             return container
         } catch {
             fatalError("Preview container failed: \(error)")
         }
     }
+
+    private static let sampleAuthors = [
+        "n1": "Jonathan Wosen", "n3": "Claire Vo", "n4": "James O'Donnell", "n5": "Meghana Keshavan", "n7": "James O'Donnell",
+    ]
+
+    private static let sampleMinutes = ["p1": 17, "p2": 86, "p3": 59]
 }
 #endif
