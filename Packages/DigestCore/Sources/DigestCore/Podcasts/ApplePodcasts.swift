@@ -25,6 +25,7 @@ public enum ApplePodcasts {
     }
 
     /// Picks the episode out of a lookup response: by guid, then by title; else the show's own page.
+    /// A link that isn't https is ignored.
     static func match(lookup data: Data, guid: String?, title: String) -> URL? {
         guard let response = try? JSONDecoder().decode(LookupResponse.self, from: data) else { return nil }
         let episodes = response.results.filter { $0.wrapperType == "podcastEpisode" }
@@ -32,7 +33,8 @@ public enum ApplePodcasts {
         let episode = episodes.first { guid != nil && $0.episodeGuid == guid }
             ?? episodes.first { $0.trackName.map(normalized) == wantedTitle }
         let link = episode?.trackViewUrl ?? response.results.first { $0.wrapperType == "track" }?.collectionViewUrl
-        return link.flatMap(URL.init(string:))
+        // Only an https link is opened, whatever the response says.
+        return link.flatMap(URL.init(string:)).flatMap { $0.scheme?.lowercased() == "https" ? $0 : nil }
     }
 
     // MARK: Search

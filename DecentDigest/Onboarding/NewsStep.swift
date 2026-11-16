@@ -58,6 +58,7 @@ struct NewsPicker: View {
     @Environment(\.modelContext) private var context
     @Environment(NetworkStatus.self) private var network: NetworkStatus?
     @Query(sort: \Source.sortOrder) private var sources: [Source]
+    @Query private var fetchStates: [FetchState]
 
     @State private var text = ""
     @State private var found: FoundFeed?
@@ -137,8 +138,10 @@ struct NewsPicker: View {
     private func followingList(_ followed: [Source], heading: String, limit: Int?) -> some View {
         let shown = limit.map { Array(followed.prefix($0)) } ?? followed
         ListHeading(heading)
+        let failing = inSettings ? FetchState.failing(fetchStates) : []
         ForEach(shown) { source in
-            ChoiceRow(title: source.title, subtitle: categoryName(source.category) ?? (heading == "Added by you" ? Self.host(source.siteURL ?? source.feedURL) : "Added by you"), emphasized: !inSettings) {
+            let usual = categoryName(source.category) ?? (heading == "Added by you" ? Self.host(source.siteURL ?? source.feedURL) : "Added by you")
+            ChoiceRow(title: source.title, subtitle: failing.contains(source.id) ? "Couldn't load" : usual, emphasized: !inSettings) {
                 FollowLink(title: source.title, isFollowing: true) {
                     Following.unfollow(source.feedURL, kind: .news, in: context)
                 }

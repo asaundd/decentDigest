@@ -12,7 +12,7 @@ public enum HTMLText {
         text = text.replacingOccurrences(of: "</(p|div|h[1-6]|blockquote|pre|ul|ol)>", with: "\n\n", options: [.regularExpression, .caseInsensitive])
         text = text.replacingOccurrences(of: "<li[^>]*>", with: "\n– ", options: [.regularExpression, .caseInsensitive])
         text = text.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
-        text = decodeEntities(text)
+        text = removeInvisible(decodeEntities(text))
         let lines = text.components(separatedBy: "\n").map {
             $0.replacingOccurrences(of: "[ \\t\u{00A0}]+", with: " ", options: .regularExpression)
                 .trimmingCharacters(in: .whitespaces)
@@ -33,7 +33,7 @@ public enum HTMLText {
             text = text.replacingOccurrences(of: "<\(tag)[^>]*>[\\s\\S]*?</\(tag)>", with: " ", options: [.regularExpression, .caseInsensitive])
         }
         text = text.replacingOccurrences(of: "<[^>]+>", with: " ", options: .regularExpression)
-        text = decodeEntities(text)
+        text = removeInvisible(decodeEntities(text))
         // A second pass catches tags that were entity-encoded (e.g. &lt;p&gt;).
         text = text.replacingOccurrences(of: "<[^>]+>", with: " ", options: .regularExpression)
         text = text.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
@@ -48,6 +48,26 @@ public enum HTMLText {
             }
         }
         return text
+    }
+
+    /// Drops characters a feed could use to make text display misleadingly: control characters
+    /// (other than line breaks and tabs), the marks that override or isolate text direction, and
+    /// invisible zero-width spaces. The joiners that emoji and some scripts need are kept.
+    static func removeInvisible(_ text: String) -> String {
+        var scalars = String.UnicodeScalarView()
+        scalars.append(contentsOf: text.unicodeScalars.lazy.filter { !isInvisible($0) })
+        return String(scalars)
+    }
+
+    private static func isInvisible(_ scalar: Unicode.Scalar) -> Bool {
+        switch scalar.value {
+        case 0x09, 0x0A, 0x0D: return false
+        case 0x00...0x1F, 0x7F...0x9F: return true   // control characters
+        case 0x061C, 0x200E, 0x200F: return true      // direction marks
+        case 0x202A...0x202E, 0x2066...0x2069: return true  // direction overrides and isolates
+        case 0x200B, 0x2060, 0xFEFF: return true      // zero-width space, word joiner, byte order mark
+        default: return false
+        }
     }
 
     private static let named: [String: String] = [

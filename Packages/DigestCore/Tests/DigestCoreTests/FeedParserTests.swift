@@ -271,3 +271,38 @@ private func data(_ string: String) -> Data { Data(string.utf8) }
     #expect(FeedParser.authorName("Jane Doe") == "Jane Doe")
     #expect(FeedParser.authorName("Jane Doe (guest)") == "Jane Doe (guest)")
 }
+
+@Test func invisibleCharactersAreRemoved() {
+    // A right-to-left override would make "gnp.exe" display as "exe.png".
+    #expect(HTMLText.plain("Photo\u{202E}gnp.exe") == "Photognp.exe")
+    #expect(HTMLText.plain("Zero\u{200B}width and \u{0007}bell &#x202E;") == "Zerowidth and bell")
+    // The joiner inside an emoji stays.
+    #expect(HTMLText.plain("Family 👨\u{200D}👩\u{200D}👧") == "Family 👨\u{200D}👩\u{200D}👧")
+    #expect(HTMLText.paragraphs("<p>One\u{2066}</p><p>Two\u{FEFF}</p>") == "One\n\nTwo")
+}
+
+@Test func hostileFeedsAreReadSafely() throws {
+    // A "billion laughs" feed: entities that expand into each other. The parser must not expand
+    // them into the title, or load the outside file the second entity names.
+    let xml = """
+    <?xml version="1.0"?>
+    <!DOCTYPE rss [
+      <!ENTITY a "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa">
+      <!ENTITY b "&a;&a;&a;&a;&a;&a;&a;&a;&a;&a;">
+      <!ENTITY c "&b;&b;&b;&b;&b;&b;&b;&b;&b;&b;">
+      <!ENTITY d "&c;&c;&c;&c;&c;&c;&c;&c;&c;&c;">
+      <!ENTITY e "&d;&d;&d;&d;&d;&d;&d;&d;&d;&d;">
+      <!ENTITY secret SYSTEM "file:///etc/passwd">
+    ]>
+    <rss version="2.0"><channel><title>Feed</title>
+    <item><title>Boom &e;</title><link>https://example.com/1</link><description>&secret;</description></item>
+    </channel></rss>
+    """
+    // Either the parser refuses the feed or it reads it without the expansions; it must not hang or crash.
+    if let feed = try? FeedParser.parse(Data(xml.utf8)) {
+        for item in feed.items {
+            #expect(item.title.count < 1_000)
+            #expect(!(item.summary ?? "").contains("root:"))
+        }
+    }
+}

@@ -124,3 +124,12 @@ private let search = """
     #expect(items.first { $0.name == "media" }?.value == "podcast")
     #expect(ApplePodcasts.searchURL("   ") == nil)
 }
+
+@Test func onlyHTTPSEpisodeLinksAreOpened() {
+    let lookup = """
+    {"resultCount":1,"results":[
+     {"wrapperType":"podcastEpisode","kind":"podcast-episode","trackName":"Plain","episodeGuid":"g","trackViewUrl":"http://podcasts.apple.com/us/podcast/x/id1?i=2"}
+    ]}
+    """
+    #expect(ApplePodcasts.match(lookup: Data(lookup.utf8), guid: "g", title: "Plain") == nil)
+}
