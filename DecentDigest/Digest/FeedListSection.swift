@@ -24,7 +24,6 @@ struct FeedListSection: View {
     @Query private var sources: [Source]
     @Query private var states: [ItemState]
     @AppStorage(NewsRefresher.listStartedAtKey) private var listStartedAt: Double = 0
-    @AppStorage(DigestPreferences.readingHistoryOffKey) private var historyOff = false
     @AppStorage(NewsRefresher.offlineKey(.news)) private var newsOffline = false
     @AppStorage(NewsRefresher.offlineKey(.podcast)) private var podcastsOffline = false
 
@@ -38,6 +37,8 @@ struct FeedListSection: View {
     /// Rows closing up as they leave. They no longer count toward the rows shown, so the next one
     /// joins while they close and the list below them doesn't move twice.
     @State private var closing: Set<String> = []
+    /// News' Clear all: the rows on screen and every row, as they were when it was tapped.
+    @State private var clearing: Clearing?
 
     var body: some View {
         let eligible = eligibleEntries
@@ -90,7 +91,7 @@ struct FeedListSection: View {
             .leaveSwipe(choices, request: leaving[entry.item.itemID], closing: {
                 closing.insert(entry.item.itemID)
             }) { choice in
-                finish(entry.item, as: choice)
+                finish(entry, as: choice)
             }
             .onAppear {
                 ReadingState.markShown(itemID: entry.item.itemID, sourceID: entry.item.sourceID, in: context)
@@ -101,7 +102,9 @@ struct FeedListSection: View {
         // offline (the bar under the date says why).
         let offersRefresh = refresh != nil && network?.isOffline != true
         let toggles = !showsAll && remaining > 0 || showsAll && staying > limit
-        if !waiting && (toggles || isEpisodes || offersRefresh) {
+        // News' Clear all marks the whole list read at once, after a question.
+        let offersClear = !isEpisodes && staying > 0
+        if !waiting && (toggles || isEpisodes || offersRefresh || offersClear) {
             ListFooter(
                 hidden: showsAll ? 0 : remaining,
                 phrase: { _ in "more" },
@@ -109,6 +112,14 @@ struct FeedListSection: View {
                 showsAll: showsAll && staying > limit,
                 showTitle: NewsRules.showMoreTitle(count: staying),
                 app: isEpisodes ? ListFooter.Link(title: "Podcasts ↗", spoken: "Open Podcasts") { openURL(ApplePodcasts.app) } : nil,
+                clear: offersClear ? ListFooter.Link(title: "Clear all", spoken: "Clear all news items") {
+                    let open = eligible.filter { !closing.contains($0.item.itemID) && leaving[$0.item.itemID] == nil }
+                    let onScreen = Set(shown.map(\.item.itemID))
+                    clearing = Clearing(
+                        visible: open.filter { onScreen.contains($0.item.itemID) }.map(\.item),
+                        all: open.map(\.item)
+                    )
+                } : nil,
                 refresh: offersRefresh ? refresh.map { action in ListFooter.Link(title: "Refresh", spoken: "Refresh news", action: action) } : nil,
                 isRefreshing: isRefreshing
             ) {
@@ -119,10 +130,28 @@ struct FeedListSection: View {
             }
             .padding(.top, 4)
             .digestRow()
+            .alert("Clear news items?", isPresented: clearingBinding, presenting: clearing) { clearing in
+                if clearing.visible.count < clearing.all.count {
+                    Button("Clear all visible (\(clearing.visible.count))", role: .destructive) { clear(clearing.visible) }
+                }
+                Button("Clear all (\(clearing.all.count))", role: .destructive) { clear(clearing.all) }
+                Button("Cancel", role: .cancel) {}
+            } message: { _ in
+                Text("Cleared items are marked read and leave the list. Saved items stay.")
+            }
         }
     }
 
     // MARK: Data
+
+    private struct Clearing {
+        var visible: [FeedItem]
+        var all: [FeedItem]
+    }
+
+    private var clearingBinding: Binding<Bool> {
+        Binding(get: { clearing != nil }, set: { if !$0 { clearing = nil } })
+    }
 
     private var isEpisodes: Bool { kind == .podcast }
 
@@ -138,7 +167,7 @@ struct FeedListSection: View {
 
     private var limit: Int { isEpisodes ? PodcastRules.itemsShown : NewsRules.itemsShown }
 
-    private var choices: [RowAction] { RowAction.choices(keepsHistory: !historyOff) }
+    private var choices: [RowAction] { RowAction.choices(canSave: true) }
 
     private struct Entry {
         var item: FeedItem
@@ -222,7 +251,6 @@ struct FeedListSection: View {
             openAction = nil
         }
         var actions = HeadlineActions(
-            save: { save(item, sourceName: entry.sourceName) },
             choices: choices,
             choose: { leaving[item.itemID] = $0 },
             open: openAction,
@@ -275,20 +303,30 @@ struct FeedListSection: View {
         EpisodeLink.open(showID: entry.appleID, guid: item.guid, title: item.title, fallback: item.linkURL, with: openURL)
     }
 
-    private func save(_ item: FeedItem, sourceName: String) {
+    /// Clear all: marks each item read, and the rows go together while the rows below slide up.
+    private func clear(_ cleared: [FeedItem]) {
         scrollHold?.hold()
-        // The row is gone at once; the rows below slide up briefly to close the gap.
         withAnimation(HeadlineMotion.close) {
-            ReadingState.save(item, sourceTitle: sourceName, kind: kind, in: context)
+            for item in cleared {
+                expandedIDs.remove(item.itemID)
+                ReadingState.resolve(itemID: item.itemID, sourceID: item.sourceID, as: .read, in: context)
+            }
         }
     }
 
-    /// Records the action once the row has played its leaving animation and closed up.
-    private func finish(_ item: FeedItem, as choice: RowAction) {
+    /// Records the action once the row has played its leaving animation and closed up: Save moves it
+    /// to Saved, ✓ Read marks it done.
+    private func finish(_ entry: Entry, as choice: RowAction) {
+        let item = entry.item
         leaving[item.itemID] = nil
         expandedIDs.remove(item.itemID)
         withAnimation(HeadlineMotion.close) {
-            ReadingState.resolve(itemID: item.itemID, sourceID: item.sourceID, as: choice.status, in: context)
+            switch choice {
+            case .save:
+                ReadingState.save(item, sourceTitle: entry.sourceName, kind: kind, in: context)
+            case .read:
+                ReadingState.resolve(itemID: item.itemID, sourceID: item.sourceID, as: .read, in: context)
+            }
         }
     }
 }

@@ -72,9 +72,8 @@ struct Headline: Identifiable {
 
 /// The actions a headline offers. A nil action is left out.
 struct HeadlineActions {
-    var save: (() -> Void)?
-    /// ↓ Not relevant and ↑ Relevant, in the swipe's order, or ✓ Read alone when reading history is off.
-    var choices: [RowAction] = RowAction.choices(keepsHistory: true)
+    /// Save then ✓ Read, in the swipe's order, or ✓ Read alone in Saved.
+    var choices: [RowAction] = RowAction.choices(canSave: true)
     /// Plays the row's leaving animation, then records the action.
     var choose: (RowAction) -> Void
     /// Opens the panel. When present it is the ribbon's first action.
@@ -147,9 +146,6 @@ struct HeadlineRow: View {
                 ForEach(Array(actions.choices.reversed()), id: \.self) { choice in
                     Button(choice.label) { actions.choose(choice) }
                 }
-                if let save = actions.save {
-                    Button("Save", action: save)
-                }
             }
 
             if isExpanded {
@@ -179,7 +175,7 @@ struct HeadlineRow: View {
             .foregroundStyle(Theme.secondary)
     }
 
-    /// The card: byline with Save, ↓ and ↑ at the top right where the thumb is, then the text,
+    /// The card: byline with Save and ✓ Read at the top right where the thumb is, then the text,
     /// then the way to read it.
     private var expandedDetail: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -223,7 +219,7 @@ struct HeadlineRow: View {
 }
 
 /// The actions pinned at the bottom of the panel: Open ↗ and Share first, then small square
-/// buttons for Save, ↑ (relevant) and ↓ (not relevant), or ✓ Read.
+/// buttons for Save and ✓ Read, or ✓ Read alone.
 struct ActionRibbon: View {
     var actions: HeadlineActions
     /// Space before the first action.
@@ -288,16 +284,12 @@ struct ActionLinks: View {
     }
 }
 
-/// Small square buttons for Save (when offered), then ↓ Not relevant and ↑ Relevant (the same order as
-/// the swipe), or ✓ Read when reading history is off.
+/// Small square buttons for Save (when offered), then ✓ Read, in the swipe's order.
 struct ActionButtons: View {
     var actions: HeadlineActions
 
     var body: some View {
         HStack(spacing: 0) {
-            if let save = actions.save {
-                RibbonButton(systemImage: "bookmark", label: "Save", action: save)
-            }
             ForEach(actions.choices, id: \.self) { choice in
                 RibbonButton(systemImage: choice.symbol, label: choice.label) { actions.choose(choice) }
             }

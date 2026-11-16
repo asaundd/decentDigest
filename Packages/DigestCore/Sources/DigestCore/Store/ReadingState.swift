@@ -19,8 +19,7 @@ public enum ReadingState {
         try? context.save()
     }
 
-    /// Relevant, Not relevant, or Read when reading history is off: the item leaves its list, or Saved
-    /// if it was saved.
+    /// ✓ Read or Clear all: the item leaves its list, or Saved if it was saved.
     public static func resolve(itemID: String, sourceID: String, as status: ItemStatus, in context: ModelContext, now: Date = .now) {
         let state = stateOrNew(itemID: itemID, sourceID: sourceID, in: context, now: now)
         state.status = status

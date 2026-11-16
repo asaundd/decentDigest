@@ -17,7 +17,6 @@ struct SavedSectionView: View {
     /// Only the records of saved items, not the whole reading history.
     @Query(filter: #Predicate<ItemState> { $0.statusRaw == "saved" }) private var states: [ItemState]
     @Query private var sources: [Source]
-    @AppStorage(DigestPreferences.readingHistoryOffKey) private var historyOff = false
 
     /// Open rows stay open until the reader closes them.
     @State private var expandedIDs: Set<String> = []
@@ -173,7 +172,8 @@ struct SavedSectionView: View {
         EpisodeLink.open(showID: showID, guid: item.guid, title: item.title, fallback: item.linkURL, with: openURL)
     }
 
-    private var choices: [RowAction] { RowAction.choices(keepsHistory: !historyOff) }
+    /// Already saved, so ✓ Read is the only action.
+    private var choices: [RowAction] { RowAction.choices(canSave: false) }
 
     /// Records the action once the row has played its leaving animation and closed up.
     private func finish(_ item: SavedItem, as choice: RowAction) {
@@ -182,7 +182,7 @@ struct SavedSectionView: View {
         leaving[itemID] = nil
         expandedIDs.remove(itemID)
         withAnimation(HeadlineMotion.close) {
-            ReadingState.resolve(itemID: itemID, sourceID: sourceID, as: choice.status, in: context)
+            ReadingState.resolve(itemID: itemID, sourceID: sourceID, as: .read, in: context)
         }
     }
 }
