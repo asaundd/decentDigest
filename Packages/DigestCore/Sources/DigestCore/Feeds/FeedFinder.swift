@@ -38,8 +38,18 @@ public enum FeedFinder {
             trimmed = "https://" + trimmed
         }
         guard let url = URL(string: trimmed), let host = url.host(), host.contains("."),
-              !host.hasPrefix("."), !host.hasSuffix(".") else { return nil }
+              !host.hasPrefix("."), !host.hasSuffix("."), isPublicHost(host) else { return nil }
         return url
+    }
+
+    /// False for a numeric address (like 192.168.1.1), "localhost" or a ".local" name: a feed lives on
+    /// a public site, so the finder never reaches into the reader's own network.
+    public static func isPublicHost(_ host: String) -> Bool {
+        let host = host.lowercased()
+        if host.contains(":") || host.hasPrefix("[") { return false }   // IPv6
+        if host.allSatisfy({ $0.isNumber || $0 == "." }) { return false }   // IPv4
+        if host == "localhost" || host.hasSuffix(".localhost") || host.hasSuffix(".local") { return false }
+        return true
     }
 
     /// True when the text reads as an address rather than words to search for.
@@ -62,6 +72,7 @@ public enum FeedFinder {
                   let href = attribute("href", in: tag),
                   let url = URL(string: decodeEntities(href), relativeTo: base)?.absoluteURL,
                   url.scheme?.lowercased() == "https",
+                  let host = url.host(), isPublicHost(host),
                   !found.contains(url) else { continue }
             found.append(url)
         }
@@ -93,7 +104,7 @@ public enum FeedFinder {
     // MARK: Private
 
     private static func tryCommonPaths(near url: URL, session: URLSession) async throws -> FoundFeed? {
-        guard let host = url.host() else { return nil }
+        guard let host = url.host(), isPublicHost(host) else { return nil }
         for path in commonPaths {
             guard let candidate = URL(string: "https://\(host)\(path)"),
                   let fetched = try await download(candidate, session: session),

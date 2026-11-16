@@ -9,12 +9,35 @@ struct DecentDigestApp: App {
     private let refresher: NewsRefresher
     private let agenda: AgendaModel
     private let weather: WeatherModel
-    private let preferences = DigestPreferences()
+    private let preferences: DigestPreferences
     private let network = NetworkStatus()
+    /// True in demo mode: sample content for screenshots, kept in memory (debug builds only).
+    private let isDemo: Bool
     /// True when the saved data couldn't be opened: the app says so instead of showing an empty digest.
     private let storageFailed: Bool
 
     init() {
+        #if DEBUG
+        // Edit Scheme › Run › Arguments: -demo fills the page with sample weather, events, to-dos,
+        // news and episodes for screenshots. Nothing is read from or saved to the reader's data.
+        if ProcessInfo.processInfo.arguments.contains("-demo") {
+            let defaults = UserDefaults(suiteName: "demo") ?? .standard
+            defaults.removePersistentDomain(forName: "demo")
+            let preferences = DigestPreferences(defaults: defaults)
+            preferences.finishSetup()
+            let container = DigestStore.previewContainer()
+            self.isDemo = true
+            self.storageFailed = false
+            self.container = container
+            self.refresher = NewsRefresher(container: container)
+            self.preferences = preferences
+            self.agenda = AgendaModel(source: SampleAgendaSource(), defaults: defaults)
+            self.weather = WeatherModel(provider: SampleWeatherProvider(), places: SamplePlaces(), defaults: defaults)
+            return
+        }
+        #endif
+        isDemo = false
+        preferences = DigestPreferences()
         var container: ModelContainer?
         #if DEBUG
         // Edit Scheme › Run › Arguments: -simulateStorageFailure shows the message below.
@@ -55,7 +78,11 @@ struct DecentDigestApp: App {
     }
 
     private var digest: some View {
-        DigestView(agenda: agenda, weather: weather, preferences: preferences, refresh: { [refresher] force, kind in await refresher.refresh(force: force, only: kind) })
+        DigestView(agenda: agenda, weather: weather, preferences: preferences, refresh: { [refresher, isDemo] force, kind in
+            // Demo mode never fetches: its sample feeds aren't real.
+            guard !isDemo else { return }
+            await refresher.refresh(force: force, only: kind)
+        })
     }
 }
 

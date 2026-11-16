@@ -108,3 +108,12 @@ import Testing
     #expect(NewsRules.showMoreTitle(count: 25) == "Show all")
     #expect(NewsRules.showMoreTitle(count: 26) == "Show 25")
 }
+
+@Test func failingFeedsWaitLongerEachTime() {
+    #expect(NewsRules.retryInterval(failures: 0) == 15 * 60)
+    #expect(NewsRules.retryInterval(failures: 1) == 30 * 60)
+    #expect(NewsRules.retryInterval(failures: 2) == 60 * 60)
+    #expect(NewsRules.retryInterval(failures: 6) == 16 * 60 * 60)
+    #expect(NewsRules.retryInterval(failures: 7) == 24 * 60 * 60)
+    #expect(NewsRules.retryInterval(failures: 500) == 24 * 60 * 60)
+}

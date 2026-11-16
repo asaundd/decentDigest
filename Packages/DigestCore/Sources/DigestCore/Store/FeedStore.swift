@@ -126,7 +126,8 @@ public actor FeedStore {
             let sourceKind = SourceKind(rawValue: source.kind) ?? .news
             if let kind, sourceKind != kind { return nil }
             let state = states[source.id]
-            if !force, let last = state?.lastFetchedAt, now.timeIntervalSince(last) < NewsRules.refreshInterval {
+            if !force, let last = state?.lastFetchedAt,
+               now.timeIntervalSince(last) < NewsRules.retryInterval(failures: state?.failureCount ?? 0) {
                 return nil
             }
             // Until a source has a backfill cutoff, fetch it in full so the cutoff can be set.
@@ -155,7 +156,8 @@ public actor FeedStore {
         switch result {
         case .failure(let error):
             state.lastError = String(describing: error)
-            state.failureCount += 1
+            // A missing connection says nothing about the feed, so only real failures count.
+            if !Connectivity.isOffline(error) { state.failureCount += 1 }
         case .success(.notModified):
             state.lastError = nil
             state.failureCount = 0

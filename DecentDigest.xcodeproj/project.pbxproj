@@ -213,7 +213,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Config/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Decent digest";
+				INFOPLIST_KEY_CFBundleDisplayName = Decent;
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Full access lets Decent digest show your events. They are read only on your device, never changed by the app, and never shared with the developer or anyone else.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Your location lets Decent digest show the weather where you are. It is used only to name your city and get its forecast from Apple Weather, and is never shared with the developer.";
 				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Full access lets Decent digest show your to-dos and check them off when you tap. They are managed only on your device and never shared with the developer or anyone else.";
@@ -246,7 +246,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Config/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Decent digest";
+				INFOPLIST_KEY_CFBundleDisplayName = Decent;
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Full access lets Decent digest show your events. They are read only on your device, never changed by the app, and never shared with the developer or anyone else.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Your location lets Decent digest show the weather where you are. It is used only to name your city and get its forecast from Apple Weather, and is never shared with the developer.";
 				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Full access lets Decent digest show your to-dos and check them off when you tap. They are managed only on your device and never shared with the developer or anyone else.";
