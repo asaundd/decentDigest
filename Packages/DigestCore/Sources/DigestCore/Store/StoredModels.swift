@@ -54,8 +54,13 @@ public final class ItemState {
     public var sourceID: String = ""
     public var statusRaw: String = ItemStatus.new.rawValue
     public var firstShownAt: Date?
+    /// When the reader first opened the item's card (or went further).
     public var openedAt: Date?
-    /// When the item left the digest (useful, not relevant or ignored).
+    /// When the reader first went past the card: the panel (Read full post, Read excerpt or Read
+    /// notes), the site, or the episode in Podcasts. Nil with `openedAt` set means the card only;
+    /// both nil with `resolvedAt` set means marked read or cleared without opening.
+    public var readInDepthAt: Date?
+    /// When the item left the digest (read, saved, ignored, or marked in earlier builds).
     public var resolvedAt: Date?
 
     public var status: ItemStatus {

@@ -262,7 +262,7 @@ struct FeedListSection: View {
         if row.opensPanel {
             let panelActions = actions
             actions.readFull = {
-                ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, in: context)
+                ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, inDepth: true, in: context)
                 panel = PanelRequest(headline: row, actions: panelActions)
             }
         }
@@ -278,6 +278,8 @@ struct FeedListSection: View {
         // No animation, so the title stays put while the details appear under it.
         if expandedIDs.contains(id) {
             scrollHold?.hold()
+            // Closing a card counts as having opened it.
+            markSeen(id)
             expandedIDs.remove(id)
         } else {
             expandedIDs.insert(id)
@@ -291,7 +293,7 @@ struct FeedListSection: View {
     }
 
     private func open(_ item: FeedItem) {
-        ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, in: context)
+        ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, inDepth: true, in: context)
         if let url = item.linkURL {
             openURL(url)
         }
@@ -299,7 +301,7 @@ struct FeedListSection: View {
 
     private func openEpisode(_ entry: Entry) {
         let item = entry.item
-        ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, in: context)
+        ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, inDepth: true, in: context)
         EpisodeLink.open(showID: entry.appleID, guid: item.guid, title: item.title, fallback: item.linkURL, with: openURL)
     }
 
@@ -308,7 +310,9 @@ struct FeedListSection: View {
         scrollHold?.hold()
         withAnimation(HeadlineMotion.close) {
             for item in cleared {
-                expandedIDs.remove(item.itemID)
+                if expandedIDs.remove(item.itemID) != nil {
+                    ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, in: context)
+                }
                 ReadingState.resolve(itemID: item.itemID, sourceID: item.sourceID, as: .read, in: context)
             }
         }
@@ -319,7 +323,10 @@ struct FeedListSection: View {
     private func finish(_ entry: Entry, as choice: RowAction) {
         let item = entry.item
         leaving[item.itemID] = nil
-        expandedIDs.remove(item.itemID)
+        // Marked from an open card: the history records that it was opened first.
+        if expandedIDs.remove(item.itemID) != nil {
+            ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, in: context)
+        }
         withAnimation(HeadlineMotion.close) {
             switch choice {
             case .save:

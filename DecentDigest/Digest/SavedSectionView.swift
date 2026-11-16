@@ -137,7 +137,7 @@ struct SavedSectionView: View {
         if headline.opensPanel {
             let panelActions = actions
             actions.readFull = {
-                ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, in: context)
+                ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, inDepth: true, in: context)
                 panel = PanelRequest(headline: headline, actions: panelActions)
             }
         }
@@ -152,6 +152,8 @@ struct SavedSectionView: View {
         // No animation, so the title stays put while the details appear under it.
         if expandedIDs.contains(item.itemID) {
             scrollHold?.hold()
+            // Closing a card counts as having opened it.
+            ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, in: context)
             expandedIDs.remove(item.itemID)
         } else {
             expandedIDs.insert(item.itemID)
@@ -160,14 +162,14 @@ struct SavedSectionView: View {
     }
 
     private func open(_ item: SavedItem) {
-        ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, in: context)
+        ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, inDepth: true, in: context)
         if let url = item.linkURL {
             openURL(url)
         }
     }
 
     private func openEpisode(_ item: SavedItem) {
-        ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, in: context)
+        ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, inDepth: true, in: context)
         let showID = sources.first { $0.id == item.sourceID }?.appleID
         EpisodeLink.open(showID: showID, guid: item.guid, title: item.title, fallback: item.linkURL, with: openURL)
     }
@@ -180,7 +182,10 @@ struct SavedSectionView: View {
         let itemID = item.itemID
         let sourceID = item.sourceID
         leaving[itemID] = nil
-        expandedIDs.remove(itemID)
+        // Marked from an open card: the history records that it was opened first.
+        if expandedIDs.remove(itemID) != nil {
+            ReadingState.markOpened(itemID: itemID, sourceID: sourceID, in: context)
+        }
         withAnimation(HeadlineMotion.close) {
             ReadingState.resolve(itemID: itemID, sourceID: sourceID, as: .read, in: context)
         }

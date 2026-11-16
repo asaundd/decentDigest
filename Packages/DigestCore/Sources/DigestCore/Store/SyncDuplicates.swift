@@ -83,6 +83,7 @@ public enum SyncDuplicates {
             for extra in ordered.dropFirst() {
                 keeper.firstShownAt = earliest(keeper.firstShownAt, extra.firstShownAt)
                 keeper.openedAt = earliest(keeper.openedAt, extra.openedAt)
+                keeper.readInDepthAt = earliest(keeper.readInDepthAt, extra.readInDepthAt)
                 context.delete(extra)
             }
             changed = true

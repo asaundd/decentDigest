@@ -96,7 +96,7 @@ public actor FeedStore {
         guard !old.isEmpty else { return }
         let saved = Set(try modelContext.fetch(FetchDescriptor<SavedItem>()).map(\.itemID))
         for state in old where !saved.contains(state.itemID) && state.status != .saved {
-            let last = [state.firstShownAt, state.openedAt, state.resolvedAt].compactMap { $0 }.max() ?? .distantPast
+            let last = [state.firstShownAt, state.openedAt, state.readInDepthAt, state.resolvedAt].compactMap { $0 }.max() ?? .distantPast
             if last < cutoff { modelContext.delete(state) }
         }
     }
