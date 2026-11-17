@@ -11,16 +11,16 @@ public enum ReadingState {
         try? context.save()
     }
 
-    /// The reader opened the item.
-    public static func markOpened(itemID: String, sourceID: String, in context: ModelContext, now: Date = .now) {
+    /// The reader opened the item: its card, or, `inDepth`, the panel, the site or Podcasts.
+    public static func markOpened(itemID: String, sourceID: String, inDepth: Bool = false, in context: ModelContext, now: Date = .now) {
         let state = stateOrNew(itemID: itemID, sourceID: sourceID, in: context, now: now)
         if state.status.isUnread { state.status = .read }
         state.openedAt = now
+        if inDepth, state.readInDepthAt == nil { state.readInDepthAt = now }
         try? context.save()
     }
 
-    /// Relevant, Not relevant, or Read when reading history is off: the item leaves its list, or Saved
-    /// if it was saved.
+    /// ✓ Read or Clear all: the item leaves its list, or Saved if it was saved.
     public static func resolve(itemID: String, sourceID: String, as status: ItemStatus, in context: ModelContext, now: Date = .now) {
         let state = stateOrNew(itemID: itemID, sourceID: sourceID, in: context, now: now)
         state.status = status

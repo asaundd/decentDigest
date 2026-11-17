@@ -95,6 +95,8 @@ struct ListFooter: View {
     var text: String?
     var toggle: Link?
     var app: Link?
+    /// News' Clear all, before Refresh.
+    var clear: Link? = nil
     var refresh: Link? = nil
     /// True while the refresh runs: the link gives way to a gray "Refreshing…".
     var isRefreshing = false
@@ -123,7 +125,7 @@ struct ListFooter: View {
                 .foregroundStyle(Theme.secondary)
                 .fixedSize()
                 .padding(.vertical, 4)
-            if toggle != nil || app != nil || refresh != nil { dot }
+            if toggle != nil || app != nil || clear != nil || refresh != nil { dot }
         }
         links
     }
@@ -132,10 +134,14 @@ struct ListFooter: View {
     private var links: some View {
         if let toggle {
             link(toggle)
-            if app != nil || refresh != nil { dot }
+            if app != nil || clear != nil || refresh != nil { dot }
         }
         if let app {
             link(app)
+            if clear != nil || refresh != nil { dot }
+        }
+        if let clear {
+            link(clear)
             if refresh != nil { dot }
         }
         if let refresh {
@@ -170,13 +176,13 @@ extension ListFooter {
     /// "4 more events · Show all", "Show less", or "No other events" when nothing
     /// waits, each followed by the app link. `showTitle` replaces "Show all" for a list that opens
     /// only part of the way ("Show 25").
-    init(hidden: Int, phrase: (Int) -> String, empty: String?, showsAll: Bool, showTitle: String = "Show all", app: Link?, refresh: Link? = nil, isRefreshing: Bool = false, toggle: @escaping () -> Void) {
+    init(hidden: Int, phrase: (Int) -> String, empty: String?, showsAll: Bool, showTitle: String = "Show all", app: Link?, clear: Link? = nil, refresh: Link? = nil, isRefreshing: Bool = false, toggle: @escaping () -> Void) {
         if hidden > 0 {
-            self.init(text: "\(hidden) \(phrase(hidden))", toggle: Link(title: showTitle, action: toggle), app: app, refresh: refresh, isRefreshing: isRefreshing)
+            self.init(text: "\(hidden) \(phrase(hidden))", toggle: Link(title: showTitle, action: toggle), app: app, clear: clear, refresh: refresh, isRefreshing: isRefreshing)
         } else if showsAll {
-            self.init(text: nil, toggle: Link(title: "Show less", action: toggle), app: app, refresh: refresh, isRefreshing: isRefreshing)
+            self.init(text: nil, toggle: Link(title: "Show less", action: toggle), app: app, clear: clear, refresh: refresh, isRefreshing: isRefreshing)
         } else {
-            self.init(text: empty, toggle: nil, app: app, refresh: refresh, isRefreshing: isRefreshing)
+            self.init(text: empty, toggle: nil, app: app, clear: clear, refresh: refresh, isRefreshing: isRefreshing)
         }
     }
 }

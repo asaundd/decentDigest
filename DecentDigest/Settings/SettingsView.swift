@@ -17,6 +17,7 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \Source.sortOrder) private var sources: [Source]
     @State private var confirmsStartOver = false
+    @State private var showsDesignLab = false
     @State private var confirmsDeleteAll = false
     @State private var deletedAll = false
 
@@ -78,6 +79,9 @@ struct SettingsView: View {
         } message: {
             Text("This unfollows every site and show, deletes your saved items and reading history, and forgets your city, on this device and in your iCloud, so your other devices clear too. Which sections show and your calendar and list choices stay. This can't be undone.")
         }
+        #if DEBUG
+        .sheet(isPresented: $showsDesignLab) { DesignLabView() }
+        #endif
         .alert("Start setup over?", isPresented: $confirmsStartOver) {
             Button("Keep my choices") { showWelcome() }
             Button("Clear my choices", role: .destructive) { startOver() }
@@ -215,6 +219,14 @@ struct SettingsView: View {
             .accessibilityHint("Shows the welcome and setup again")
     }
 
+    /// For trying design options on the phone; not in release builds.
+    private var debugLinks: some View {
+        HStack(spacing: 16) {
+            startOverLink
+            TextLink("Design lab") { showsDesignLab = true }
+        }
+    }
+
     private var footer: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .center, spacing: 10) {
@@ -229,13 +241,13 @@ struct SettingsView: View {
                 HStack(spacing: 16) {
                     footerLinks
                     #if DEBUG
-                    startOverLink
+                    debugLinks
                     #endif
                 }
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(spacing: 16) { footerLinks }
                     #if DEBUG
-                    startOverLink
+                    debugLinks
                     #endif
                 }
             }
@@ -568,7 +580,7 @@ struct ReadingHistoryPage: View {
     @State private var cleared = false
 
     var body: some View {
-        SettingsPage(title: "Reading history", subtitle: "Decent digest keeps a private reading history of the news and episodes you open, save, and mark relevant or not relevant.") {
+        SettingsPage(title: "Reading history", subtitle: "Decent digest keeps a private reading history of the news and episodes you open, save, and mark read.") {
             ShowSwitch(label: "Keep reading history", isOn: Binding(
                 get: { preferences.keepsReadingHistory },
                 set: { preferences.setKeepsReadingHistory($0) }

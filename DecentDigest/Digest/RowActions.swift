@@ -3,44 +3,33 @@ import SwiftUI
 
 /// What the reader can do with a headline or episode once they're done with it.
 enum RowAction: String, Hashable, Sendable {
-    case relevant, notRelevant, read
+    case save, read
 
     var symbol: String {
         switch self {
-        case .relevant: "arrow.up"
-        case .notRelevant: "arrow.down"
+        case .save: "bookmark"
         case .read: "checkmark"
         }
     }
 
     var label: String {
         switch self {
-        case .relevant: "Relevant"
-        case .notRelevant: "Not relevant"
+        case .save: "Save"
         case .read: "Read"
         }
     }
 
-    /// What the reading history records.
-    var status: ItemStatus {
-        switch self {
-        case .relevant: .useful
-        case .notRelevant: .notRelevant
-        case .read: .read
-        }
-    }
-
     /// The actions in the order they show, left to right, on the card, the panel and the open swipe:
-    /// ↓ Not relevant then ↑ Relevant, or one ✓ Read when reading history is off. The last one is what
-    /// a full swipe does.
-    static func choices(keepsHistory: Bool) -> [RowAction] {
-        keepsHistory ? [.notRelevant, .relevant] : [.read]
+    /// Save then ✓ Read, or ✓ Read alone where an item is already saved. The last one is what a full
+    /// swipe does.
+    static func choices(canSave: Bool) -> [RowAction] {
+        canSave ? [.save, .read] : [.read]
     }
 }
 
 extension View {
-    /// Swipe left, like Mail. A short swipe rests open on the actions, ↓ Not relevant then ↑ Relevant;
-    /// a full swipe does the right-most one. Once an action is chosen, here or from the card or the
+    /// Swipe left, like Mail. A short swipe rests open on the actions, Save then ✓ Read; a full swipe
+    /// does the right-most one. Once an action is chosen, here or from the card or the
     /// panel (`request`), the row slides off to the left with the action riding out at its edge, rests
     /// a beat, then closes up and the rows below slide up. `perform` records the action at the end.
     /// `closing` is called as the row starts to close up, in the same animation, so a list can let
@@ -68,7 +57,7 @@ private struct LeaveSwipe: ViewModifier {
     /// opening ✓ Read alone.
     private static let opensAt: CGFloat = (baseActionWidth + Theme.margin) * 0.5
 
-    /// Each action's share of the open strip; it grows with the text size so "Not relevant" fits.
+    /// Each action's share of the open strip; it grows with the text size so each word fits.
     @ScaledMetric(relativeTo: .caption) private var actionWidth: CGFloat = 84
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -113,7 +102,7 @@ private struct LeaveSwipe: ViewModifier {
             // While the row closes up, nothing spills over the rows below it.
             .mask { Rectangle().padding(.vertical, frozenHeight == nil ? -24 : 0) }
             .sensoryFeedback(.selection, trigger: isArmed) { _, armed in armed }
-            .sensoryFeedback(.impact(weight: .light), trigger: commitHaptic)
+            .doneHaptic(trigger: commitHaptic)
             .onAppear { swipeGuard.closeStrip = { close() } }
             .onChange(of: request, initial: true) { _, action in
                 if let action { commit(action) }
