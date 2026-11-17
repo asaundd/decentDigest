@@ -1,8 +1,59 @@
 {
-  "version": 1,
-  "generatedAt": "2026-11-03",
-  "popularitySource": "Feedly public feed API subscriber count (rough proxy; varies by feed URL variant)",
+  "version": 2,
+  "generatedAt": "2026-11-17",
   "categories": [
+    {
+      "id": "news",
+      "name": "Top news"
+    },
+    {
+      "id": "politics",
+      "name": "Politics and policy"
+    },
+    {
+      "id": "climate",
+      "name": "Climate and environment"
+    },
+    {
+      "id": "business",
+      "name": "Business"
+    },
+    {
+      "id": "money",
+      "name": "Markets and personal finance"
+    },
+    {
+      "id": "startups",
+      "name": "Startups and venture"
+    },
+    {
+      "id": "tech",
+      "name": "Tech"
+    },
+    {
+      "id": "apple",
+      "name": "Apple"
+    },
+    {
+      "id": "ai",
+      "name": "AI"
+    },
+    {
+      "id": "programming",
+      "name": "Programming"
+    },
+    {
+      "id": "science",
+      "name": "Science"
+    },
+    {
+      "id": "space",
+      "name": "Space"
+    },
+    {
+      "id": "health",
+      "name": "Health and medicine"
+    },
     {
       "id": "healthtech",
       "name": "Healthtech and digital health"
@@ -12,486 +63,811 @@
       "name": "Product and leadership"
     },
     {
-      "id": "ai",
-      "name": "AI"
+      "id": "design",
+      "name": "Design"
     },
     {
-      "id": "tech",
-      "name": "Tech and Apple"
+      "id": "ideas",
+      "name": "Ideas and long reads"
     },
     {
-      "id": "news",
-      "name": "News and science"
+      "id": "books",
+      "name": "Books"
+    },
+    {
+      "id": "film",
+      "name": "Film and TV"
+    },
+    {
+      "id": "music",
+      "name": "Music"
+    },
+    {
+      "id": "gaming",
+      "name": "Gaming"
+    },
+    {
+      "id": "sports",
+      "name": "Sports"
+    },
+    {
+      "id": "food",
+      "name": "Food and cooking"
+    },
+    {
+      "id": "travel",
+      "name": "Travel"
     }
   ],
   "feeds": [
     {
-      "id": "stat",
-      "title": "STAT",
-      "siteUrl": "https://www.statnews.com",
-      "feedUrl": "https://www.statnews.com/feed/",
-      "category": "healthtech",
-      "tags": [
-        "health",
-        "biotech",
-        "policy"
-      ],
-      "access": "freemium",
-      "feedlySubscribers": 584,
-      "format": "rss",
-      "description": "Health, medicine and life sciences news; STAT+ stories are paywalled.",
-      "lastItemDate": "2026-11-02",
+      "id": "bbc-news-world",
+      "title": "BBC News: World",
+      "siteUrl": "https://www.bbc.co.uk/news/world",
+      "feedUrl": "https://feeds.bbci.co.uk/news/world/rss.xml",
+      "category": "news",
+      "access": "free",
       "verified": true,
-      "verifiedAt": "2026-11-03",
       "popularityRank": 1
     },
     {
-      "id": "fierce-healthcare",
-      "title": "Fierce Healthcare",
-      "siteUrl": "https://www.fiercehealthcare.com",
-      "feedUrl": "https://www.fiercehealthcare.com/rss/xml",
-      "category": "healthtech",
-      "tags": [
-        "health",
-        "industry",
-        "payers"
-      ],
+      "id": "vox",
+      "title": "Vox",
+      "siteUrl": "https://www.vox.com",
+      "feedUrl": "https://www.vox.com/rss/index.xml",
+      "category": "news",
       "access": "free",
-      "feedlySubscribers": 138,
-      "format": "rss",
-      "description": "Payer, provider and health tech industry news.",
-      "lastItemDate": "2026-11-02",
       "verified": true,
-      "verifiedAt": "2026-11-03",
+      "popularityRank": 2
+    },
+    {
+      "id": "propublica",
+      "title": "ProPublica",
+      "siteUrl": "https://www.propublica.org",
+      "feedUrl": "https://feeds.propublica.org/propublica/main",
+      "category": "news",
+      "access": "free",
+      "verified": true,
       "popularityRank": 3
     },
     {
-      "id": "healthcare-dive",
-      "title": "Healthcare Dive",
-      "siteUrl": "https://www.healthcaredive.com",
-      "feedUrl": "https://www.healthcaredive.com/feeds/news/",
-      "category": "healthtech",
-      "tags": [
-        "health",
-        "industry"
-      ],
+      "id": "cbc-news",
+      "title": "CBC News",
+      "siteUrl": "https://www.cbc.ca/news",
+      "feedUrl": "https://www.cbc.ca/webfeed/rss/rss-topstories",
+      "category": "news",
       "access": "free",
-      "feedlySubscribers": 184,
-      "format": "rss",
-      "description": "Daily healthcare business and policy news.",
-      "lastItemDate": "2026-11-02",
       "verified": true,
-      "verifiedAt": "2026-11-03",
-      "popularityRank": 2
-    },
-    {
-      "id": "kff-health-news",
-      "title": "KFF Health News",
-      "siteUrl": "https://kffhealthnews.org",
-      "feedUrl": "https://kffhealthnews.org/feed/",
-      "category": "healthtech",
-      "tags": [
-        "health",
-        "policy"
-      ],
-      "access": "free",
-      "feedlySubscribers": 78,
-      "format": "rss",
-      "description": "Nonprofit health policy journalism.",
-      "lastItemDate": "2026-11-03",
-      "verified": true,
-      "verifiedAt": "2026-11-03",
-      "popularityRank": 5
-    },
-    {
-      "id": "out-of-pocket",
-      "title": "Out-Of-Pocket",
-      "siteUrl": "https://www.outofpocket.health",
-      "feedUrl": "https://www.outofpocket.health/p/rss.xml",
-      "category": "healthtech",
-      "tags": [
-        "health",
-        "analysis",
-        "newsletter"
-      ],
-      "access": "free",
-      "feedlySubscribers": 92,
-      "format": "rss",
-      "description": "Nikhil Krishnan's irreverent explainers on how US healthcare works.",
-      "lastItemDate": "2026-10-28",
-      "verified": true,
-      "verifiedAt": "2026-11-03",
       "popularityRank": 4
     },
     {
-      "id": "health-care-blog",
-      "title": "The Health Care Blog",
-      "siteUrl": "https://thehealthcareblog.com",
-      "feedUrl": "https://thehealthcareblog.com/feed/",
-      "category": "healthtech",
-      "tags": [
-        "health",
-        "opinion"
-      ],
+      "id": "bbc-news",
+      "title": "BBC News",
+      "siteUrl": "https://www.bbc.co.uk/news",
+      "feedUrl": "https://feeds.bbci.co.uk/news/rss.xml",
+      "category": "news",
       "access": "free",
-      "feedlySubscribers": 7,
-      "format": "rss",
-      "description": "Long-running opinion blog on health tech and policy.",
-      "lastItemDate": "2026-10-30",
       "verified": true,
-      "verifiedAt": "2026-11-03",
-      "popularityRank": 6
-    },
-    {
-      "id": "lennys-newsletter",
-      "title": "Lenny's Newsletter",
-      "siteUrl": "https://www.lennysnewsletter.com",
-      "feedUrl": "https://www.lennysnewsletter.com/feed",
-      "category": "product",
-      "tags": [
-        "product",
-        "growth",
-        "newsletter"
-      ],
-      "access": "freemium",
-      "feedlySubscribers": 377,
-      "format": "rss",
-      "description": "Product, growth and career advice; some posts are paid.",
-      "lastItemDate": "2026-11-02",
-      "verified": true,
-      "verifiedAt": "2026-11-03",
       "popularityRank": 5
     },
     {
-      "id": "svpg",
-      "title": "Silicon Valley Product Group",
-      "siteUrl": "https://www.svpg.com",
-      "feedUrl": "https://www.svpg.com/feed/",
-      "category": "product",
-      "tags": [
-        "product",
-        "leadership"
-      ],
-      "access": "free",
-      "feedlySubscribers": 28,
-      "format": "rss",
-      "description": "Marty Cagan and team on product leadership.",
-      "lastItemDate": "2026-10-21",
+      "id": "the-new-york-times",
+      "title": "The New York Times",
+      "siteUrl": "https://www.nytimes.com",
+      "feedUrl": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
+      "category": "news",
+      "access": "paywalled",
       "verified": true,
-      "verifiedAt": "2026-11-03",
       "popularityRank": 6
     },
     {
-      "id": "product-talk",
-      "title": "Product Talk",
-      "siteUrl": "https://www.producttalk.org",
-      "feedUrl": "https://www.producttalk.org/feed/",
-      "category": "product",
-      "tags": [
-        "product",
-        "discovery"
-      ],
-      "access": "freemium",
-      "feedlySubscribers": 424,
-      "format": "rss",
-      "description": "Teresa Torres on continuous discovery.",
-      "lastItemDate": "2026-11-03",
+      "id": "the-washington-post-world",
+      "title": "The Washington Post: World",
+      "siteUrl": "https://www.washingtonpost.com/world/",
+      "feedUrl": "https://feeds.washingtonpost.com/rss/world",
+      "category": "news",
+      "access": "paywalled",
       "verified": true,
-      "verifiedAt": "2026-11-03",
-      "popularityRank": 4
-    },
-    {
-      "id": "beautiful-mess",
-      "title": "The Beautiful Mess",
-      "siteUrl": "https://cutlefish.substack.com",
-      "feedUrl": "https://cutlefish.substack.com/feed",
-      "category": "product",
-      "tags": [
-        "product",
-        "org-design",
-        "newsletter"
-      ],
-      "access": "free",
-      "feedlySubscribers": null,
-      "format": "rss",
-      "description": "John Cutler on product operating models.",
-      "lastItemDate": "2026-10-25",
-      "verified": true,
-      "verifiedAt": "2026-11-03",
-      "popularityRank": 8
-    },
-    {
-      "id": "elena-verna",
-      "title": "Elena's Growth Scoop",
-      "siteUrl": "https://www.elenaverna.com",
-      "feedUrl": "https://www.elenaverna.com/feed",
-      "category": "product",
-      "tags": [
-        "growth",
-        "product",
-        "newsletter"
-      ],
-      "access": "free",
-      "feedlySubscribers": 20,
-      "format": "rss",
-      "description": "Elena Verna on product-led growth.",
-      "lastItemDate": "2026-10-27",
-      "verified": true,
-      "verifiedAt": "2026-11-03",
       "popularityRank": 7
     },
     {
-      "id": "pragmatic-engineer",
-      "title": "The Pragmatic Engineer",
-      "siteUrl": "https://newsletter.pragmaticengineer.com",
-      "feedUrl": "https://newsletter.pragmaticengineer.com/feed",
-      "category": "product",
-      "tags": [
-        "engineering",
-        "leadership",
-        "newsletter"
-      ],
-      "access": "freemium",
-      "feedlySubscribers": 3770,
-      "format": "rss",
-      "description": "Gergely Orosz on engineering teams and Big Tech; deep dives are paid.",
-      "lastItemDate": "2026-10-30",
+      "id": "al-jazeera",
+      "title": "Al Jazeera",
+      "siteUrl": "https://www.aljazeera.com",
+      "feedUrl": "https://www.aljazeera.com/xml/rss/all.xml",
+      "category": "news",
+      "access": "free",
       "verified": true,
-      "verifiedAt": "2026-11-03",
+      "popularityRank": 8
+    },
+    {
+      "id": "the-guardian-world",
+      "title": "The Guardian: World",
+      "siteUrl": "https://www.theguardian.com/world",
+      "feedUrl": "https://www.theguardian.com/world/rss",
+      "category": "news",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 9
+    },
+    {
+      "id": "semafor",
+      "title": "Semafor",
+      "siteUrl": "https://www.semafor.com",
+      "feedUrl": "https://www.semafor.com/rss.xml",
+      "category": "news",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 10
+    },
+    {
+      "id": "the-conversation-us",
+      "title": "The Conversation US",
+      "siteUrl": "https://theconversation.com/us",
+      "feedUrl": "https://theconversation.com/us/articles.atom",
+      "category": "news",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 11
+    },
+    {
+      "id": "pbs-newshour",
+      "title": "PBS NewsHour",
+      "siteUrl": "https://www.pbs.org/newshour",
+      "feedUrl": "https://www.pbs.org/newshour/feeds/rss/headlines",
+      "category": "news",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 12
+    },
+    {
+      "id": "npr-news",
+      "title": "NPR News",
+      "siteUrl": "https://www.npr.org",
+      "feedUrl": "https://feeds.npr.org/1001/rss.xml",
+      "category": "news",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 13
+    },
+    {
+      "id": "the-guardian-us",
+      "title": "The Guardian: US",
+      "siteUrl": "https://www.theguardian.com/us-news",
+      "feedUrl": "https://www.theguardian.com/us-news/rss",
+      "category": "news",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 14
+    },
+    {
+      "id": "deutsche-welle",
+      "title": "Deutsche Welle",
+      "siteUrl": "https://www.dw.com/en",
+      "feedUrl": "https://rss.dw.com/rdf/rss-en-all",
+      "category": "news",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 15
+    },
+    {
+      "id": "axios",
+      "title": "Axios",
+      "siteUrl": "https://www.axios.com",
+      "feedUrl": "https://api.axios.com/feed/",
+      "category": "news",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 16
+    },
+    {
+      "id": "cbs-news",
+      "title": "CBS News",
+      "siteUrl": "https://www.cbsnews.com",
+      "feedUrl": "https://www.cbsnews.com/latest/rss/main",
+      "category": "news",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 17
+    },
+    {
+      "id": "the-economist",
+      "title": "The Economist",
+      "siteUrl": "https://www.economist.com",
+      "feedUrl": "https://www.economist.com/latest/rss.xml",
+      "category": "news",
+      "access": "paywalled",
+      "verified": true,
+      "popularityRank": 18
+    },
+    {
+      "id": "abc-news",
+      "title": "ABC News",
+      "siteUrl": "https://abcnews.go.com",
+      "feedUrl": "https://abcnews.go.com/abcnews/topstories",
+      "category": "news",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 19
+    },
+    {
+      "id": "nbc-news",
+      "title": "NBC News",
+      "siteUrl": "https://www.nbcnews.com",
+      "feedUrl": "https://feeds.nbcnews.com/nbcnews/public/news",
+      "category": "news",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 20
+    },
+    {
+      "id": "scotusblog",
+      "title": "SCOTUSblog",
+      "siteUrl": "https://www.scotusblog.com",
+      "feedUrl": "https://www.scotusblog.com/feed/",
+      "category": "politics",
+      "access": "free",
+      "verified": true,
       "popularityRank": 1
     },
     {
-      "id": "farnam-street",
-      "title": "Farnam Street",
-      "siteUrl": "https://fs.blog",
-      "feedUrl": "https://fs.blog/feed/",
-      "category": "product",
-      "tags": [
-        "thinking",
-        "leadership"
-      ],
+      "id": "politico",
+      "title": "Politico",
+      "siteUrl": "https://www.politico.com",
+      "feedUrl": "https://rss.politico.com/politics-news.xml",
+      "category": "politics",
       "access": "free",
-      "feedlySubscribers": 3634,
-      "format": "rss",
-      "description": "Mental models and better decision making.",
-      "lastItemDate": "2026-10-29",
       "verified": true,
-      "verifiedAt": "2026-11-03",
       "popularityRank": 2
+    },
+    {
+      "id": "mother-jones",
+      "title": "Mother Jones",
+      "siteUrl": "https://www.motherjones.com",
+      "feedUrl": "https://www.motherjones.com/feed/",
+      "category": "politics",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 3
+    },
+    {
+      "id": "the-19th",
+      "title": "The 19th",
+      "siteUrl": "https://19thnews.org",
+      "feedUrl": "https://19thnews.org/feed/",
+      "category": "politics",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 4
+    },
+    {
+      "id": "the-washington-post-politics",
+      "title": "The Washington Post: Politics",
+      "siteUrl": "https://www.washingtonpost.com/politics/",
+      "feedUrl": "https://feeds.washingtonpost.com/rss/politics",
+      "category": "politics",
+      "access": "paywalled",
+      "verified": true,
+      "popularityRank": 5
+    },
+    {
+      "id": "the-marshall-project",
+      "title": "The Marshall Project",
+      "siteUrl": "https://www.themarshallproject.org",
+      "feedUrl": "https://www.themarshallproject.org/rss/recent.rss",
+      "category": "politics",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 6
+    },
+    {
+      "id": "pew-research-center",
+      "title": "Pew Research Center",
+      "siteUrl": "https://www.pewresearch.org",
+      "feedUrl": "https://www.pewresearch.org/feed/",
+      "category": "politics",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 7
+    },
+    {
+      "id": "lawfare",
+      "title": "Lawfare",
+      "siteUrl": "https://www.lawfaremedia.org",
+      "feedUrl": "https://www.lawfaremedia.org/feeds/articles",
+      "category": "politics",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 8
+    },
+    {
+      "id": "nyt-politics",
+      "title": "NYT Politics",
+      "siteUrl": "https://www.nytimes.com/section/politics",
+      "feedUrl": "https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml",
+      "category": "politics",
+      "access": "paywalled",
+      "verified": true,
+      "popularityRank": 9
+    },
+    {
+      "id": "the-hill",
+      "title": "The Hill",
+      "siteUrl": "https://thehill.com",
+      "feedUrl": "https://thehill.com/feed/",
+      "category": "politics",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 10
+    },
+    {
+      "id": "silver-bulletin",
+      "title": "Silver Bulletin",
+      "siteUrl": "https://www.natesilver.net",
+      "feedUrl": "https://www.natesilver.net/feed",
+      "category": "politics",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 11
+    },
+    {
+      "id": "npr-politics",
+      "title": "NPR Politics",
+      "siteUrl": "https://www.npr.org/sections/politics/",
+      "feedUrl": "https://feeds.npr.org/1014/rss.xml",
+      "category": "politics",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 12
+    },
+    {
+      "id": "stateline",
+      "title": "Stateline",
+      "siteUrl": "https://stateline.org",
+      "feedUrl": "https://stateline.org/feed/",
+      "category": "politics",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 13
+    },
+    {
+      "id": "the-guardian-us-politics",
+      "title": "The Guardian: US politics",
+      "siteUrl": "https://www.theguardian.com/us-news/us-politics",
+      "feedUrl": "https://www.theguardian.com/us-news/us-politics/rss",
+      "category": "politics",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 14
+    },
+    {
+      "id": "the-guardian-environment",
+      "title": "The Guardian: Environment",
+      "siteUrl": "https://www.theguardian.com/environment",
+      "feedUrl": "https://www.theguardian.com/environment/rss",
+      "category": "climate",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 1
+    },
+    {
+      "id": "cleantechnica",
+      "title": "CleanTechnica",
+      "siteUrl": "https://cleantechnica.com",
+      "feedUrl": "https://cleantechnica.com/feed/",
+      "category": "climate",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 2
+    },
+    {
+      "id": "electrek",
+      "title": "Electrek",
+      "siteUrl": "https://electrek.co",
+      "feedUrl": "https://electrek.co/feed/",
+      "category": "climate",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 3
+    },
+    {
+      "id": "grist",
+      "title": "Grist",
+      "siteUrl": "https://grist.org",
+      "feedUrl": "https://grist.org/feed/",
+      "category": "climate",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 4
+    },
+    {
+      "id": "heatmap",
+      "title": "Heatmap",
+      "siteUrl": "https://heatmap.news",
+      "feedUrl": "https://heatmap.news/feeds/feed.rss",
+      "category": "climate",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 5
+    },
+    {
+      "id": "volts",
+      "title": "Volts",
+      "siteUrl": "https://www.volts.wtf",
+      "feedUrl": "https://www.volts.wtf/feed",
+      "category": "climate",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 6
+    },
+    {
+      "id": "mongabay",
+      "title": "Mongabay",
+      "siteUrl": "https://news.mongabay.com",
+      "feedUrl": "https://news.mongabay.com/feed/",
+      "category": "climate",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 7
+    },
+    {
+      "id": "nyt-climate",
+      "title": "NYT Climate",
+      "siteUrl": "https://www.nytimes.com/section/climate",
+      "feedUrl": "https://rss.nytimes.com/services/xml/rss/nyt/Climate.xml",
+      "category": "climate",
+      "access": "paywalled",
+      "verified": true,
+      "popularityRank": 8
+    },
+    {
+      "id": "inside-climate-news",
+      "title": "Inside Climate News",
+      "siteUrl": "https://insideclimatenews.org",
+      "feedUrl": "https://insideclimatenews.org/feed/",
+      "category": "climate",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 9
+    },
+    {
+      "id": "carbon-brief",
+      "title": "Carbon Brief",
+      "siteUrl": "https://www.carbonbrief.org",
+      "feedUrl": "https://www.carbonbrief.org/feed/",
+      "category": "climate",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 10
+    },
+    {
+      "id": "yale-environment-360",
+      "title": "Yale Environment 360",
+      "siteUrl": "https://e360.yale.edu",
+      "feedUrl": "https://e360.yale.edu/feed.xml",
+      "category": "climate",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 11
+    },
+    {
+      "id": "canary-media",
+      "title": "Canary Media",
+      "siteUrl": "https://www.canarymedia.com",
+      "feedUrl": "https://www.canarymedia.com/rss.rss",
+      "category": "climate",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 12
+    },
+    {
+      "id": "fortune",
+      "title": "Fortune",
+      "siteUrl": "https://fortune.com",
+      "feedUrl": "https://fortune.com/feed/fortune-feeds/?id=3230629",
+      "category": "business",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 1
+    },
+    {
+      "id": "retail-dive",
+      "title": "Retail Dive",
+      "siteUrl": "https://www.retaildive.com",
+      "feedUrl": "https://www.retaildive.com/feeds/news/",
+      "category": "business",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 2
+    },
+    {
+      "id": "cnbc",
+      "title": "CNBC",
+      "siteUrl": "https://www.cnbc.com",
+      "feedUrl": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+      "category": "business",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 3
+    },
+    {
+      "id": "bloomberg-markets",
+      "title": "Bloomberg: Markets",
+      "siteUrl": "https://www.bloomberg.com/markets",
+      "feedUrl": "https://feeds.bloomberg.com/markets/news.rss",
+      "category": "business",
+      "access": "paywalled",
+      "verified": true,
+      "popularityRank": 4
+    },
+    {
+      "id": "slow-boring",
+      "title": "Slow Boring",
+      "siteUrl": "https://www.slowboring.com",
+      "feedUrl": "https://www.slowboring.com/feed",
+      "category": "business",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 5
+    },
+    {
+      "id": "modern-retail",
+      "title": "Modern Retail",
+      "siteUrl": "https://www.modernretail.co",
+      "feedUrl": "https://www.modernretail.co/feed/",
+      "category": "business",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 6
+    },
+    {
+      "id": "nyt-business",
+      "title": "NYT Business",
+      "siteUrl": "https://www.nytimes.com/section/business",
+      "feedUrl": "https://rss.nytimes.com/services/xml/rss/nyt/Business.xml",
+      "category": "business",
+      "access": "paywalled",
+      "verified": true,
+      "popularityRank": 7
+    },
+    {
+      "id": "business-insider",
+      "title": "Business Insider",
+      "siteUrl": "https://www.businessinsider.com",
+      "feedUrl": "https://feeds.businessinsider.com/custom/all",
+      "category": "business",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 8
+    },
+    {
+      "id": "quartz",
+      "title": "Quartz",
+      "siteUrl": "https://qz.com",
+      "feedUrl": "https://qz.com/rss",
+      "category": "business",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 9
+    },
+    {
+      "id": "inc",
+      "title": "Inc.",
+      "siteUrl": "https://www.inc.com",
+      "feedUrl": "https://www.inc.com/rss/",
+      "category": "business",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 10
+    },
+    {
+      "id": "fast-company",
+      "title": "Fast Company",
+      "siteUrl": "https://www.fastcompany.com",
+      "feedUrl": "https://www.fastcompany.com/latest/rss",
+      "category": "business",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 11
+    },
+    {
+      "id": "the-guardian-business",
+      "title": "The Guardian: Business",
+      "siteUrl": "https://www.theguardian.com/business",
+      "feedUrl": "https://www.theguardian.com/business/rss",
+      "category": "business",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 12
+    },
+    {
+      "id": "npr-business",
+      "title": "NPR Business",
+      "siteUrl": "https://www.npr.org/sections/business/",
+      "feedUrl": "https://feeds.npr.org/1006/rss.xml",
+      "category": "business",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 13
+    },
+    {
+      "id": "abnormal-returns",
+      "title": "Abnormal Returns",
+      "siteUrl": "https://abnormalreturns.com",
+      "feedUrl": "https://abnormalreturns.com/feed/",
+      "category": "money",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 1
+    },
+    {
+      "id": "a-wealth-of-common-sense",
+      "title": "A Wealth of Common Sense",
+      "siteUrl": "https://awealthofcommonsense.com",
+      "feedUrl": "https://awealthofcommonsense.com/feed/",
+      "category": "money",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 2
+    },
+    {
+      "id": "of-dollars-and-data",
+      "title": "Of Dollars and Data",
+      "siteUrl": "https://ofdollarsanddata.com",
+      "feedUrl": "https://ofdollarsanddata.com/feed/",
+      "category": "money",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 3
+    },
+    {
+      "id": "money-stuff-bloomberg",
+      "title": "Money Stuff (Bloomberg)",
+      "siteUrl": "https://www.bloomberg.com/account/newsletters/money-stuff",
+      "feedUrl": "https://www.bloomberg.com/opinion/authors/ARbTQlRLRjE/matthew-s-levine.rss",
+      "category": "money",
+      "access": "paywalled",
+      "verified": true,
+      "popularityRank": 4
+    },
+    {
+      "id": "marginal-revolution",
+      "title": "Marginal Revolution",
+      "siteUrl": "https://marginalrevolution.com",
+      "feedUrl": "https://marginalrevolution.com/feed",
+      "category": "money",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 5
+    },
+    {
+      "id": "noahpinion",
+      "title": "Noahpinion",
+      "siteUrl": "https://www.noahpinion.blog",
+      "feedUrl": "https://www.noahpinion.blog/feed",
+      "category": "money",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 6
+    },
+    {
+      "id": "the-big-picture",
+      "title": "The Big Picture",
+      "siteUrl": "https://ritholtz.com",
+      "feedUrl": "https://ritholtz.com/feed/",
+      "category": "money",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 7
+    },
+    {
+      "id": "nerdwallet",
+      "title": "NerdWallet",
+      "siteUrl": "https://www.nerdwallet.com/blog/",
+      "feedUrl": "https://www.nerdwallet.com/blog/feed/",
+      "category": "money",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 8
+    },
+    {
+      "id": "apricitas-economics",
+      "title": "Apricitas Economics",
+      "siteUrl": "https://www.apricitas.io",
+      "feedUrl": "https://www.apricitas.io/feed",
+      "category": "money",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 9
+    },
+    {
+      "id": "tomasz-tunguz",
+      "title": "Tomasz Tunguz",
+      "siteUrl": "https://tomtunguz.com",
+      "feedUrl": "https://tomtunguz.com/index.xml",
+      "category": "startups",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 1
+    },
+    {
+      "id": "hunter-walk",
+      "title": "Hunter Walk",
+      "siteUrl": "https://hunterwalk.com",
+      "feedUrl": "https://hunterwalk.com/feed/",
+      "category": "startups",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 2
+    },
+    {
+      "id": "saastr",
+      "title": "SaaStr",
+      "siteUrl": "https://www.saastr.com",
+      "feedUrl": "https://www.saastr.com/feed/",
+      "category": "startups",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 3
+    },
+    {
+      "id": "sifted",
+      "title": "Sifted",
+      "siteUrl": "https://sifted.eu",
+      "feedUrl": "https://sifted.eu/feed",
+      "category": "startups",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 4
+    },
+    {
+      "id": "seths-blog",
+      "title": "Seth's Blog",
+      "siteUrl": "https://seths.blog",
+      "feedUrl": "https://seths.blog/feed/",
+      "category": "startups",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 5
     },
     {
       "id": "not-boring",
       "title": "Not Boring",
       "siteUrl": "https://www.notboring.co",
       "feedUrl": "https://www.notboring.co/feed",
-      "category": "product",
-      "tags": [
-        "strategy",
-        "startups",
-        "newsletter"
-      ],
+      "category": "startups",
       "access": "free",
-      "feedlySubscribers": 431,
-      "format": "rss",
-      "description": "Packy McCormick on tech strategy and startups.",
-      "lastItemDate": "2026-10-30",
       "verified": true,
-      "verifiedAt": "2026-11-03",
-      "popularityRank": 3
-    },
-    {
-      "id": "simon-willison",
-      "title": "Simon Willison's Weblog",
-      "siteUrl": "https://simonwillison.net",
-      "feedUrl": "https://simonwillison.net/atom/everything/",
-      "category": "ai",
-      "tags": [
-        "llms",
-        "tools"
-      ],
-      "access": "free",
-      "feedlySubscribers": 4949,
-      "format": "atom",
-      "description": "Hands-on notes about LLMs and tools, posted several times a day.",
-      "lastItemDate": "2026-11-02",
-      "verified": true,
-      "verifiedAt": "2026-11-03",
-      "popularityRank": 2
-    },
-    {
-      "id": "import-ai",
-      "title": "Import AI",
-      "siteUrl": "https://importai.substack.com",
-      "feedUrl": "https://importai.substack.com/feed",
-      "category": "ai",
-      "tags": [
-        "research",
-        "policy",
-        "newsletter"
-      ],
-      "access": "free",
-      "feedlySubscribers": 1575,
-      "format": "rss",
-      "description": "Jack Clark's weekly AI research roundup.",
-      "lastItemDate": "2026-11-02",
-      "verified": true,
-      "verifiedAt": "2026-11-03",
       "popularityRank": 6
     },
     {
-      "id": "one-useful-thing",
-      "title": "One Useful Thing",
-      "siteUrl": "https://www.oneusefulthing.org",
-      "feedUrl": "https://www.oneusefulthing.org/feed",
-      "category": "ai",
-      "tags": [
-        "work",
-        "education",
-        "newsletter"
-      ],
+      "id": "crunchbase-news",
+      "title": "Crunchbase News",
+      "siteUrl": "https://news.crunchbase.com",
+      "feedUrl": "https://news.crunchbase.com/feed/",
+      "category": "startups",
       "access": "free",
-      "feedlySubscribers": 965,
-      "format": "rss",
-      "description": "Ethan Mollick on using AI at work and school.",
-      "lastItemDate": "2026-10-20",
       "verified": true,
-      "verifiedAt": "2026-11-03",
       "popularityRank": 7
     },
     {
-      "id": "interconnects",
-      "title": "Interconnects",
-      "siteUrl": "https://www.interconnects.ai",
-      "feedUrl": "https://www.interconnects.ai/feed",
-      "category": "ai",
-      "tags": [
-        "research",
-        "models",
-        "newsletter"
-      ],
-      "access": "freemium",
-      "feedlySubscribers": 377,
-      "format": "rss",
-      "description": "Nathan Lambert on AI models and open research.",
-      "lastItemDate": "2026-10-30",
-      "verified": true,
-      "verifiedAt": "2026-11-03",
-      "popularityRank": 9
-    },
-    {
-      "id": "latent-space",
-      "title": "Latent Space",
-      "siteUrl": "https://www.latent.space",
-      "feedUrl": "https://www.latent.space/feed",
-      "category": "ai",
-      "tags": [
-        "engineering",
-        "podcast",
-        "newsletter"
-      ],
+      "id": "y-combinator-blog",
+      "title": "Y Combinator Blog",
+      "siteUrl": "https://www.ycombinator.com/blog",
+      "feedUrl": "https://www.ycombinator.com/blog/rss/",
+      "category": "startups",
       "access": "free",
-      "feedlySubscribers": 730,
-      "format": "rss",
-      "description": "The AI engineer's newsletter and podcast.",
-      "lastItemDate": "2026-11-02",
       "verified": true,
-      "verifiedAt": "2026-11-03",
       "popularityRank": 8
     },
     {
-      "id": "ahead-of-ai",
-      "title": "Ahead of AI",
-      "siteUrl": "https://magazine.sebastianraschka.com",
-      "feedUrl": "https://magazine.sebastianraschka.com/feed",
-      "category": "ai",
-      "tags": [
-        "research",
-        "ml",
-        "newsletter"
-      ],
+      "id": "the-verge",
+      "title": "The Verge",
+      "siteUrl": "https://www.theverge.com",
+      "feedUrl": "https://www.theverge.com/rss/index.xml",
+      "category": "tech",
       "access": "freemium",
-      "feedlySubscribers": 1750,
-      "format": "rss",
-      "description": "Sebastian Raschka's ML research explainers.",
-      "lastItemDate": "2026-10-24",
       "verified": true,
-      "verifiedAt": "2026-11-03",
-      "popularityRank": 5
-    },
-    {
-      "id": "mit-tr-ai",
-      "title": "MIT Technology Review: AI",
-      "siteUrl": "https://www.technologyreview.com/topic/artificial-intelligence/",
-      "feedUrl": "https://www.technologyreview.com/topic/artificial-intelligence/feed",
-      "category": "ai",
-      "tags": [
-        "news",
-        "analysis"
-      ],
-      "access": "freemium",
-      "feedlySubscribers": 4201,
-      "format": "rss",
-      "description": "AI news and analysis from MIT Technology Review.",
-      "lastItemDate": "2026-11-03",
-      "verified": true,
-      "verifiedAt": "2026-11-03",
-      "popularityRank": 3
-    },
-    {
-      "id": "openai-news",
-      "title": "OpenAI News",
-      "siteUrl": "https://openai.com/news/",
-      "feedUrl": "https://openai.com/news/rss.xml",
-      "category": "ai",
-      "tags": [
-        "company",
-        "announcements"
-      ],
-      "access": "free",
-      "feedlySubscribers": 2032,
-      "format": "rss",
-      "description": "Official OpenAI announcements.",
-      "lastItemDate": "2026-11-02",
-      "verified": true,
-      "verifiedAt": "2026-11-03",
-      "popularityRank": 4
-    },
-    {
-      "id": "google-ai",
-      "title": "Google AI Blog",
-      "siteUrl": "https://blog.google/technology/ai/",
-      "feedUrl": "https://blog.google/technology/ai/rss/",
-      "category": "ai",
-      "tags": [
-        "company",
-        "announcements"
-      ],
-      "access": "free",
-      "feedlySubscribers": 282,
-      "format": "rss",
-      "description": "Official Google AI announcements.",
-      "lastItemDate": "2026-11-02",
-      "verified": true,
-      "verifiedAt": "2026-11-03",
-      "popularityRank": 10
-    },
-    {
-      "id": "hugging-face",
-      "title": "Hugging Face Blog",
-      "siteUrl": "https://huggingface.co/blog",
-      "feedUrl": "https://huggingface.co/blog/feed.xml",
-      "category": "ai",
-      "tags": [
-        "open-source",
-        "tutorials"
-      ],
-      "access": "free",
-      "feedlySubscribers": 11055,
-      "format": "rss",
-      "description": "Open models, datasets and tutorials.",
-      "lastItemDate": "2026-10-30",
-      "verified": true,
-      "verifiedAt": "2026-11-03",
       "popularityRank": 1
     },
     {
@@ -500,243 +876,9 @@
       "siteUrl": "https://techcrunch.com",
       "feedUrl": "https://techcrunch.com/feed/",
       "category": "tech",
-      "tags": [
-        "startups",
-        "news"
-      ],
       "access": "freemium",
-      "feedlySubscribers": 1339072,
-      "format": "rss",
-      "description": "Startup and tech industry news.",
-      "lastItemDate": "2026-11-03",
       "verified": true,
-      "verifiedAt": "2026-11-03",
-      "popularityRank": 1
-    },
-    {
-      "id": "stratechery",
-      "title": "Stratechery",
-      "siteUrl": "https://stratechery.com",
-      "feedUrl": "https://stratechery.com/feed/",
-      "category": "tech",
-      "tags": [
-        "strategy",
-        "analysis"
-      ],
-      "access": "paywalled",
-      "feedlySubscribers": 67886,
-      "format": "rss",
-      "description": "Ben Thompson on tech strategy; most posts are for subscribers.",
-      "lastItemDate": "2026-11-02",
-      "verified": true,
-      "verifiedAt": "2026-11-03",
       "popularityRank": 2
-    },
-    {
-      "id": "hacker-news",
-      "title": "Hacker News: Front Page",
-      "siteUrl": "https://news.ycombinator.com",
-      "feedUrl": "https://hnrss.org/frontpage",
-      "category": "tech",
-      "tags": [
-        "links",
-        "community"
-      ],
-      "access": "free",
-      "feedlySubscribers": 5516,
-      "format": "rss",
-      "description": "Top links from Hacker News (via hnrss.org).",
-      "lastItemDate": "2026-11-03",
-      "verified": true,
-      "verifiedAt": "2026-11-03",
-      "popularityRank": 4
-    },
-    {
-      "id": "daring-fireball",
-      "title": "Daring Fireball",
-      "siteUrl": "https://daringfireball.net",
-      "feedUrl": "https://daringfireball.net/feeds/main",
-      "category": "tech",
-      "tags": [
-        "apple",
-        "opinion"
-      ],
-      "access": "free",
-      "feedlySubscribers": 4657,
-      "format": "atom",
-      "description": "John Gruber on Apple and tech.",
-      "lastItemDate": "2026-11-03",
-      "verified": true,
-      "verifiedAt": "2026-11-03",
-      "popularityRank": 5
-    },
-    {
-      "id": "9to5mac",
-      "title": "9to5Mac",
-      "siteUrl": "https://9to5mac.com",
-      "feedUrl": "https://9to5mac.com/feed/",
-      "category": "tech",
-      "tags": [
-        "apple",
-        "news"
-      ],
-      "access": "free",
-      "feedlySubscribers": 4639,
-      "format": "rss",
-      "description": "Apple news and rumors.",
-      "lastItemDate": "2026-11-03",
-      "verified": true,
-      "verifiedAt": "2026-11-03",
-      "popularityRank": 6
-    },
-    {
-      "id": "macstories",
-      "title": "MacStories",
-      "siteUrl": "https://www.macstories.net",
-      "feedUrl": "https://www.macstories.net/feed/",
-      "category": "tech",
-      "tags": [
-        "apple",
-        "apps"
-      ],
-      "access": "freemium",
-      "feedlySubscribers": 11862,
-      "format": "rss",
-      "description": "Apple apps, iOS and automation; Club posts are paid.",
-      "lastItemDate": "2026-11-02",
-      "verified": true,
-      "verifiedAt": "2026-11-03",
-      "popularityRank": 3
-    },
-    {
-      "id": "platformer",
-      "title": "Platformer",
-      "siteUrl": "https://www.platformer.news",
-      "feedUrl": "https://www.platformer.news/rss/",
-      "category": "tech",
-      "tags": [
-        "platforms",
-        "policy",
-        "newsletter"
-      ],
-      "access": "freemium",
-      "feedlySubscribers": 179,
-      "format": "rss",
-      "description": "Casey Newton on big tech and democracy.",
-      "lastItemDate": "2026-10-30",
-      "verified": true,
-      "verifiedAt": "2026-11-03",
-      "popularityRank": 8
-    },
-    {
-      "id": "benedict-evans",
-      "title": "Benedict Evans",
-      "siteUrl": "https://www.ben-evans.com",
-      "feedUrl": "https://www.ben-evans.com/benedictevans?format=rss",
-      "category": "tech",
-      "tags": [
-        "strategy",
-        "essays"
-      ],
-      "access": "free",
-      "feedlySubscribers": 612,
-      "format": "rss",
-      "description": "Occasional essays on tech trends (posts every few months).",
-      "lastItemDate": "2026-09-03",
-      "verified": true,
-      "verifiedAt": "2026-11-03",
-      "popularityRank": 7
-    },
-    {
-      "id": "npr-news",
-      "title": "NPR News",
-      "siteUrl": "https://www.npr.org",
-      "feedUrl": "https://feeds.npr.org/1001/rss.xml",
-      "category": "news",
-      "tags": [
-        "us",
-        "world"
-      ],
-      "access": "free",
-      "feedlySubscribers": 944,
-      "format": "rss",
-      "description": "Top US and world news from NPR.",
-      "lastItemDate": "2026-11-03",
-      "verified": true,
-      "verifiedAt": "2026-11-03",
-      "popularityRank": 4
-    },
-    {
-      "id": "quanta",
-      "title": "Quanta Magazine",
-      "siteUrl": "https://www.quantamagazine.org",
-      "feedUrl": "https://www.quantamagazine.org/feed/",
-      "category": "news",
-      "tags": [
-        "science",
-        "math"
-      ],
-      "access": "free",
-      "feedlySubscribers": 1028,
-      "format": "rss",
-      "description": "Math, physics, biology and computer science stories.",
-      "lastItemDate": "2026-11-02",
-      "verified": true,
-      "verifiedAt": "2026-11-03",
-      "popularityRank": 3
-    },
-    {
-      "id": "nature",
-      "title": "Nature",
-      "siteUrl": "https://www.nature.com/nature",
-      "feedUrl": "https://www.nature.com/nature.rss",
-      "category": "news",
-      "tags": [
-        "science",
-        "research"
-      ],
-      "access": "freemium",
-      "feedlySubscribers": 2810,
-      "format": "rss",
-      "description": "Research and news from the journal Nature.",
-      "lastItemDate": "2026-11-03",
-      "verified": true,
-      "verifiedAt": "2026-11-03",
-      "popularityRank": 2
-    },
-    {
-      "id": "science-news",
-      "title": "Science News",
-      "siteUrl": "https://www.sciencenews.org",
-      "feedUrl": "https://www.sciencenews.org/feed",
-      "category": "news",
-      "tags": [
-        "science"
-      ],
-      "access": "freemium",
-      "feedlySubscribers": 3155,
-      "format": "rss",
-      "description": "Independent science journalism.",
-      "lastItemDate": "2026-11-03",
-      "verified": true,
-      "verifiedAt": "2026-11-03",
-      "popularityRank": 1
-    },
-    {
-      "id": "the-verge",
-      "title": "The Verge",
-      "siteUrl": "https://www.theverge.com",
-      "feedUrl": "https://www.theverge.com/rss/index.xml",
-      "category": "tech",
-      "tags": [],
-      "access": "freemium",
-      "feedlySubscribers": 1451702,
-      "format": "rss",
-      "description": "",
-      "lastItemDate": null,
-      "verified": false,
-      "verifiedAt": null,
-      "note": "Site blocked our checker; confirm on device before shipping."
     },
     {
       "id": "ars-technica",
@@ -744,15 +886,79 @@
       "siteUrl": "https://arstechnica.com",
       "feedUrl": "https://feeds.arstechnica.com/arstechnica/index",
       "category": "tech",
-      "tags": [],
       "access": "free",
-      "feedlySubscribers": 1083,
-      "format": "rss",
-      "description": "",
-      "lastItemDate": null,
-      "verified": false,
-      "verifiedAt": null,
-      "note": "Site blocked our checker; confirm on device before shipping."
+      "verified": true,
+      "popularityRank": 3
+    },
+    {
+      "id": "engadget",
+      "title": "Engadget",
+      "siteUrl": "https://www.engadget.com",
+      "feedUrl": "https://www.engadget.com/rss.xml",
+      "category": "tech",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 4
+    },
+    {
+      "id": "krebs-on-security",
+      "title": "Krebs on Security",
+      "siteUrl": "https://krebsonsecurity.com",
+      "feedUrl": "https://krebsonsecurity.com/feed/",
+      "category": "tech",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 5
+    },
+    {
+      "id": "kottke",
+      "title": "Kottke",
+      "siteUrl": "https://kottke.org",
+      "feedUrl": "https://feeds.kottke.org/main",
+      "category": "tech",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 6
+    },
+    {
+      "id": "stratechery",
+      "title": "Stratechery",
+      "siteUrl": "https://stratechery.com",
+      "feedUrl": "https://stratechery.com/feed/",
+      "category": "tech",
+      "access": "paywalled",
+      "verified": true,
+      "popularityRank": 7
+    },
+    {
+      "id": "techmeme",
+      "title": "Techmeme",
+      "siteUrl": "https://www.techmeme.com",
+      "feedUrl": "https://www.techmeme.com/feed.xml",
+      "category": "tech",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 8
+    },
+    {
+      "id": "404-media",
+      "title": "404 Media",
+      "siteUrl": "https://www.404media.co",
+      "feedUrl": "https://www.404media.co/rss/",
+      "category": "tech",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 9
+    },
+    {
+      "id": "hacker-news-front-page",
+      "title": "Hacker News: Front Page",
+      "siteUrl": "https://news.ycombinator.com",
+      "feedUrl": "https://hnrss.org/frontpage",
+      "category": "tech",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 10
     },
     {
       "id": "wired",
@@ -760,143 +966,2439 @@
       "siteUrl": "https://www.wired.com",
       "feedUrl": "https://www.wired.com/feed/rss",
       "category": "tech",
-      "tags": [],
       "access": "freemium",
-      "feedlySubscribers": 4735,
-      "format": "rss",
-      "description": "",
-      "lastItemDate": null,
-      "verified": false,
-      "verifiedAt": null,
-      "note": "Site blocked our checker; confirm on device before shipping."
+      "verified": true,
+      "popularityRank": 11
     },
     {
-      "id": "bbc-news",
-      "title": "BBC News",
-      "siteUrl": "https://www.bbc.co.uk/news",
-      "feedUrl": "https://feeds.bbci.co.uk/news/rss.xml",
-      "category": "news",
-      "tags": [],
-      "access": "free",
-      "feedlySubscribers": 821,
-      "format": "rss",
-      "description": "",
-      "lastItemDate": null,
-      "verified": false,
-      "verifiedAt": null,
-      "note": "Site blocked our checker; confirm on device before shipping."
+      "id": "mit-technology-review",
+      "title": "MIT Technology Review",
+      "siteUrl": "https://www.technologyreview.com",
+      "feedUrl": "https://www.technologyreview.com/feed/",
+      "category": "tech",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 12
     },
     {
-      "id": "nyt-home",
-      "title": "The New York Times",
-      "siteUrl": "https://www.nytimes.com",
-      "feedUrl": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
-      "category": "news",
-      "tags": [],
+      "id": "the-information",
+      "title": "The Information",
+      "siteUrl": "https://www.theinformation.com",
+      "feedUrl": "https://www.theinformation.com/feed",
+      "category": "tech",
       "access": "paywalled",
-      "feedlySubscribers": 2942,
-      "format": "rss",
-      "description": "",
-      "lastItemDate": null,
-      "verified": false,
-      "verifiedAt": null,
-      "note": "Site blocked our checker; confirm on device before shipping."
+      "verified": true,
+      "popularityRank": 13
+    },
+    {
+      "id": "slashdot",
+      "title": "Slashdot",
+      "siteUrl": "https://slashdot.org",
+      "feedUrl": "https://rss.slashdot.org/Slashdot/slashdotMain",
+      "category": "tech",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 14
+    },
+    {
+      "id": "the-markup",
+      "title": "The Markup",
+      "siteUrl": "https://themarkup.org",
+      "feedUrl": "https://themarkup.org/feeds/rss.xml",
+      "category": "tech",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 15
+    },
+    {
+      "id": "schneier-on-security",
+      "title": "Schneier on Security",
+      "siteUrl": "https://www.schneier.com",
+      "feedUrl": "https://www.schneier.com/feed/atom/",
+      "category": "tech",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 16
+    },
+    {
+      "id": "the-register",
+      "title": "The Register",
+      "siteUrl": "https://www.theregister.com",
+      "feedUrl": "https://www.theregister.com/headlines.atom",
+      "category": "tech",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 17
+    },
+    {
+      "id": "gizmodo",
+      "title": "Gizmodo",
+      "siteUrl": "https://gizmodo.com",
+      "feedUrl": "https://gizmodo.com/feed",
+      "category": "tech",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 18
+    },
+    {
+      "id": "anil-dash",
+      "title": "Anil Dash",
+      "siteUrl": "https://www.anildash.com",
+      "feedUrl": "https://www.anildash.com/feed.xml",
+      "category": "tech",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 19
+    },
+    {
+      "id": "platformer",
+      "title": "Platformer",
+      "siteUrl": "https://www.platformer.news",
+      "feedUrl": "https://www.platformer.news/rss/",
+      "category": "tech",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 20
+    },
+    {
+      "id": "9to5mac",
+      "title": "9to5Mac",
+      "siteUrl": "https://9to5mac.com",
+      "feedUrl": "https://9to5mac.com/feed/",
+      "category": "apple",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 1
+    },
+    {
+      "id": "appleinsider",
+      "title": "AppleInsider",
+      "siteUrl": "https://appleinsider.com",
+      "feedUrl": "https://appleinsider.com/rss/news/",
+      "category": "apple",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 2
+    },
+    {
+      "id": "macrumors",
+      "title": "MacRumors",
+      "siteUrl": "https://www.macrumors.com",
+      "feedUrl": "https://feeds.macrumors.com/MacRumors-All",
+      "category": "apple",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 3
+    },
+    {
+      "id": "cult-of-mac",
+      "title": "Cult of Mac",
+      "siteUrl": "https://www.cultofmac.com",
+      "feedUrl": "https://www.cultofmac.com/feed/",
+      "category": "apple",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 4
+    },
+    {
+      "id": "the-loop",
+      "title": "The Loop",
+      "siteUrl": "https://www.loopinsight.com",
+      "feedUrl": "https://www.loopinsight.com/feed/",
+      "category": "apple",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 5
+    },
+    {
+      "id": "macstories",
+      "title": "MacStories",
+      "siteUrl": "https://www.macstories.net",
+      "feedUrl": "https://www.macstories.net/feed/",
+      "category": "apple",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 6
+    },
+    {
+      "id": "michael-tsai",
+      "title": "Michael Tsai",
+      "siteUrl": "https://mjtsai.com/blog/",
+      "feedUrl": "https://mjtsai.com/blog/feed/",
+      "category": "apple",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 7
+    },
+    {
+      "id": "apple-developer-news",
+      "title": "Apple Developer News",
+      "siteUrl": "https://developer.apple.com/news/",
+      "feedUrl": "https://developer.apple.com/news/rss/news.rss",
+      "category": "apple",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 8
+    },
+    {
+      "id": "daring-fireball",
+      "title": "Daring Fireball",
+      "siteUrl": "https://daringfireball.net",
+      "feedUrl": "https://daringfireball.net/feeds/main",
+      "category": "apple",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 9
+    },
+    {
+      "id": "pixel-envy",
+      "title": "Pixel Envy",
+      "siteUrl": "https://pxlnv.com",
+      "feedUrl": "https://pxlnv.com/feed/",
+      "category": "apple",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 10
+    },
+    {
+      "id": "apple-newsroom",
+      "title": "Apple Newsroom",
+      "siteUrl": "https://www.apple.com/newsroom/",
+      "feedUrl": "https://www.apple.com/newsroom/rss-feed.rss",
+      "category": "apple",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 11
+    },
+    {
+      "id": "the-eclectic-light-company",
+      "title": "The Eclectic Light Company",
+      "siteUrl": "https://eclecticlight.co",
+      "feedUrl": "https://eclecticlight.co/feed/",
+      "category": "apple",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 12
+    },
+    {
+      "id": "marco-org",
+      "title": "Marco.org",
+      "siteUrl": "https://marco.org",
+      "feedUrl": "https://marco.org/rss",
+      "category": "apple",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 13
+    },
+    {
+      "id": "tidbits",
+      "title": "TidBITS",
+      "siteUrl": "https://tidbits.com",
+      "feedUrl": "https://tidbits.com/feed/",
+      "category": "apple",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 14
+    },
+    {
+      "id": "512-pixels",
+      "title": "512 Pixels",
+      "siteUrl": "https://512pixels.net",
+      "feedUrl": "https://512pixels.net/feed/",
+      "category": "apple",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 15
+    },
+    {
+      "id": "imore",
+      "title": "iMore",
+      "siteUrl": "https://www.imore.com",
+      "feedUrl": "https://www.imore.com/rss.xml",
+      "category": "apple",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 16
+    },
+    {
+      "id": "six-colors",
+      "title": "Six Colors",
+      "siteUrl": "https://sixcolors.com",
+      "feedUrl": "https://sixcolors.com/feed/",
+      "category": "apple",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 17
+    },
+    {
+      "id": "hugging-face-blog",
+      "title": "Hugging Face Blog",
+      "siteUrl": "https://huggingface.co/blog",
+      "feedUrl": "https://huggingface.co/blog/feed.xml",
+      "category": "ai",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 1
+    },
+    {
+      "id": "simon-willisons-weblog",
+      "title": "Simon Willison's Weblog",
+      "siteUrl": "https://simonwillison.net",
+      "feedUrl": "https://simonwillison.net/atom/everything/",
+      "category": "ai",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 2
+    },
+    {
+      "id": "mit-technology-review-ai",
+      "title": "MIT Technology Review: AI",
+      "siteUrl": "https://www.technologyreview.com/topic/artificial-intelligence/",
+      "feedUrl": "https://www.technologyreview.com/topic/artificial-intelligence/feed",
+      "category": "ai",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 3
+    },
+    {
+      "id": "google-deepmind-blog",
+      "title": "Google DeepMind Blog",
+      "siteUrl": "https://deepmind.google/discover/blog/",
+      "feedUrl": "https://deepmind.google/blog/rss.xml",
+      "category": "ai",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 4
+    },
+    {
+      "id": "openai-news",
+      "title": "OpenAI News",
+      "siteUrl": "https://openai.com/news/",
+      "feedUrl": "https://openai.com/news/rss.xml",
+      "category": "ai",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 5
+    },
+    {
+      "id": "ahead-of-ai",
+      "title": "Ahead of AI",
+      "siteUrl": "https://magazine.sebastianraschka.com",
+      "feedUrl": "https://magazine.sebastianraschka.com/feed",
+      "category": "ai",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 6
+    },
+    {
+      "id": "last-week-in-ai",
+      "title": "Last Week in AI",
+      "siteUrl": "https://lastweekin.ai",
+      "feedUrl": "https://lastweekin.ai/feed",
+      "category": "ai",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 7
+    },
+    {
+      "id": "apple-machine-learning-research",
+      "title": "Apple Machine Learning Research",
+      "siteUrl": "https://machinelearning.apple.com",
+      "feedUrl": "https://machinelearning.apple.com/rss.xml",
+      "category": "ai",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 8
+    },
+    {
+      "id": "import-ai",
+      "title": "Import AI",
+      "siteUrl": "https://importai.substack.com",
+      "feedUrl": "https://importai.substack.com/feed",
+      "category": "ai",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 9
+    },
+    {
+      "id": "one-useful-thing",
+      "title": "One Useful Thing",
+      "siteUrl": "https://www.oneusefulthing.org",
+      "feedUrl": "https://www.oneusefulthing.org/feed",
+      "category": "ai",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 10
+    },
+    {
+      "id": "nvidia-blog",
+      "title": "NVIDIA Blog",
+      "siteUrl": "https://blogs.nvidia.com",
+      "feedUrl": "https://blogs.nvidia.com/feed/",
+      "category": "ai",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 11
+    },
+    {
+      "id": "latent-space",
+      "title": "Latent Space",
+      "siteUrl": "https://www.latent.space",
+      "feedUrl": "https://www.latent.space/feed",
+      "category": "ai",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 12
+    },
+    {
+      "id": "understanding-ai",
+      "title": "Understanding AI",
+      "siteUrl": "https://www.understandingai.org",
+      "feedUrl": "https://www.understandingai.org/feed",
+      "category": "ai",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 13
+    },
+    {
+      "id": "interconnects",
+      "title": "Interconnects",
+      "siteUrl": "https://www.interconnects.ai",
+      "feedUrl": "https://www.interconnects.ai/feed",
+      "category": "ai",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 14
+    },
+    {
+      "id": "google-ai-blog",
+      "title": "Google AI Blog",
+      "siteUrl": "https://blog.google/technology/ai/",
+      "feedUrl": "https://blog.google/technology/ai/rss/",
+      "category": "ai",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 15
+    },
+    {
+      "id": "ai-snake-oil",
+      "title": "AI Snake Oil",
+      "siteUrl": "https://www.aisnakeoil.com",
+      "feedUrl": "https://www.aisnakeoil.com/feed",
+      "category": "ai",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 16
+    },
+    {
+      "id": "smashing-magazine",
+      "title": "Smashing Magazine",
+      "siteUrl": "https://www.smashingmagazine.com",
+      "feedUrl": "https://www.smashingmagazine.com/feed/",
+      "category": "programming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 1
+    },
+    {
+      "id": "martin-fowler",
+      "title": "Martin Fowler",
+      "siteUrl": "https://martinfowler.com",
+      "feedUrl": "https://martinfowler.com/feed.atom",
+      "category": "programming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 2
+    },
+    {
+      "id": "rust-blog",
+      "title": "Rust Blog",
+      "siteUrl": "https://blog.rust-lang.org",
+      "feedUrl": "https://blog.rust-lang.org/feed.xml",
+      "category": "programming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 3
+    },
+    {
+      "id": "css-tricks",
+      "title": "CSS-Tricks",
+      "siteUrl": "https://css-tricks.com",
+      "feedUrl": "https://css-tricks.com/feed/",
+      "category": "programming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 4
+    },
+    {
+      "id": "josh-comeau",
+      "title": "Josh Comeau",
+      "siteUrl": "https://www.joshwcomeau.com",
+      "feedUrl": "https://www.joshwcomeau.com/rss.xml",
+      "category": "programming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 5
+    },
+    {
+      "id": "netflix-tech-blog",
+      "title": "Netflix Tech Blog",
+      "siteUrl": "https://netflixtechblog.com",
+      "feedUrl": "https://netflixtechblog.com/feed",
+      "category": "programming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 6
+    },
+    {
+      "id": "the-pragmatic-engineer",
+      "title": "The Pragmatic Engineer",
+      "siteUrl": "https://newsletter.pragmaticengineer.com",
+      "feedUrl": "https://newsletter.pragmaticengineer.com/feed",
+      "category": "programming",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 7
+    },
+    {
+      "id": "cloudflare-blog",
+      "title": "Cloudflare Blog",
+      "siteUrl": "https://blog.cloudflare.com",
+      "feedUrl": "https://blog.cloudflare.com/rss/",
+      "category": "programming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 8
+    },
+    {
+      "id": "the-github-blog",
+      "title": "The GitHub Blog",
+      "siteUrl": "https://github.blog",
+      "feedUrl": "https://github.blog/feed/",
+      "category": "programming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 9
+    },
+    {
+      "id": "lwn-net",
+      "title": "LWN.net",
+      "siteUrl": "https://lwn.net",
+      "feedUrl": "https://lwn.net/headlines/rss",
+      "category": "programming",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 10
+    },
+    {
+      "id": "stack-overflow-blog",
+      "title": "Stack Overflow Blog",
+      "siteUrl": "https://stackoverflow.blog",
+      "feedUrl": "https://stackoverflow.blog/feed/",
+      "category": "programming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 11
+    },
+    {
+      "id": "python-insider",
+      "title": "Python Insider",
+      "siteUrl": "https://blog.python.org",
+      "feedUrl": "https://blog.python.org/feeds/posts/default",
+      "category": "programming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 12
+    },
+    {
+      "id": "coding-horror",
+      "title": "Coding Horror",
+      "siteUrl": "https://blog.codinghorror.com",
+      "feedUrl": "https://blog.codinghorror.com/rss/",
+      "category": "programming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 13
+    },
+    {
+      "id": "irrational-exuberance",
+      "title": "Irrational Exuberance",
+      "siteUrl": "https://lethain.com",
+      "feedUrl": "https://lethain.com/feeds/",
+      "category": "programming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 14
+    },
+    {
+      "id": "swift-org-blog",
+      "title": "Swift.org Blog",
+      "siteUrl": "https://www.swift.org/blog/",
+      "feedUrl": "https://www.swift.org/atom.xml",
+      "category": "programming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 15
+    },
+    {
+      "id": "swift-by-sundell",
+      "title": "Swift by Sundell",
+      "siteUrl": "https://www.swiftbysundell.com",
+      "feedUrl": "https://www.swiftbysundell.com/rss",
+      "category": "programming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 16
+    },
+    {
+      "id": "quanta-magazine",
+      "title": "Quanta Magazine",
+      "siteUrl": "https://www.quantamagazine.org",
+      "feedUrl": "https://www.quantamagazine.org/feed/",
+      "category": "science",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 1
+    },
+    {
+      "id": "ars-technica-science",
+      "title": "Ars Technica: Science",
+      "siteUrl": "https://arstechnica.com/science/",
+      "feedUrl": "https://feeds.arstechnica.com/arstechnica/science",
+      "category": "science",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 2
+    },
+    {
+      "id": "nautilus",
+      "title": "Nautilus",
+      "siteUrl": "https://nautil.us",
+      "feedUrl": "https://nautil.us/feed/",
+      "category": "science",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 3
+    },
+    {
+      "id": "science-news",
+      "title": "Science News",
+      "siteUrl": "https://www.sciencenews.org",
+      "feedUrl": "https://www.sciencenews.org/feed",
+      "category": "science",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 4
+    },
+    {
+      "id": "undark",
+      "title": "Undark",
+      "siteUrl": "https://undark.org",
+      "feedUrl": "https://undark.org/feed/",
+      "category": "science",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 5
+    },
+    {
+      "id": "phys-org",
+      "title": "Phys.org",
+      "siteUrl": "https://phys.org",
+      "feedUrl": "https://phys.org/rss-feed/",
+      "category": "science",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 6
+    },
+    {
+      "id": "nature",
+      "title": "Nature",
+      "siteUrl": "https://www.nature.com/nature",
+      "feedUrl": "https://www.nature.com/nature.rss",
+      "category": "science",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 7
+    },
+    {
+      "id": "nyt-science",
+      "title": "NYT Science",
+      "siteUrl": "https://www.nytimes.com/section/science",
+      "feedUrl": "https://rss.nytimes.com/services/xml/rss/nyt/Science.xml",
+      "category": "science",
+      "access": "paywalled",
+      "verified": true,
+      "popularityRank": 8
+    },
+    {
+      "id": "science-aaas-news",
+      "title": "Science (AAAS) News",
+      "siteUrl": "https://www.science.org/news",
+      "feedUrl": "https://www.science.org/rss/news_current.xml",
+      "category": "science",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 9
+    },
+    {
+      "id": "live-science",
+      "title": "Live Science",
+      "siteUrl": "https://www.livescience.com",
+      "feedUrl": "https://www.livescience.com/feeds/all",
+      "category": "science",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 10
+    },
+    {
+      "id": "the-guardian-science",
+      "title": "The Guardian: Science",
+      "siteUrl": "https://www.theguardian.com/science",
+      "feedUrl": "https://www.theguardian.com/science/rss",
+      "category": "science",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 11
+    },
+    {
+      "id": "new-scientist",
+      "title": "New Scientist",
+      "siteUrl": "https://www.newscientist.com",
+      "feedUrl": "https://www.newscientist.com/feed/home/",
+      "category": "science",
+      "access": "paywalled",
+      "verified": true,
+      "popularityRank": 12
+    },
+    {
+      "id": "scientific-american",
+      "title": "Scientific American",
+      "siteUrl": "https://www.scientificamerican.com",
+      "feedUrl": "https://www.scientificamerican.com/platform/syndication/rss/",
+      "category": "science",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 13
+    },
+    {
+      "id": "sciencealert",
+      "title": "ScienceAlert",
+      "siteUrl": "https://www.sciencealert.com",
+      "feedUrl": "https://www.sciencealert.com/feed",
+      "category": "science",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 14
+    },
+    {
+      "id": "smithsonian-science",
+      "title": "Smithsonian: Science",
+      "siteUrl": "https://www.smithsonianmag.com/science-nature/",
+      "feedUrl": "https://www.smithsonianmag.com/rss/science-nature/",
+      "category": "science",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 15
+    },
+    {
+      "id": "the-atlantic-science",
+      "title": "The Atlantic: Science",
+      "siteUrl": "https://www.theatlantic.com/science/",
+      "feedUrl": "https://www.theatlantic.com/feed/channel/science/",
+      "category": "science",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 16
+    },
+    {
+      "id": "big-think",
+      "title": "Big Think",
+      "siteUrl": "https://bigthink.com",
+      "feedUrl": "https://bigthink.com/feed/",
+      "category": "science",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 17
+    },
+    {
+      "id": "npr-science",
+      "title": "NPR Science",
+      "siteUrl": "https://www.npr.org/sections/science/",
+      "feedUrl": "https://feeds.npr.org/1007/rss.xml",
+      "category": "science",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 18
+    },
+    {
+      "id": "knowable-magazine",
+      "title": "Knowable Magazine",
+      "siteUrl": "https://knowablemagazine.org",
+      "feedUrl": "https://knowablemagazine.org/rss",
+      "category": "science",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 19
+    },
+    {
+      "id": "spacenews",
+      "title": "SpaceNews",
+      "siteUrl": "https://spacenews.com",
+      "feedUrl": "https://spacenews.com/feed/",
+      "category": "space",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 1
+    },
+    {
+      "id": "nasaspaceflight",
+      "title": "NASASpaceflight",
+      "siteUrl": "https://www.nasaspaceflight.com",
+      "feedUrl": "https://www.nasaspaceflight.com/feed/",
+      "category": "space",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 2
+    },
+    {
+      "id": "spaceflight-now",
+      "title": "Spaceflight Now",
+      "siteUrl": "https://spaceflightnow.com",
+      "feedUrl": "https://spaceflightnow.com/feed/",
+      "category": "space",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 3
+    },
+    {
+      "id": "earthsky",
+      "title": "EarthSky",
+      "siteUrl": "https://earthsky.org",
+      "feedUrl": "https://earthsky.org/feed/",
+      "category": "space",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 4
+    },
+    {
+      "id": "universe-today",
+      "title": "Universe Today",
+      "siteUrl": "https://www.universetoday.com",
+      "feedUrl": "https://www.universetoday.com/feed/",
+      "category": "space",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 5
+    },
+    {
+      "id": "space-com",
+      "title": "Space.com",
+      "siteUrl": "https://www.space.com",
+      "feedUrl": "https://www.space.com/feeds/all",
+      "category": "space",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 6
+    },
+    {
+      "id": "payload",
+      "title": "Payload",
+      "siteUrl": "https://payloadspace.com",
+      "feedUrl": "https://payloadspace.com/feed/",
+      "category": "space",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 7
+    },
+    {
+      "id": "astronomy-magazine",
+      "title": "Astronomy Magazine",
+      "siteUrl": "https://www.astronomy.com",
+      "feedUrl": "https://www.astronomy.com/feed/",
+      "category": "space",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 8
+    },
+    {
+      "id": "ars-technica-space",
+      "title": "Ars Technica: Space",
+      "siteUrl": "https://arstechnica.com/space/",
+      "feedUrl": "https://arstechnica.com/space/feed/",
+      "category": "space",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 9
+    },
+    {
+      "id": "astronomy-picture-of-the-day",
+      "title": "Astronomy Picture of the Day",
+      "siteUrl": "https://apod.nasa.gov",
+      "feedUrl": "https://apod.com/feed.rss",
+      "category": "space",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 10
+    },
+    {
+      "id": "nasa-news",
+      "title": "NASA News",
+      "siteUrl": "https://www.nasa.gov/news/",
+      "feedUrl": "https://www.nasa.gov/news-release/feed/",
+      "category": "space",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 11
+    },
+    {
+      "id": "nasa-image-of-the-day",
+      "title": "NASA Image of the Day",
+      "siteUrl": "https://www.nasa.gov/image-of-the-day/",
+      "feedUrl": "https://www.nasa.gov/feeds/iotd-feed/",
+      "category": "space",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 12
+    },
+    {
+      "id": "the-planetary-society",
+      "title": "The Planetary Society",
+      "siteUrl": "https://www.planetary.org",
+      "feedUrl": "https://www.planetary.org/rss/articles",
+      "category": "space",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 13
+    },
+    {
+      "id": "sky-telescope",
+      "title": "Sky & Telescope",
+      "siteUrl": "https://skyandtelescope.org",
+      "feedUrl": "https://skyandtelescope.org/feed/",
+      "category": "space",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 14
+    },
+    {
+      "id": "nejm",
+      "title": "NEJM",
+      "siteUrl": "https://www.nejm.org",
+      "feedUrl": "https://www.nejm.org/action/showFeed?jc=nejm&type=etoc&feed=rss",
+      "category": "health",
+      "access": "paywalled",
+      "verified": true,
+      "popularityRank": 1
+    },
+    {
+      "id": "medical-xpress",
+      "title": "Medical Xpress",
+      "siteUrl": "https://medicalxpress.com",
+      "feedUrl": "https://medicalxpress.com/rss-feed/",
+      "category": "health",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 2
+    },
+    {
+      "id": "the-guardian-health",
+      "title": "The Guardian: Health",
+      "siteUrl": "https://www.theguardian.com/society/health",
+      "feedUrl": "https://www.theguardian.com/society/health/rss",
+      "category": "health",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 3
+    },
+    {
+      "id": "your-local-epidemiologist",
+      "title": "Your Local Epidemiologist",
+      "siteUrl": "https://yourlocalepidemiologist.substack.com",
+      "feedUrl": "https://yourlocalepidemiologist.substack.com/feed",
+      "category": "health",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 4
     },
     {
       "id": "nyt-health",
       "title": "NYT Health",
       "siteUrl": "https://www.nytimes.com/section/health",
       "feedUrl": "https://rss.nytimes.com/services/xml/rss/nyt/Health.xml",
-      "category": "healthtech",
-      "tags": [],
+      "category": "health",
       "access": "paywalled",
-      "feedlySubscribers": 176,
-      "format": "rss",
-      "description": "",
-      "lastItemDate": null,
-      "verified": false,
-      "verifiedAt": null,
-      "note": "Site blocked our checker; confirm on device before shipping."
+      "verified": true,
+      "popularityRank": 5
     },
     {
-      "id": "guardian-world",
-      "title": "The Guardian: World",
-      "siteUrl": "https://www.theguardian.com/world",
-      "feedUrl": "https://www.theguardian.com/world/rss",
-      "category": "news",
-      "tags": [],
+      "id": "eric-topol-ground-truths",
+      "title": "Eric Topol: Ground Truths",
+      "siteUrl": "https://erictopol.substack.com",
+      "feedUrl": "https://erictopol.substack.com/feed",
+      "category": "health",
       "access": "free",
-      "feedlySubscribers": 2804,
-      "format": "rss",
-      "description": "",
-      "lastItemDate": null,
-      "verified": false,
-      "verifiedAt": null,
-      "note": "Site blocked our checker; confirm on device before shipping."
+      "verified": true,
+      "popularityRank": 6
+    },
+    {
+      "id": "the-bmj",
+      "title": "The BMJ",
+      "siteUrl": "https://www.bmj.com",
+      "feedUrl": "https://www.bmj.com/rss.xml",
+      "category": "health",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 7
+    },
+    {
+      "id": "science-based-medicine",
+      "title": "Science-Based Medicine",
+      "siteUrl": "https://sciencebasedmedicine.org",
+      "feedUrl": "https://sciencebasedmedicine.org/feed/",
+      "category": "health",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 8
+    },
+    {
+      "id": "well-nyt",
+      "title": "Well (NYT)",
+      "siteUrl": "https://www.nytimes.com/section/well",
+      "feedUrl": "https://rss.nytimes.com/services/xml/rss/nyt/Well.xml",
+      "category": "health",
+      "access": "paywalled",
+      "verified": true,
+      "popularityRank": 9
+    },
+    {
+      "id": "kff-health-news",
+      "title": "KFF Health News",
+      "siteUrl": "https://kffhealthnews.org",
+      "feedUrl": "https://kffhealthnews.org/feed/",
+      "category": "health",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 10
+    },
+    {
+      "id": "npr-health",
+      "title": "NPR Health",
+      "siteUrl": "https://www.npr.org/sections/health/",
+      "feedUrl": "https://feeds.npr.org/1128/rss.xml",
+      "category": "health",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 11
+    },
+    {
+      "id": "healthcare-it-news",
+      "title": "Healthcare IT News",
+      "siteUrl": "https://www.healthcareitnews.com",
+      "feedUrl": "https://www.healthcareitnews.com/home/feed",
+      "category": "healthtech",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 1
+    },
+    {
+      "id": "the-health-care-blog",
+      "title": "The Health Care Blog",
+      "siteUrl": "https://thehealthcareblog.com",
+      "feedUrl": "https://thehealthcareblog.com/feed/",
+      "category": "healthtech",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 2
+    },
+    {
+      "id": "stat",
+      "title": "STAT",
+      "siteUrl": "https://www.statnews.com",
+      "feedUrl": "https://www.statnews.com/feed/",
+      "category": "healthtech",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 3
+    },
+    {
+      "id": "biopharma-dive",
+      "title": "BioPharma Dive",
+      "siteUrl": "https://www.biopharmadive.com",
+      "feedUrl": "https://www.biopharmadive.com/feeds/news/",
+      "category": "healthtech",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 4
+    },
+    {
+      "id": "medcity-news",
+      "title": "MedCity News",
+      "siteUrl": "https://medcitynews.com",
+      "feedUrl": "https://medcitynews.com/feed/",
+      "category": "healthtech",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 5
+    },
+    {
+      "id": "endpoints-news",
+      "title": "Endpoints News",
+      "siteUrl": "https://endpts.com",
+      "feedUrl": "https://endpts.com/feed/",
+      "category": "healthtech",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 6
+    },
+    {
+      "id": "fierce-healthcare",
+      "title": "Fierce Healthcare",
+      "siteUrl": "https://www.fiercehealthcare.com",
+      "feedUrl": "https://www.fiercehealthcare.com/rss/xml",
+      "category": "healthtech",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 7
+    },
+    {
+      "id": "healthcare-dive",
+      "title": "Healthcare Dive",
+      "siteUrl": "https://www.healthcaredive.com",
+      "feedUrl": "https://www.healthcaredive.com/feeds/news/",
+      "category": "healthtech",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 8
+    },
+    {
+      "id": "fierce-pharma",
+      "title": "Fierce Pharma",
+      "siteUrl": "https://www.fiercepharma.com",
+      "feedUrl": "https://www.fiercepharma.com/rss.xml",
+      "category": "healthtech",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 9
+    },
+    {
+      "id": "beckers-health-it",
+      "title": "Becker's Health IT",
+      "siteUrl": "https://www.beckershospitalreview.com/healthcare-information-technology/",
+      "feedUrl": "https://www.beckershospitalreview.com/feed/",
+      "category": "healthtech",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 10
+    },
+    {
+      "id": "fierce-biotech",
+      "title": "Fierce Biotech",
+      "siteUrl": "https://www.fiercebiotech.com",
+      "feedUrl": "https://www.fiercebiotech.com/rss.xml",
+      "category": "healthtech",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 11
+    },
+    {
+      "id": "histalk",
+      "title": "HIStalk",
+      "siteUrl": "https://histalk2.com",
+      "feedUrl": "https://histalk2.com/feed/",
+      "category": "healthtech",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 12
+    },
+    {
+      "id": "out-of-pocket",
+      "title": "Out-Of-Pocket",
+      "siteUrl": "https://www.outofpocket.health",
+      "feedUrl": "https://www.outofpocket.health/p/rss.xml",
+      "category": "healthtech",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 13
+    },
+    {
+      "id": "ask-a-manager",
+      "title": "Ask a Manager",
+      "siteUrl": "https://www.askamanager.org",
+      "feedUrl": "https://www.askamanager.org/feed",
+      "category": "product",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 1
+    },
+    {
+      "id": "farnam-street",
+      "title": "Farnam Street",
+      "siteUrl": "https://fs.blog",
+      "feedUrl": "https://fs.blog/feed/",
+      "category": "product",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 2
+    },
+    {
+      "id": "lennys-newsletter",
+      "title": "Lenny's Newsletter",
+      "siteUrl": "https://www.lennysnewsletter.com",
+      "feedUrl": "https://www.lennysnewsletter.com/feed",
+      "category": "product",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 3
+    },
+    {
+      "id": "kellblog",
+      "title": "Kellblog",
+      "siteUrl": "https://kellblog.com",
+      "feedUrl": "https://kellblog.com/feed/",
+      "category": "product",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 4
+    },
+    {
+      "id": "rands-in-repose",
+      "title": "Rands in Repose",
+      "siteUrl": "https://randsinrepose.com",
+      "feedUrl": "https://randsinrepose.com/feed/",
+      "category": "product",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 5
+    },
+    {
+      "id": "the-beautiful-mess",
+      "title": "The Beautiful Mess",
+      "siteUrl": "https://cutlefish.substack.com",
+      "feedUrl": "https://cutlefish.substack.com/feed",
+      "category": "product",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 6
+    },
+    {
+      "id": "product-talk",
+      "title": "Product Talk",
+      "siteUrl": "https://www.producttalk.org",
+      "feedUrl": "https://www.producttalk.org/feed/",
+      "category": "product",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 7
+    },
+    {
+      "id": "kent-beck-software-design",
+      "title": "Kent Beck: Software Design",
+      "siteUrl": "https://tidyfirst.substack.com",
+      "feedUrl": "https://tidyfirst.substack.com/feed",
+      "category": "product",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 8
+    },
+    {
+      "id": "amplitude-blog",
+      "title": "Amplitude Blog",
+      "siteUrl": "https://amplitude.com/blog",
+      "feedUrl": "https://amplitude.com/feed",
+      "category": "product",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 9
+    },
+    {
+      "id": "silicon-valley-product-group",
+      "title": "Silicon Valley Product Group",
+      "siteUrl": "https://www.svpg.com",
+      "feedUrl": "https://www.svpg.com/feed/",
+      "category": "product",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 10
+    },
+    {
+      "id": "dezeen",
+      "title": "Dezeen",
+      "siteUrl": "https://www.dezeen.com",
+      "feedUrl": "https://www.dezeen.com/feed/",
+      "category": "design",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 1
+    },
+    {
+      "id": "colossal",
+      "title": "Colossal",
+      "siteUrl": "https://www.thisiscolossal.com",
+      "feedUrl": "https://www.thisiscolossal.com/feed/",
+      "category": "design",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 2
+    },
+    {
+      "id": "its-nice-that",
+      "title": "It's Nice That",
+      "siteUrl": "https://www.itsnicethat.com",
+      "feedUrl": "https://feeds2.feedburner.com/itsnicethat/SlXC",
+      "category": "design",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 3
+    },
+    {
+      "id": "ux-collective",
+      "title": "UX Collective",
+      "siteUrl": "https://uxdesign.cc",
+      "feedUrl": "https://uxdesign.cc/feed",
+      "category": "design",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 4
+    },
+    {
+      "id": "nielsen-norman-group",
+      "title": "Nielsen Norman Group",
+      "siteUrl": "https://www.nngroup.com",
+      "feedUrl": "https://www.nngroup.com/feed/rss/",
+      "category": "design",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 5
+    },
+    {
+      "id": "design-milk",
+      "title": "Design Milk",
+      "siteUrl": "https://design-milk.com",
+      "feedUrl": "https://design-milk.com/feed/",
+      "category": "design",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 6
+    },
+    {
+      "id": "designboom",
+      "title": "Designboom",
+      "siteUrl": "https://www.designboom.com",
+      "feedUrl": "https://www.designboom.com/feed/",
+      "category": "design",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 7
+    },
+    {
+      "id": "figma-blog",
+      "title": "Figma Blog",
+      "siteUrl": "https://www.figma.com/blog/",
+      "feedUrl": "https://www.figma.com/blog/feed/atom.xml",
+      "category": "design",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 8
+    },
+    {
+      "id": "sidebar",
+      "title": "Sidebar",
+      "siteUrl": "https://sidebar.io",
+      "feedUrl": "https://sidebar.io/feed.xml",
+      "category": "design",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 9
+    },
+    {
+      "id": "archdaily",
+      "title": "ArchDaily",
+      "siteUrl": "https://www.archdaily.com",
+      "feedUrl": "https://feeds.feedburner.com/Archdaily",
+      "category": "design",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 10
+    },
+    {
+      "id": "fonts-in-use",
+      "title": "Fonts In Use",
+      "siteUrl": "https://fontsinuse.com",
+      "feedUrl": "https://fontsinuse.com/main.rss",
+      "category": "design",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 11
+    },
+    {
+      "id": "aeon",
+      "title": "Aeon",
+      "siteUrl": "https://aeon.co",
+      "feedUrl": "https://aeon.co/feed.rss",
+      "category": "ideas",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 1
+    },
+    {
+      "id": "noema",
+      "title": "Noema",
+      "siteUrl": "https://www.noemamag.com",
+      "feedUrl": "https://www.noemamag.com/feed/",
+      "category": "ideas",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 2
+    },
+    {
+      "id": "the-guardian-long-read",
+      "title": "The Guardian: Long Read",
+      "siteUrl": "https://www.theguardian.com/news/series/the-long-read",
+      "feedUrl": "https://www.theguardian.com/news/series/the-long-read/rss",
+      "category": "ideas",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 3
+    },
+    {
+      "id": "psyche",
+      "title": "Psyche",
+      "siteUrl": "https://psyche.co",
+      "feedUrl": "https://psyche.co/feed",
+      "category": "ideas",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 4
+    },
+    {
+      "id": "the-walrus",
+      "title": "The Walrus",
+      "siteUrl": "https://thewalrus.ca",
+      "feedUrl": "https://thewalrus.ca/feed/",
+      "category": "ideas",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 5
+    },
+    {
+      "id": "heather-cox-richardson-letters-from-an-american",
+      "title": "Heather Cox Richardson: Letters from an American",
+      "siteUrl": "https://heathercoxrichardson.substack.com",
+      "feedUrl": "https://heathercoxrichardson.substack.com/feed",
+      "category": "ideas",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 6
     },
     {
       "id": "the-atlantic",
       "title": "The Atlantic",
       "siteUrl": "https://www.theatlantic.com",
       "feedUrl": "https://www.theatlantic.com/feed/all/",
-      "category": "news",
-      "tags": [],
+      "category": "ideas",
       "access": "freemium",
-      "feedlySubscribers": 2990,
-      "format": "rss",
-      "description": "",
-      "lastItemDate": null,
-      "verified": false,
-      "verifiedAt": null,
-      "note": "Site blocked our checker; confirm on device before shipping."
+      "verified": true,
+      "popularityRank": 7
     },
     {
-      "id": "economist",
-      "title": "The Economist",
-      "siteUrl": "https://www.economist.com",
-      "feedUrl": "https://www.economist.com/latest/rss.xml",
-      "category": "news",
-      "tags": [],
-      "access": "paywalled",
-      "feedlySubscribers": 283,
-      "format": "rss",
-      "description": "",
-      "lastItemDate": null,
-      "verified": false,
-      "verifiedAt": null,
-      "note": "Site blocked our checker; confirm on device before shipping."
-    },
-    {
-      "id": "hbr",
-      "title": "Harvard Business Review",
-      "siteUrl": "https://hbr.org",
-      "feedUrl": "http://feeds.hbr.org/harvardbusiness",
-      "category": "product",
-      "tags": [],
-      "access": "freemium",
-      "feedlySubscribers": 1055,
-      "format": "rss",
-      "description": "",
-      "lastItemDate": null,
-      "verified": false,
-      "verifiedAt": null,
-      "note": "Site blocked our checker; confirm on device before shipping."
-    },
-    {
-      "id": "axios",
-      "title": "Axios",
-      "siteUrl": "https://www.axios.com",
-      "feedUrl": "https://api.axios.com/feed/",
-      "category": "news",
-      "tags": [],
+      "id": "smithsonian-magazine",
+      "title": "Smithsonian Magazine",
+      "siteUrl": "https://www.smithsonianmag.com",
+      "feedUrl": "https://www.smithsonianmag.com/rss/latest_articles/",
+      "category": "ideas",
       "access": "free",
-      "feedlySubscribers": 348,
-      "format": "rss",
-      "description": "",
-      "lastItemDate": null,
-      "verified": false,
-      "verifiedAt": null,
-      "note": "Site blocked our checker; confirm on device before shipping."
+      "verified": true,
+      "popularityRank": 8
+    },
+    {
+      "id": "paul-krugman",
+      "title": "Paul Krugman",
+      "siteUrl": "https://paulkrugman.substack.com",
+      "feedUrl": "https://paulkrugman.substack.com/feed",
+      "category": "ideas",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 9
+    },
+    {
+      "id": "harpers-magazine",
+      "title": "Harper's Magazine",
+      "siteUrl": "https://harpers.org",
+      "feedUrl": "https://harpers.org/feed/",
+      "category": "ideas",
+      "access": "paywalled",
+      "verified": true,
+      "popularityRank": 10
+    },
+    {
+      "id": "the-new-yorker",
+      "title": "The New Yorker",
+      "siteUrl": "https://www.newyorker.com",
+      "feedUrl": "https://www.newyorker.com/feed/everything",
+      "category": "ideas",
+      "access": "paywalled",
+      "verified": true,
+      "popularityRank": 11
+    },
+    {
+      "id": "works-in-progress",
+      "title": "Works in Progress",
+      "siteUrl": "https://worksinprogress.co",
+      "feedUrl": "https://worksinprogress.co/rss.xml",
+      "category": "ideas",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 12
+    },
+    {
+      "id": "longreads",
+      "title": "Longreads",
+      "siteUrl": "https://longreads.com",
+      "feedUrl": "https://longreads.com/feed/",
+      "category": "ideas",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 13
+    },
+    {
+      "id": "vox-future-perfect",
+      "title": "Vox: Future Perfect",
+      "siteUrl": "https://www.vox.com/future-perfect",
+      "feedUrl": "https://www.vox.com/rss/future-perfect/index.xml",
+      "category": "ideas",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 14
+    },
+    {
+      "id": "the-marginalian",
+      "title": "The Marginalian",
+      "siteUrl": "https://www.themarginalian.org",
+      "feedUrl": "https://www.themarginalian.org/feed/",
+      "category": "ideas",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 15
+    },
+    {
+      "id": "public-domain-review",
+      "title": "Public Domain Review",
+      "siteUrl": "https://publicdomainreview.org",
+      "feedUrl": "https://publicdomainreview.org/rss.xml",
+      "category": "ideas",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 16
+    },
+    {
+      "id": "astral-codex-ten",
+      "title": "Astral Codex Ten",
+      "siteUrl": "https://www.astralcodexten.com",
+      "feedUrl": "https://www.astralcodexten.com/feed",
+      "category": "ideas",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 17
+    },
+    {
+      "id": "paris-review",
+      "title": "Paris Review",
+      "siteUrl": "https://www.theparisreview.org/blog/",
+      "feedUrl": "https://www.theparisreview.org/blog/feed/",
+      "category": "books",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 1
+    },
+    {
+      "id": "literary-hub",
+      "title": "Literary Hub",
+      "siteUrl": "https://lithub.com",
+      "feedUrl": "https://lithub.com/feed/",
+      "category": "books",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 2
+    },
+    {
+      "id": "electric-literature",
+      "title": "Electric Literature",
+      "siteUrl": "https://electricliterature.com",
+      "feedUrl": "https://electricliterature.com/feed/",
+      "category": "books",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 3
+    },
+    {
+      "id": "book-riot",
+      "title": "Book Riot",
+      "siteUrl": "https://bookriot.com",
+      "feedUrl": "https://bookriot.com/feed/",
+      "category": "books",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 4
+    },
+    {
+      "id": "publishers-weekly",
+      "title": "Publishers Weekly",
+      "siteUrl": "https://www.publishersweekly.com",
+      "feedUrl": "https://www.publishersweekly.com/pw/feeds/recent/index.xml",
+      "category": "books",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 5
+    },
+    {
+      "id": "nyt-books",
+      "title": "NYT Books",
+      "siteUrl": "https://www.nytimes.com/section/books",
+      "feedUrl": "https://rss.nytimes.com/services/xml/rss/nyt/Books.xml",
+      "category": "books",
+      "access": "paywalled",
+      "verified": true,
+      "popularityRank": 6
+    },
+    {
+      "id": "the-guardian-books",
+      "title": "The Guardian: Books",
+      "siteUrl": "https://www.theguardian.com/books",
+      "feedUrl": "https://www.theguardian.com/books/rss",
+      "category": "books",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 7
+    },
+    {
+      "id": "reactor",
+      "title": "Reactor",
+      "siteUrl": "https://reactormag.com",
+      "feedUrl": "https://reactormag.com/feed/",
+      "category": "books",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 8
+    },
+    {
+      "id": "npr-books",
+      "title": "NPR Books",
+      "siteUrl": "https://www.npr.org/sections/books/",
+      "feedUrl": "https://feeds.npr.org/1032/rss.xml",
+      "category": "books",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 9
+    },
+    {
+      "id": "the-a-v-club",
+      "title": "The A.V. Club",
+      "siteUrl": "https://www.avclub.com",
+      "feedUrl": "https://www.avclub.com/rss",
+      "category": "film",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 1
+    },
+    {
+      "id": "variety",
+      "title": "Variety",
+      "siteUrl": "https://variety.com",
+      "feedUrl": "https://variety.com/feed/",
+      "category": "film",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 2
+    },
+    {
+      "id": "decider",
+      "title": "Decider",
+      "siteUrl": "https://decider.com",
+      "feedUrl": "https://decider.com/feed/",
+      "category": "film",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 3
+    },
+    {
+      "id": "vulture",
+      "title": "Vulture",
+      "siteUrl": "https://www.vulture.com",
+      "feedUrl": "https://feeds.feedburner.com/nymag/vulture",
+      "category": "film",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 4
+    },
+    {
+      "id": "tvline",
+      "title": "TVLine",
+      "siteUrl": "https://tvline.com",
+      "feedUrl": "https://tvline.com/feed/",
+      "category": "film",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 5
+    },
+    {
+      "id": "collider",
+      "title": "Collider",
+      "siteUrl": "https://collider.com",
+      "feedUrl": "https://collider.com/feed/",
+      "category": "film",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 6
+    },
+    {
+      "id": "screen-daily",
+      "title": "Screen Daily",
+      "siteUrl": "https://www.screendaily.com",
+      "feedUrl": "https://www.screendaily.com/45202.rss",
+      "category": "film",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 7
+    },
+    {
+      "id": "rogerebert-com",
+      "title": "RogerEbert.com",
+      "siteUrl": "https://www.rogerebert.com",
+      "feedUrl": "https://www.rogerebert.com/feed",
+      "category": "film",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 8
+    },
+    {
+      "id": "deadline",
+      "title": "Deadline",
+      "siteUrl": "https://deadline.com",
+      "feedUrl": "https://deadline.com/feed/",
+      "category": "film",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 9
+    },
+    {
+      "id": "indiewire",
+      "title": "IndieWire",
+      "siteUrl": "https://www.indiewire.com",
+      "feedUrl": "https://www.indiewire.com/feed/",
+      "category": "film",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 10
+    },
+    {
+      "id": "slashfilm",
+      "title": "/Film",
+      "siteUrl": "https://www.slashfilm.com",
+      "feedUrl": "https://www.slashfilm.com/feed/",
+      "category": "film",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 11
+    },
+    {
+      "id": "the-guardian-film",
+      "title": "The Guardian: Film",
+      "siteUrl": "https://www.theguardian.com/film",
+      "feedUrl": "https://www.theguardian.com/film/rss",
+      "category": "film",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 12
+    },
+    {
+      "id": "the-hollywood-reporter",
+      "title": "The Hollywood Reporter",
+      "siteUrl": "https://www.hollywoodreporter.com",
+      "feedUrl": "https://www.hollywoodreporter.com/feed/",
+      "category": "film",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 13
+    },
+    {
+      "id": "den-of-geek",
+      "title": "Den of Geek",
+      "siteUrl": "https://www.denofgeek.com",
+      "feedUrl": "https://www.denofgeek.com/feed/",
+      "category": "film",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 14
+    },
+    {
+      "id": "the-guardian-tv",
+      "title": "The Guardian: TV",
+      "siteUrl": "https://www.theguardian.com/tv-and-radio",
+      "feedUrl": "https://www.theguardian.com/tv-and-radio/rss",
+      "category": "film",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 15
+    },
+    {
+      "id": "npr-pop-culture",
+      "title": "NPR: Pop Culture",
+      "siteUrl": "https://www.npr.org/sections/pop-culture/",
+      "feedUrl": "https://feeds.npr.org/1048/rss.xml",
+      "category": "film",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 16
+    },
+    {
+      "id": "the-quietus",
+      "title": "The Quietus",
+      "siteUrl": "https://thequietus.com",
+      "feedUrl": "https://thequietus.com/feed",
+      "category": "music",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 1
+    },
+    {
+      "id": "gorilla-vs-bear",
+      "title": "Gorilla vs. Bear",
+      "siteUrl": "https://www.gorillavsbear.net",
+      "feedUrl": "https://www.gorillavsbear.net/feed/",
+      "category": "music",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 2
+    },
+    {
+      "id": "bandcamp-daily",
+      "title": "Bandcamp Daily",
+      "siteUrl": "https://daily.bandcamp.com",
+      "feedUrl": "https://daily.bandcamp.com/feed",
+      "category": "music",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 3
+    },
+    {
+      "id": "nme",
+      "title": "NME",
+      "siteUrl": "https://www.nme.com",
+      "feedUrl": "https://www.nme.com/feed",
+      "category": "music",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 4
+    },
+    {
+      "id": "pitchfork",
+      "title": "Pitchfork",
+      "siteUrl": "https://pitchfork.com",
+      "feedUrl": "https://pitchfork.com/feed/feed-news/rss",
+      "category": "music",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 5
+    },
+    {
+      "id": "rolling-stone",
+      "title": "Rolling Stone",
+      "siteUrl": "https://www.rollingstone.com",
+      "feedUrl": "https://www.rollingstone.com/feed/",
+      "category": "music",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 6
+    },
+    {
+      "id": "the-guardian-music",
+      "title": "The Guardian: Music",
+      "siteUrl": "https://www.theguardian.com/music",
+      "feedUrl": "https://www.theguardian.com/music/rss",
+      "category": "music",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 7
+    },
+    {
+      "id": "npr-music",
+      "title": "NPR Music",
+      "siteUrl": "https://www.npr.org/music/",
+      "feedUrl": "https://feeds.npr.org/1039/rss.xml",
+      "category": "music",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 8
+    },
+    {
+      "id": "stereogum",
+      "title": "Stereogum",
+      "siteUrl": "https://www.stereogum.com",
+      "feedUrl": "https://www.stereogum.com/feed/",
+      "category": "music",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 9
+    },
+    {
+      "id": "billboard",
+      "title": "Billboard",
+      "siteUrl": "https://www.billboard.com",
+      "feedUrl": "https://www.billboard.com/feed/",
+      "category": "music",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 10
+    },
+    {
+      "id": "consequence",
+      "title": "Consequence",
+      "siteUrl": "https://consequence.net",
+      "feedUrl": "https://consequence.net/feed/",
+      "category": "music",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 11
+    },
+    {
+      "id": "aquarium-drunkard",
+      "title": "Aquarium Drunkard",
+      "siteUrl": "https://aquariumdrunkard.com",
+      "feedUrl": "https://aquariumdrunkard.com/feed/",
+      "category": "music",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 12
+    },
+    {
+      "id": "polygon",
+      "title": "Polygon",
+      "siteUrl": "https://www.polygon.com",
+      "feedUrl": "https://www.polygon.com/rss/index.xml",
+      "category": "gaming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 1
+    },
+    {
+      "id": "nintendo-life",
+      "title": "Nintendo Life",
+      "siteUrl": "https://www.nintendolife.com",
+      "feedUrl": "https://www.nintendolife.com/feeds/latest",
+      "category": "gaming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 2
+    },
+    {
+      "id": "rock-paper-shotgun",
+      "title": "Rock Paper Shotgun",
+      "siteUrl": "https://www.rockpapershotgun.com",
+      "feedUrl": "https://www.rockpapershotgun.com/feed",
+      "category": "gaming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 3
+    },
+    {
+      "id": "aftermath",
+      "title": "Aftermath",
+      "siteUrl": "https://aftermath.site",
+      "feedUrl": "https://aftermath.site/feed",
+      "category": "gaming",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 4
+    },
+    {
+      "id": "giant-bomb",
+      "title": "Giant Bomb",
+      "siteUrl": "https://www.giantbomb.com",
+      "feedUrl": "https://www.giantbomb.com/feeds/news/",
+      "category": "gaming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 5
+    },
+    {
+      "id": "game-developer",
+      "title": "Game Developer",
+      "siteUrl": "https://www.gamedeveloper.com",
+      "feedUrl": "https://www.gamedeveloper.com/rss.xml",
+      "category": "gaming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 6
+    },
+    {
+      "id": "kotaku",
+      "title": "Kotaku",
+      "siteUrl": "https://kotaku.com",
+      "feedUrl": "https://kotaku.com/rss",
+      "category": "gaming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 7
+    },
+    {
+      "id": "vgc",
+      "title": "VGC",
+      "siteUrl": "https://www.videogameschronicle.com",
+      "feedUrl": "https://www.videogameschronicle.com/feed/",
+      "category": "gaming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 8
+    },
+    {
+      "id": "pc-gamer",
+      "title": "PC Gamer",
+      "siteUrl": "https://www.pcgamer.com",
+      "feedUrl": "https://www.pcgamer.com/rss/",
+      "category": "gaming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 9
+    },
+    {
+      "id": "ign",
+      "title": "IGN",
+      "siteUrl": "https://www.ign.com",
+      "feedUrl": "https://feeds.feedburner.com/ign/all",
+      "category": "gaming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 10
+    },
+    {
+      "id": "eurogamer",
+      "title": "Eurogamer",
+      "siteUrl": "https://www.eurogamer.net",
+      "feedUrl": "https://www.eurogamer.net/feed",
+      "category": "gaming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 11
+    },
+    {
+      "id": "gamespot",
+      "title": "GameSpot",
+      "siteUrl": "https://www.gamespot.com",
+      "feedUrl": "https://www.gamespot.com/feeds/mashup/",
+      "category": "gaming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 12
+    },
+    {
+      "id": "push-square",
+      "title": "Push Square",
+      "siteUrl": "https://www.pushsquare.com",
+      "feedUrl": "https://www.pushsquare.com/feeds/latest",
+      "category": "gaming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 13
+    },
+    {
+      "id": "pure-xbox",
+      "title": "Pure Xbox",
+      "siteUrl": "https://www.purexbox.com",
+      "feedUrl": "https://www.purexbox.com/feeds/latest",
+      "category": "gaming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 14
+    },
+    {
+      "id": "destructoid",
+      "title": "Destructoid",
+      "siteUrl": "https://www.destructoid.com",
+      "feedUrl": "https://www.destructoid.com/feed/",
+      "category": "gaming",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 15
+    },
+    {
+      "id": "the-guardian-football",
+      "title": "The Guardian: Football",
+      "siteUrl": "https://www.theguardian.com/football",
+      "feedUrl": "https://www.theguardian.com/football/rss",
+      "category": "sports",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 1
+    },
+    {
+      "id": "defector",
+      "title": "Defector",
+      "siteUrl": "https://defector.com",
+      "feedUrl": "https://defector.com/feed",
+      "category": "sports",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 2
+    },
+    {
+      "id": "espn",
+      "title": "ESPN",
+      "siteUrl": "https://www.espn.com",
+      "feedUrl": "https://www.espn.com/espn/rss/news",
+      "category": "sports",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 3
+    },
+    {
+      "id": "sports-illustrated",
+      "title": "Sports Illustrated",
+      "siteUrl": "https://www.si.com",
+      "feedUrl": "https://www.si.com/feed",
+      "category": "sports",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 4
+    },
+    {
+      "id": "espn-nba",
+      "title": "ESPN: NBA",
+      "siteUrl": "https://www.espn.com/nba/",
+      "feedUrl": "https://www.espn.com/espn/rss/nba/news",
+      "category": "sports",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 5
+    },
+    {
+      "id": "espn-nfl",
+      "title": "ESPN: NFL",
+      "siteUrl": "https://www.espn.com/nfl/",
+      "feedUrl": "https://www.espn.com/espn/rss/nfl/news",
+      "category": "sports",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 6
+    },
+    {
+      "id": "bbc-sport",
+      "title": "BBC Sport",
+      "siteUrl": "https://www.bbc.co.uk/sport",
+      "feedUrl": "https://feeds.bbci.co.uk/sport/rss.xml",
+      "category": "sports",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 7
+    },
+    {
+      "id": "runners-world",
+      "title": "Runner's World",
+      "siteUrl": "https://www.runnersworld.com",
+      "feedUrl": "https://www.runnersworld.com/rss/all.xml/",
+      "category": "sports",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 8
+    },
+    {
+      "id": "espn-mlb",
+      "title": "ESPN: MLB",
+      "siteUrl": "https://www.espn.com/mlb/",
+      "feedUrl": "https://www.espn.com/espn/rss/mlb/news",
+      "category": "sports",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 9
+    },
+    {
+      "id": "yahoo-sports",
+      "title": "Yahoo Sports",
+      "siteUrl": "https://sports.yahoo.com",
+      "feedUrl": "https://sports.yahoo.com/rss/",
+      "category": "sports",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 10
+    },
+    {
+      "id": "cbs-sports",
+      "title": "CBS Sports",
+      "siteUrl": "https://www.cbssports.com",
+      "feedUrl": "https://www.cbssports.com/rss/headlines/",
+      "category": "sports",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 11
+    },
+    {
+      "id": "npr-sports",
+      "title": "NPR Sports",
+      "siteUrl": "https://www.npr.org/sections/sports/",
+      "feedUrl": "https://feeds.npr.org/1055/rss.xml",
+      "category": "sports",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 12
+    },
+    {
+      "id": "love-and-lemons",
+      "title": "Love and Lemons",
+      "siteUrl": "https://www.loveandlemons.com",
+      "feedUrl": "https://www.loveandlemons.com/feed/",
+      "category": "food",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 1
+    },
+    {
+      "id": "eater",
+      "title": "Eater",
+      "siteUrl": "https://www.eater.com",
+      "feedUrl": "https://www.eater.com/rss/index.xml",
+      "category": "food",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 2
+    },
+    {
+      "id": "recipetin-eats",
+      "title": "RecipeTin Eats",
+      "siteUrl": "https://www.recipetineats.com",
+      "feedUrl": "https://www.recipetineats.com/feed/",
+      "category": "food",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 3
+    },
+    {
+      "id": "budget-bytes",
+      "title": "Budget Bytes",
+      "siteUrl": "https://www.budgetbytes.com",
+      "feedUrl": "https://www.budgetbytes.com/feed/",
+      "category": "food",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 4
+    },
+    {
+      "id": "pinch-of-yum",
+      "title": "Pinch of Yum",
+      "siteUrl": "https://pinchofyum.com",
+      "feedUrl": "https://pinchofyum.com/feed",
+      "category": "food",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 5
+    },
+    {
+      "id": "cookie-and-kate",
+      "title": "Cookie and Kate",
+      "siteUrl": "https://cookieandkate.com",
+      "feedUrl": "https://cookieandkate.com/feed/",
+      "category": "food",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 6
+    },
+    {
+      "id": "minimalist-baker",
+      "title": "Minimalist Baker",
+      "siteUrl": "https://minimalistbaker.com",
+      "feedUrl": "https://minimalistbaker.com/feed/",
+      "category": "food",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 7
+    },
+    {
+      "id": "nyt-food",
+      "title": "NYT Food",
+      "siteUrl": "https://www.nytimes.com/section/food",
+      "feedUrl": "https://rss.nytimes.com/services/xml/rss/nyt/DiningandWine.xml",
+      "category": "food",
+      "access": "paywalled",
+      "verified": true,
+      "popularityRank": 8
+    },
+    {
+      "id": "sallys-baking-addiction",
+      "title": "Sally's Baking Addiction",
+      "siteUrl": "https://sallysbakingaddiction.com",
+      "feedUrl": "https://sallysbakingaddiction.com/feed/",
+      "category": "food",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 9
+    },
+    {
+      "id": "the-kitchn",
+      "title": "The Kitchn",
+      "siteUrl": "https://www.thekitchn.com",
+      "feedUrl": "https://www.thekitchn.com/main.rss",
+      "category": "food",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 10
+    },
+    {
+      "id": "bon-appetit",
+      "title": "Bon Appétit",
+      "siteUrl": "https://www.bonappetit.com",
+      "feedUrl": "https://www.bonappetit.com/feed/rss",
+      "category": "food",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 11
+    },
+    {
+      "id": "101-cookbooks",
+      "title": "101 Cookbooks",
+      "siteUrl": "https://www.101cookbooks.com",
+      "feedUrl": "https://www.101cookbooks.com/feed",
+      "category": "food",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 12
+    },
+    {
+      "id": "just-one-cookbook",
+      "title": "Just One Cookbook",
+      "siteUrl": "https://www.justonecookbook.com",
+      "feedUrl": "https://www.justonecookbook.com/feed/",
+      "category": "food",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 13
+    },
+    {
+      "id": "the-guardian-food",
+      "title": "The Guardian: Food",
+      "siteUrl": "https://www.theguardian.com/food",
+      "feedUrl": "https://www.theguardian.com/food/rss",
+      "category": "food",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 14
+    },
+    {
+      "id": "serious-eats",
+      "title": "Serious Eats",
+      "siteUrl": "https://www.seriouseats.com",
+      "feedUrl": "https://feeds-api.dotdashmeredith.com/v1/rss/google/ad57d421-0ff5-41e7-a5da-f2167b6d7f7a",
+      "category": "food",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 15
+    },
+    {
+      "id": "the-points-guy",
+      "title": "The Points Guy",
+      "siteUrl": "https://thepointsguy.com",
+      "feedUrl": "https://thepointsguy.com/feed/",
+      "category": "travel",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 1
+    },
+    {
+      "id": "skift",
+      "title": "Skift",
+      "siteUrl": "https://skift.com",
+      "feedUrl": "https://skift.com/feed/",
+      "category": "travel",
+      "access": "freemium",
+      "verified": true,
+      "popularityRank": 2
+    },
+    {
+      "id": "cond-nast-traveler",
+      "title": "Condé Nast Traveler",
+      "siteUrl": "https://www.cntraveler.com",
+      "feedUrl": "https://www.cntraveler.com/feed/rss",
+      "category": "travel",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 3
+    },
+    {
+      "id": "atlas-obscura",
+      "title": "Atlas Obscura",
+      "siteUrl": "https://www.atlasobscura.com",
+      "feedUrl": "https://www.atlasobscura.com/feeds/latest",
+      "category": "travel",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 4
+    },
+    {
+      "id": "nyt-travel",
+      "title": "NYT Travel",
+      "siteUrl": "https://www.nytimes.com/section/travel",
+      "feedUrl": "https://rss.nytimes.com/services/xml/rss/nyt/Travel.xml",
+      "category": "travel",
+      "access": "paywalled",
+      "verified": true,
+      "popularityRank": 5
+    },
+    {
+      "id": "one-mile-at-a-time",
+      "title": "One Mile at a Time",
+      "siteUrl": "https://onemileatatime.com",
+      "feedUrl": "https://onemileatatime.com/feed/",
+      "category": "travel",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 6
+    },
+    {
+      "id": "smithsonian-travel",
+      "title": "Smithsonian: Travel",
+      "siteUrl": "https://www.smithsonianmag.com/travel/",
+      "feedUrl": "https://www.smithsonianmag.com/rss/travel/",
+      "category": "travel",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 7
+    },
+    {
+      "id": "afar",
+      "title": "Afar",
+      "siteUrl": "https://www.afar.com",
+      "feedUrl": "https://www.afar.com/index.atom",
+      "category": "travel",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 8
+    },
+    {
+      "id": "view-from-the-wing",
+      "title": "View from the Wing",
+      "siteUrl": "https://viewfromthewing.com",
+      "feedUrl": "https://viewfromthewing.com/feed/",
+      "category": "travel",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 9
+    },
+    {
+      "id": "the-guardian-travel",
+      "title": "The Guardian: Travel",
+      "siteUrl": "https://www.theguardian.com/travel",
+      "feedUrl": "https://www.theguardian.com/travel/rss",
+      "category": "travel",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 10
+    },
+    {
+      "id": "thrifty-traveler",
+      "title": "Thrifty Traveler",
+      "siteUrl": "https://thriftytraveler.com",
+      "feedUrl": "https://thriftytraveler.com/feed/",
+      "category": "travel",
+      "access": "free",
+      "verified": true,
+      "popularityRank": 11
     }
   ]
 }

@@ -119,17 +119,44 @@ public enum ApplePodcasts {
             regions.insert(country, at: 0)
         }
         for region in regions {
-            for url in chartURLs(country: region) {
-                guard let ids = try await chartIDs(from: url), !ids.isEmpty else { continue }
-                let shows = try await lookUpShows(ids: ids)
-                if !shows.isEmpty { return Array(shows.prefix(topLimit)) }
-            }
+            guard let ids = try await firstChart(country: region) else { continue }
+            let shows = try await lookUpShows(ids: ids)
+            if !shows.isEmpty { return Array(shows.prefix(topLimit)) }
         }
         return []
     }
 
+    /// Asks both chart addresses at once and takes the first that answers with a chart, since
+    /// Apple's chart server can take many seconds when it hasn't served a list recently.
+    /// - Throws: `Connectivity.Offline` when neither answered for want of a connection.
+    private static func firstChart(country: String) async throws -> [String]? {
+        let urls = chartURLs(country: country)
+        let (ids, offline) = await withTaskGroup(of: Result<[String]?, Error>.self) { group -> ([String]?, Int) in
+            for url in urls {
+                group.addTask {
+                    do { return .success(try await chartIDs(from: url)) } catch { return .failure(error) }
+                }
+            }
+            var offline = 0
+            for await outcome in group {
+                switch outcome {
+                case .success(let ids?) where !ids.isEmpty:
+                    group.cancelAll()
+                    return (ids, offline)
+                case .failure(let error) where error is Connectivity.Offline:
+                    offline += 1
+                default:
+                    break
+                }
+            }
+            return (nil, offline)
+        }
+        if ids == nil, offline == urls.count { throw Connectivity.Offline() }
+        return ids
+    }
+
     /// Asks for 25 (one of the sizes the chart offers), since a few may lack an https feed. The second address is
-    /// the feed's older name, in case one of them is moved.
+    /// the feed's older name; both are asked at once.
     static func chartURLs(country: String) -> [URL] {
         ["rss.marketingtools.apple.com", "rss.applemarketingtools.com"].compactMap {
             URL(string: "https://\($0)/api/v2/\(country)/podcasts/top/25/podcasts.json")
