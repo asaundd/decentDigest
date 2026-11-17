@@ -15,7 +15,12 @@ import Testing
 
 @Test func bundledFeedLibraryLoads() throws {
     let library = try FeedLibrary.bundled()
-    #expect(library.categories.count == 5)
+    #expect(library.categories.count == 24)
+    #expect(library.feeds.count >= 300)
+    #expect(Set(library.feeds.map(\.id)).count == library.feeds.count)
+    #expect(Set(library.feeds.map(\.feedUrl)).count == library.feeds.count)
+    let topics = Set(library.categories.map(\.id))
+    #expect(library.feeds.allSatisfy { topics.contains($0.category) })
     for category in library.categories {
         let starters = library.starterFeeds(in: category.id)
         #expect(!starters.isEmpty)
