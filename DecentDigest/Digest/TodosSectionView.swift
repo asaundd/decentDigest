@@ -240,28 +240,28 @@ struct TodoRow: View {
 
     private var card: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .top, spacing: 8) {
-                VStack(alignment: .leading, spacing: 6) {
-                    if !dueLine.isEmpty {
-                        Text(dueLine)
-                            .foregroundStyle(Theme.secondary)
-                    }
-                    if let notes = todo.notes {
-                        Text(notes)
-                            .lineLimit(3)
-                            .textSelection(.enabled)
-                    }
+            VStack(alignment: .leading, spacing: 6) {
+                if !dueLine.isEmpty {
+                    Text(dueLine)
+                        .foregroundStyle(Theme.secondary)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                // ✓ sits at the top right, where it is on a News card.
+                if let notes = todo.notes {
+                    Text(notes)
+                        .lineLimit(3)
+                        .textSelection(.enabled)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            // ✓ sits at the bottom right, where Save and ✓ Read are on a News card.
+            HStack(alignment: .center, spacing: 8) {
+                TextLink("Open ↗", action: open)
+                    .accessibilityLabel("Open in Reminders")
+                Spacer(minLength: 0)
                 RibbonButton(systemImage: "checkmark", label: "Check off", action: check)
                     .disabled(isChecked)
-                    .padding(.top, -6)
                     .padding(.trailing, -RibbonButton.gap)
             }
-            TextLink("Open ↗", action: open)
-                .accessibilityLabel("Open in Reminders")
-                .padding(.top, 4)
+            .padding(.top, 2)
         }
         .font(AgendaMetrics.itemFont)
         .frame(maxWidth: .infinity, alignment: .leading)
