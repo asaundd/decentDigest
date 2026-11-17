@@ -178,26 +178,21 @@ struct HeadlineRow: View {
     /// The card: byline with Save and ✓ Read at the top right where the thumb is, then the text,
     /// then the way to read it.
     private var expandedDetail: some View {
-        // With text but no byline, the buttons join the links at the foot of the card instead of
-        // sitting alone on an empty line.
-        let buttonsAtFoot = headline.expandedText != nil && headline.byline == nil
-        return VStack(alignment: .leading, spacing: 4) {
-            if !buttonsAtFoot {
-                HStack(alignment: .center, spacing: 8) {
-                    // Link-only rows put their note on this line; others put the byline here.
-                    if headline.expandedText == nil {
-                        noSummary
-                    } else if let byline = headline.byline {
-                        Text(byline)
-                            .font(.subheadline)
-                            .foregroundStyle(Theme.secondary)
-                    }
-                    Spacer(minLength: 0)
-                    ActionButtons(actions: actions)
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .center, spacing: 8) {
+                // Link-only rows put their note on this line; others put the byline here.
+                if headline.expandedText == nil {
+                    noSummary
+                } else if let byline = headline.byline {
+                    Text(byline)
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.secondary)
                 }
-                .padding(.leading, DashColumn.width)
-                .padding(.trailing, -RibbonButton.gap)
+                Spacer(minLength: 0)
+                ActionButtons(actions: actions)
             }
+            .padding(.leading, DashColumn.width)
+            .padding(.trailing, -RibbonButton.gap)
 
             Group {
                 if let text = headline.expandedText {
@@ -215,16 +210,10 @@ struct HeadlineRow: View {
             // Line up with the title, past the dash column.
             .padding(.horizontal, DashColumn.width)
 
-            Group {
-                if buttonsAtFoot {
-                    ActionRibbon(actions: actions, leadingPadding: DashColumn.width, trailingPadding: 0)
-                } else {
-                    WrappingActionLinks(actions: actions)
-                        .padding(.leading, DashColumn.width)
-                }
-            }
-            .padding(.top, 2)
-            .padding(.bottom, 6)
+            WrappingActionLinks(actions: actions)
+                .padding(.leading, DashColumn.width)
+                .padding(.top, 2)
+                .padding(.bottom, 6)
         }
     }
 }

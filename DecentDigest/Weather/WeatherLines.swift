@@ -76,10 +76,17 @@ struct WeatherLines: View {
                     .padding(.top, 4)
             }
             if showsWeek {
-                week(report.days, unit: unit)
-                    .padding(.top, 6)
-                openFooter(place)
-                    .padding(.top, 8)
+                // The open week sits on the same card as an open row.
+                VStack(alignment: .leading, spacing: 0) {
+                    week(report.days, unit: unit)
+                    openFooter(place)
+                        .padding(.top, 8)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, 6)
+                .padding(.bottom, 4)
+                .openCard(true)
+                .padding(.top, 6)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

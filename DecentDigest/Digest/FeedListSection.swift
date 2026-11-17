@@ -139,7 +139,7 @@ struct FeedListSection: View {
                 Button("Clear all (\(clearing.all.count))", role: .destructive) { clear(clearing.all) }
                 Button("Cancel", role: .cancel) {}
             } message: { _ in
-                Text("Cleared items are marked read and leave the list.")
+                Text("Cleared items are marked read and will be removed from the list.")
             }
         }
     }
