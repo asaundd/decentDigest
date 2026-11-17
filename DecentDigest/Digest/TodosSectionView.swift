@@ -37,6 +37,9 @@ struct TodosSectionView: View {
     private func list(now: Date) -> some View {
         let plan = TodoRules.plan(model.todos, now: now, expanded: expandedDays, anytimeExpanded: anytimeExpanded, showAll: showsAll)
         let days = plan.days.filter { !$0.items.isEmpty }
+        // Once enough are checked off that the folded list would show them all, Show less has
+        // nothing to fold: the footer says "No other items" instead.
+        let folds = showsAll && TodoRules.plan(model.todos, now: now, expanded: [], anytimeExpanded: false, showAll: false).hiddenCount > 0
         return VStack(alignment: .leading, spacing: 0) {
             if isEmpty(plan, days: days) {
                 QuietLine("Nothing to do.")
@@ -80,10 +83,10 @@ struct TodosSectionView: View {
                 hidden: plan.hiddenCount,
                 phrase: { $0 == 1 ? "more item" : "more items" },
                 empty: isEmpty(plan, days: days) ? nil : "No other items",
-                showsAll: showsAll,
+                showsAll: folds,
                 app: ListFooter.Link(title: "Reminders ↗", spoken: "Open Reminders") { openURL(AgendaLinks.reminders) }
             ) {
-                showsAll.toggle()
+                showsAll = !folds
                 if !showsAll {
                     expandedDays = []
                     anytimeExpanded = false
@@ -101,8 +104,8 @@ struct TodosSectionView: View {
         }
         // The rows below slide up briefly to close the gap a checked-off to-do leaves.
         .animation(HeadlineMotion.close, value: model.todos.map(\.id))
-        // The app's one haptic: a light tap when a to-do is checked off.
-        .sensoryFeedback(.impact(weight: .light), trigger: model.checkedIDs) { old, new in
+        // The done haptic: one short tap when a to-do is checked off.
+        .doneHaptic(trigger: model.checkedIDs) { old, new in
             new.count > old.count
         }
     }

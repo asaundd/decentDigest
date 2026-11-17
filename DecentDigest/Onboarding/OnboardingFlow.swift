@@ -261,10 +261,10 @@ struct ReadyPage: View {
                     DashLine("Tap an item to see more. Tap it again to close it.")
                     DashLine("Swipe a to-do right, or open it and tap ✓, to mark it done in Reminders.")
                     DashLine("Tap ↗ to open the app or website an item came from.")
-                    DashLine("In News and Podcasts, swipe an item left to mark it relevant or not relevant, and it leaves the list. To keep it for later, save it with the bookmark.")
+                    DashLine("In News and Podcasts, swipe an item left to mark it read, and it leaves the list. A short swipe shows Save too, to keep it for later.")
                     DashLine("Any news or podcast item you don't get to clears after a week to keep the list fresh.")
                 }
-                Text("Decent digest keeps a private reading history of the news and episodes you open, save, and mark relevant or not relevant. It stays on your device and in your own iCloud, and is never shared with developers. You can turn it off in Settings.")
+                Text("Decent digest keeps a private reading history of the news and episodes you open, save, and mark read. It stays on your device and in your own iCloud, and is never shared with developers. You can turn it off in Settings.")
                     .font(.footnote)
                     .foregroundStyle(Theme.secondary)
                     .fixedSize(horizontal: false, vertical: true)

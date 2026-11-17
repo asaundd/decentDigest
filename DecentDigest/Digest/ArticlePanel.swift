@@ -88,7 +88,6 @@ struct ArticlePanel: View {
         let close = onClose
         let actions = actions
         return HeadlineActions(
-            save: actions.save.map { save -> () -> Void in { close(); save() } },
             choices: actions.choices,
             choose: { choice in
                 close()
