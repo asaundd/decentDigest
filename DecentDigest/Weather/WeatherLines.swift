@@ -52,9 +52,10 @@ struct WeatherLines: View {
             .accessibilityElement(children: .combine)
 
             // The next two days, then anything notable later in the week.
+            // In the same ink as the week's days under Show week.
             Text([WeatherRules.changeLine(report, unit: unit), WeatherRules.weekLine(report, unit: unit)].compactMap { $0 }.joined(separator: " "))
                 .font(.subheadline)
-                .foregroundStyle(Theme.secondary)
+                .foregroundStyle(Theme.itemInk)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 8)
 

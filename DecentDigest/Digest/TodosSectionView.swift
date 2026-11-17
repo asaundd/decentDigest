@@ -37,6 +37,9 @@ struct TodosSectionView: View {
     private func list(now: Date) -> some View {
         let plan = TodoRules.plan(model.todos, now: now, expanded: expandedDays, anytimeExpanded: anytimeExpanded, showAll: showsAll)
         let days = plan.days.filter { !$0.items.isEmpty }
+        // A group's own "N more items" only when more than one group is cut off; otherwise the
+        // footer's count says the same thing.
+        let showsGroupMore = plan.days.count(where: { $0.hiddenCount > 0 }) + (plan.anytimeHidden > 0 ? 1 : 0) > 1
         // Once enough are checked off that the folded list would show them all, Show less has
         // nothing to fold: the footer says "No other items" instead.
         let folds = showsAll && TodoRules.plan(model.todos, now: now, expanded: [], anytimeExpanded: false, showAll: false).hiddenCount > 0
@@ -58,7 +61,7 @@ struct TodosSectionView: View {
                 ForEach(group.items) { todo in
                     row(todo, now: now)
                 }
-                if group.hiddenCount > 0 {
+                if showsGroupMore, group.hiddenCount > 0 {
                     MoreLine(count: group.hiddenCount, noun: "item", leading: DashColumn.width) {
                         expandedDays.insert(group.day)
                     }
@@ -71,7 +74,7 @@ struct TodosSectionView: View {
                 ForEach(plan.anytime) { todo in
                     row(todo, now: now)
                 }
-                if plan.anytimeHidden > 0 {
+                if showsGroupMore, plan.anytimeHidden > 0 {
                     MoreLine(count: plan.anytimeHidden, noun: "item", leading: DashColumn.width) {
                         anytimeExpanded = true
                     }

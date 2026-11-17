@@ -123,6 +123,8 @@ struct ListFooter: View {
         if let text {
             Text(text)
                 .foregroundStyle(Theme.secondary)
+                // "20 more" becomes "19 more" at once, never a crossfade of the two.
+                .contentTransition(.identity)
                 .fixedSize()
                 .padding(.vertical, 4)
             if toggle != nil || app != nil || clear != nil || refresh != nil { dot }
