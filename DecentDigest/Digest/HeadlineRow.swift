@@ -175,24 +175,20 @@ struct HeadlineRow: View {
             .foregroundStyle(Theme.secondary)
     }
 
-    /// The card: byline with Save and ✓ Read at the top right where the thumb is, then the text,
-    /// then the way to read it.
+    /// The card: the byline, then the text, then the way to read it with Save and ✓ Read at the
+    /// bottom right, the same place on every card and in the panel.
     private var expandedDetail: some View {
         VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .center, spacing: 8) {
-                // Link-only rows put their note on this line; others put the byline here.
-                if headline.expandedText == nil {
-                    noSummary
-                } else if let byline = headline.byline {
-                    Text(byline)
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.secondary)
-                }
-                Spacer(minLength: 0)
-                ActionButtons(actions: actions)
+            // Link-only rows put their note here; others the byline, when the feed sent one.
+            if headline.expandedText == nil {
+                noSummary
+                    .padding(.leading, DashColumn.width)
+            } else if let byline = headline.byline {
+                Text(byline)
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.secondary)
+                    .padding(.leading, DashColumn.width)
             }
-            .padding(.leading, DashColumn.width)
-            .padding(.trailing, -RibbonButton.gap)
 
             Group {
                 if let text = headline.expandedText {
@@ -210,10 +206,8 @@ struct HeadlineRow: View {
             // Line up with the title, past the dash column.
             .padding(.horizontal, DashColumn.width)
 
-            WrappingActionLinks(actions: actions)
-                .padding(.leading, DashColumn.width)
-                .padding(.top, 2)
-                .padding(.bottom, 6)
+            ActionRibbon(actions: actions, leadingPadding: DashColumn.width, trailingPadding: 0)
+                .padding(.bottom, 2)
         }
     }
 }
@@ -342,6 +336,32 @@ enum HeadlineMotion {
         insertion: .opacity.animation(.easeOut(duration: 0.15).delay(0.2)),
         removal: .identity
     )
+}
+
+extension View {
+    /// For a row joining a list: when `waits` (another row is closing up as it joins), it starts
+    /// hidden and fades in once the rows above have finished sliding, so it never overlaps them.
+    /// Otherwise it shows at once.
+    func joinFade(waits: Bool) -> some View {
+        modifier(JoinFade(waits: waits))
+    }
+}
+
+private struct JoinFade: ViewModifier {
+    @State private var isShown: Bool
+
+    init(waits: Bool) {
+        _isShown = State(initialValue: !waits)
+    }
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(isShown ? 1 : 0)
+            .onAppear {
+                guard !isShown else { return }
+                withAnimation(.easeOut(duration: 0.15).delay(0.22)) { isShown = true }
+            }
+    }
 }
 
 /// The width of the gray dash plus its gap, so expanded text lines up with titles.

@@ -85,14 +85,16 @@ struct FeedListSection: View {
             }
             .digestRow()
             .id(entry.item.itemID)
-            // A row that leaves is gone at once. One that joins waits for the slide, then fades in,
-            // so it never overlaps the rows still moving.
-            .transition(HeadlineMotion.transition)
             .leaveSwipe(choices, request: leaving[entry.item.itemID], closing: {
                 closing.insert(entry.item.itemID)
             }) { choice in
                 finish(entry, as: choice)
             }
+            // A row that leaves is gone at once. One that joins while another closes up stays
+            // hidden until the rows above have finished sliding, then fades in, so it never
+            // overlaps them.
+            .joinFade(waits: !closing.isEmpty)
+            .transition(.identity)
             .onAppear {
                 ReadingState.markShown(itemID: entry.item.itemID, sourceID: entry.item.sourceID, in: context)
             }
@@ -130,6 +132,8 @@ struct FeedListSection: View {
             }
             .padding(.top, 4)
             .digestRow()
+            // The footer keeps the app's links color; only the question takes iOS's own.
+            .tint(Theme.accent)
             .alert("Clear news items?", isPresented: clearingBinding, presenting: clearing) { clearing in
                 if clearing.visible.count < clearing.all.count {
                     Button("Clear all visible (\(clearing.visible.count))", role: .destructive) { clear(clearing.visible) }
@@ -137,8 +141,9 @@ struct FeedListSection: View {
                 Button("Clear all (\(clearing.all.count))", role: .destructive) { clear(clearing.all) }
                 Button("Cancel", role: .cancel) {}
             } message: { _ in
-                Text("Cleared items are marked read and leave the list. Saved items stay.")
+                Text("Cleared items are marked read and will be removed from the list.")
             }
+            .tint(Theme.alertTint)
         }
     }
 

@@ -36,6 +36,9 @@ struct CalendarSectionView: View {
     private func days(now: Date) -> some View {
         let groups = CalendarAgenda.plan(model.events, now: now, expanded: expandedDays, showAll: showsAll)
         let shown = groups.filter { !$0.items.isEmpty }
+        // A day's own "N more events" only when more than one day is cut off; otherwise the
+        // footer's count says the same thing.
+        let showsDayMore = groups.count(where: { $0.hiddenCount > 0 }) > 1
         let todayStart = Calendar.current.startOfDay(for: now)
         VStack(alignment: .leading, spacing: 0) {
             if shown.first?.day != todayStart {
@@ -63,7 +66,7 @@ struct CalendarSectionView: View {
                     )
                     .padding(.leading, DashColumn.width)
                 }
-                if group.hiddenCount > 0 {
+                if showsDayMore, group.hiddenCount > 0 {
                     MoreLine(count: group.hiddenCount, noun: "event", leading: DashColumn.width + EventRow.timeWidth) {
                         expandedDays.insert(group.day)
                     }

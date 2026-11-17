@@ -52,9 +52,10 @@ struct WeatherLines: View {
             .accessibilityElement(children: .combine)
 
             // The next two days, then anything notable later in the week.
+            // In the same ink as the week's days under Show week.
             Text([WeatherRules.changeLine(report, unit: unit), WeatherRules.weekLine(report, unit: unit)].compactMap { $0 }.joined(separator: " "))
                 .font(.subheadline)
-                .foregroundStyle(Theme.secondary)
+                .foregroundStyle(Theme.itemInk)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 8)
 
@@ -75,10 +76,17 @@ struct WeatherLines: View {
                     .padding(.top, 4)
             }
             if showsWeek {
-                week(report.days, unit: unit)
-                    .padding(.top, 6)
-                openFooter(place)
-                    .padding(.top, 8)
+                // The open week sits on the same card as an open row.
+                VStack(alignment: .leading, spacing: 0) {
+                    week(report.days, unit: unit)
+                    openFooter(place)
+                        .padding(.top, 8)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, 10)
+                .padding(.bottom, 4)
+                .openCard(true)
+                .padding(.top, 6)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

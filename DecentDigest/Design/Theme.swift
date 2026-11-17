@@ -12,6 +12,9 @@ enum Theme {
     static let rule = Color(light: 0xDFE0DC, dark: 0x343937)
     /// Links and actions: a gray blue, so a link reads as one at a glance.
     static let accent = Color(light: 0x4A5D73, dark: 0xB8C4D2)
+    /// The buttons in a centered question (alert): iOS's own system blue, so questions look like
+    /// they do in every other app. Destructive buttons stay iOS red.
+    static let alertTint = Color(uiColor: .systemBlue)
     /// The logo, and the full-width buttons in setup in light mode.
     static let slate = Color(light: 0x3C3C4C, dark: 0xCECED5)
     /// The full-width buttons in setup (Get started, Continue, Open my digest): slate, and in dark mode
