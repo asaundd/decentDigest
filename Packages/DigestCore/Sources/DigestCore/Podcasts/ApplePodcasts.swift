@@ -131,7 +131,7 @@ public enum ApplePodcasts {
     /// - Throws: `Connectivity.Offline` when neither answered for want of a connection.
     private static func firstChart(country: String) async throws -> [String]? {
         let urls = chartURLs(country: country)
-        let (ids, offline) = await withTaskGroup(of: Result<[String]?, Error>.self) { group -> ([String]?, Int) in
+        let (ids, offline) = await withTaskGroup(of: Swift.Result<[String]?, Error>.self) { group -> ([String]?, Int) in
             for url in urls {
                 group.addTask {
                     do { return .success(try await chartIDs(from: url)) } catch { return .failure(error) }

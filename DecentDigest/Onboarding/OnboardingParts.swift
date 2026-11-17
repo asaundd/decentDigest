@@ -73,6 +73,9 @@ struct OnboardingStep<Content: View>: View {
                 bottomButtons
             }
         }
+        .onboardingPage()
+        // The page keeps the app's links color; only the question takes iOS's own.
+        .tint(Theme.accent)
         .alert(skipQuestion?.title ?? "", isPresented: $asksToSkip) {
             Button(skipQuestion?.confirm ?? "Skip", role: skipQuestion?.destructive == false ? nil : .destructive) {
                 skipQuestion?.undo()
@@ -82,7 +85,7 @@ struct OnboardingStep<Content: View>: View {
         } message: {
             Text(skipQuestion?.message ?? "")
         }
-        .onboardingPage()
+        .tint(Theme.alertTint)
     }
 
     private var bottomButtons: some View {

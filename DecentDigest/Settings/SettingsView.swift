@@ -89,6 +89,8 @@ struct SettingsView: View {
         } message: {
             Text("Keep your choices to look them over, or clear them to set up from the beginning. Clearing unfollows every site and show and forgets your city. Saved items and reading history stay.")
         }
+        // The page keeps the app's links color (set above); only the questions take iOS's own.
+        .tint(Theme.alertTint)
     }
 
     /// Settings › Your data: deletes everything followed, saved and read, after a question.
@@ -603,6 +605,7 @@ struct ReadingHistoryPage: View {
                 .foregroundStyle(Theme.secondary)
                 .padding(.top, 4)
         }
+        .tint(Theme.accent)
         .alert("Clear reading history?", isPresented: $confirming) {
             Button("Clear", role: .destructive) {
                 ReadingState.clearHistory(in: context)
@@ -612,5 +615,6 @@ struct ReadingHistoryPage: View {
         } message: {
             Text("Your saved items stay. This can't be undone.")
         }
+        .tint(Theme.alertTint)
     }
 }
