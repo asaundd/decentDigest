@@ -58,8 +58,10 @@ public enum ReadingState {
     }
 
     /// Clears the reading history. Saved items stay, with their state. Headlines and episodes the
-    /// reader already dealt with leave the device's cache too, so they don't come back as new.
-    public static func clearHistory(in context: ModelContext) {
+    /// reader already dealt with leave the device's cache too. So that the next refresh doesn't add
+    /// them again as new, each feed starts over from now, as when it was first followed: items
+    /// published before the history was cleared are never added again.
+    public static func clearHistory(in context: ModelContext, now: Date = .now) {
         let saved = Set(((try? context.fetch(FetchDescriptor<SavedItem>())) ?? []).map(\.itemID))
         let states = (try? context.fetch(FetchDescriptor<ItemState>())) ?? []
         var dealtWith: Set<String> = []
@@ -71,6 +73,9 @@ public enum ReadingState {
             for item in (try? context.fetch(FetchDescriptor<FeedItem>())) ?? [] where dealtWith.contains(item.itemID) {
                 context.delete(item)
             }
+        }
+        for fetch in (try? context.fetch(FetchDescriptor<FetchState>())) ?? [] {
+            fetch.backfillCutoff = max(fetch.backfillCutoff ?? now, now)
         }
         try? context.save()
     }

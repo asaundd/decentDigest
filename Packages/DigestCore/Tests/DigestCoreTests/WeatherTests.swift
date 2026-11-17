@@ -295,3 +295,10 @@ private final class CountingWeather: WeatherProvider, @unchecked Sendable {
     await weather.reload(force: true)
     #expect(provider.fetches == 2)
 }
+
+@Test func fallbackCreditNamesAppleWeatherInWords() {
+    #expect(WeatherCredit.fallback.isFallback)
+    #expect(WeatherCredit.fallback.legalPage.host() == "developer.apple.com")
+    let url = URL(string: "https://example.com")!
+    #expect(!WeatherCredit(markLight: url, markDark: url, legalPage: url).isFallback)
+}

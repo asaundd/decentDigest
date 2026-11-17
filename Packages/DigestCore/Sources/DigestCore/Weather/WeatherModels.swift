@@ -86,15 +86,27 @@ public struct WeatherPlace: Codable, Sendable, Hashable {
 
 /// The Apple Weather mark and legal page WeatherKit asks apps to show.
 public struct WeatherCredit: Sendable, Hashable {
-    public var markLight: URL
-    public var markDark: URL
+    /// The Apple Weather mark's images. Nil in the fallback, which shows the words "Apple Weather".
+    public var markLight: URL?
+    public var markDark: URL?
     public var legalPage: URL
 
-    public init(markLight: URL, markDark: URL, legalPage: URL) {
+    public init(markLight: URL?, markDark: URL?, legalPage: URL) {
         self.markLight = markLight
         self.markDark = markDark
         self.legalPage = legalPage
     }
+
+    /// Used while Apple's own credit can't be fetched (offline, say), so a cached forecast still
+    /// shows the credit: the words "Apple Weather" and Apple's data source and legal page.
+    public static let fallback = WeatherCredit(
+        markLight: nil,
+        markDark: nil,
+        legalPage: URL(string: "https://developer.apple.com/weatherkit/data-source-attribution/")!
+    )
+
+    /// True for the fallback, which is replaced once Apple's credit arrives.
+    public var isFallback: Bool { markLight == nil && markDark == nil }
 }
 
 /// °F or °C, following the device's setting.

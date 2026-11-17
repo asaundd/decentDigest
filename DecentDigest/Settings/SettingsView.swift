@@ -20,6 +20,8 @@ struct SettingsView: View {
     @State private var showsDesignLab = false
     @State private var confirmsDeleteAll = false
     @State private var deletedAll = false
+    /// Set when Send feedback can't open a mail app, so the address shows instead.
+    @State private var showsFeedbackAddress = false
 
     enum Page: Hashable {
         case weather, calendar, todos, news, podcasts, sync, history
@@ -89,6 +91,12 @@ struct SettingsView: View {
         } message: {
             Text("Keep your choices to look them over, or clear them to set up from the beginning. Clearing unfollows every site and show and forgets your city. Saved items and reading history stay.")
         }
+        .alert("Send feedback", isPresented: $showsFeedbackAddress) {
+            Button("Copy address") { UIPasteboard.general.string = AppLinks.feedbackAddress }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Write to \(AppLinks.feedbackAddress) from any email app.")
+        }
         // The page keeps the app's links color (set above); only the questions take iOS's own.
         .tint(Theme.alertTint)
     }
@@ -112,7 +120,7 @@ struct SettingsView: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(StillButtonStyle())
-            .accessibilityHint("Asks first, then deletes what you follow, save and read, here and in iCloud")
+            .accessibilityHint("Asks first, then deletes what you follow, save, and read, here and in iCloud")
         }
     }
 
@@ -211,7 +219,12 @@ struct SettingsView: View {
             TextLink("Privacy") { openURL(privacy) }
         }
         if let feedback = AppLinks.feedback {
-            TextLink("Send feedback") { openURL(feedback) }
+            TextLink("Send feedback") {
+                // Without a mail app set up, nothing would open: the address shows instead.
+                openURL(feedback) { accepted in
+                    if !accepted { showsFeedbackAddress = true }
+                }
+            }
         }
     }
 
@@ -261,7 +274,8 @@ struct SettingsView: View {
 /// The privacy page and the feedback address on the app's website.
 enum AppLinks {
     static let privacy: URL? = URL(string: "https://decentdigest.com/privacy")
-    static let feedback: URL? = URL(string: "mailto:hello@decentdigest.com?subject=Decent%20digest")
+    static let feedbackAddress = "hello@decentdigest.com"
+    static let feedback: URL? = URL(string: "mailto:\(feedbackAddress)?subject=Decent%20digest")
 }
 
 enum AppVersion {
@@ -472,7 +486,7 @@ struct AccessNote: View {
             TextLink(isOn ? "Turn off in the Settings app ↗" : "Turn on in the Settings app ↗") {
                 if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
             }
-            .accessibilityHint("Opens Decent digest in the Settings app")
+            .accessibilityHint("Opens Decent in the Settings app")
         }
         .padding(.top, 10)
     }
@@ -552,7 +566,7 @@ struct ICloudSyncPage: View {
                 Text(ICloudStatus.isSignedIn ? "On" : "Off")
                     .foregroundStyle(Theme.secondary)
             }
-            Text("Only you can see this data. To stop syncing, open the Settings app, tap your name, then iCloud, and turn off Decent digest.")
+            Text("Only you can see this data. To stop syncing, open the Settings app, tap your name, then iCloud, then See All under Saved to iCloud, and turn off Decent.")
                 .font(.footnote)
                 .foregroundStyle(Theme.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -589,7 +603,7 @@ struct ReadingHistoryPage: View {
             ))
             PlainRule(spacing: 20)
             VStack(alignment: .leading, spacing: 8) {
-                DashLine("It stays on your device and in your own iCloud, and is never shared with developers.")
+                DashLine("It stays on your device and in your own iCloud, and is never shared with the developer.")
                 DashLine("Today it keeps your lists tidy, so news and episodes you've already opened, saved, or marked don't come back.")
                 DashLine("When turned off, reading history is still briefly saved until the item expires a week after it came out, so your digest matches across multiple devices. Saved items still stay saved until you remove them.")
             }

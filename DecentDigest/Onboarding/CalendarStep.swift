@@ -84,7 +84,7 @@ struct AppAccessRow: View {
                 TextLink("Turn on in the Settings app ↗") {
                     if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
                 }
-                .accessibilityHint("Access can be turned on for Decent digest in the Settings app")
+                .accessibilityHint("Access can be turned on for Decent in the Settings app")
             }
         }
     }

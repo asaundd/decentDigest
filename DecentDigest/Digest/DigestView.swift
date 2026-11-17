@@ -50,6 +50,9 @@ struct DigestView: View {
     /// Set only to scroll an opened row into view, by offset. (Scrolling to a row by id made iOS keep
     /// that row's bottom pinned, so closing it later pulled the page back.)
     @State private var scrollPosition = ScrollPosition(idType: String.self)
+    /// The date at the top of the page. Set again at midnight and on coming back to the app, so it
+    /// changes with the day even while the page stays on screen.
+    @State private var today = Date.now
     /// When the app last went to the background.
     @State private var leftAt: Date?
     /// Bumped to open the page fresh after a long time away: every section starts over, cards closed.
@@ -197,6 +200,7 @@ struct DigestView: View {
                 leftAt = .now
             }
             guard phase == .active else { return }
+            today = .now
             Task { await reloadAgenda() }
             Task { await reloadWeather() }
             // Nothing moves on a page the reader is in the middle of: back soon, new items wait for
@@ -214,6 +218,7 @@ struct DigestView: View {
         }
         // A new day, or a time zone change.
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification).receive(on: RunLoop.main)) { _ in
+            today = .now
             Task { await reloadAgenda() }
         }
     }
@@ -303,7 +308,7 @@ struct DigestView: View {
             Text("Decent digest")
                 .font(Theme.wordmarkFont)
                 .foregroundStyle(Theme.secondary)
-            Text(Date.now, format: .dateTime.weekday(.wide).month(.wide).day())
+            Text(today, format: .dateTime.weekday(.wide).month(.wide).day())
                 .font(Theme.dateFont)
                 .accessibilityAddTraits(.isHeader)
                 // Clear of the Settings button at the top right; a long date wraps instead.
@@ -432,7 +437,7 @@ struct DigestView: View {
             FooterLink("Refresh all", still: true) {
                 Task { await refreshAll() }
             }
-            .accessibilityHint("Checks for new events, to-dos, weather, news and episodes")
+            .accessibilityHint("Checks for new events, to-dos, weather, news, and episodes")
         }
     }
 
