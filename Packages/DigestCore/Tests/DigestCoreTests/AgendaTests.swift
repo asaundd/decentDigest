@@ -145,7 +145,8 @@ private func event(_ id: String, _ start: Date, _ end: Date, allDay: Bool = fals
     #expect(AgendaFormat.people([]) == nil)
     #expect(AgendaFormat.people(["Sam"]) == "Sam")
     #expect(AgendaFormat.people(["Sam", "Maya"]) == "Sam and Maya")
-    #expect(AgendaFormat.people(["Sam", "Maya", "Leo", "Ana", "Ben"]) == "Sam, Maya, Leo and 2 others")
+    #expect(AgendaFormat.people(["Sam", "Maya", "Leo", "Ana", "Ben"]) == "Sam, Maya, Leo, and 2 others")
+    #expect(AgendaFormat.people(["Sam", "Maya", "Leo"]) == "Sam, Maya, and Leo")
 }
 
 @Test func placesFitOnOneLine() {

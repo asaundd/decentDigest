@@ -134,7 +134,7 @@ struct WelcomePage: View {
                     SectionRule()
                     VStack(alignment: .leading, spacing: 8) {
                         DashLine("Privacy first: no tracking, no ads, and no account required.")
-                        DashLine("What you follow, save, and read stays on your device and in your own iCloud. It's never shared with developers.")
+                        DashLine("What you follow, save, and read stays on your device and in your own iCloud. It's never shared with the developer.")
                         DashLine("Each step is optional and can be changed later.")
                     }
                 }
@@ -264,7 +264,7 @@ struct ReadyPage: View {
                     DashLine("In News and Podcasts, swipe an item left to mark it read, and it's removed from the list. A short swipe shows Save too, to keep it for later.")
                     DashLine("Any news or podcast item you don't get to clears after a week to keep the list fresh.")
                 }
-                Text("Decent digest keeps a private reading history of the news and episodes you open, save, and mark read. It stays on your device and in your own iCloud, and is never shared with developers. You can turn it off in Settings.")
+                Text("Decent digest keeps a private reading history of the news and episodes you open, save, and mark read. It stays on your device and in your own iCloud, and is never shared with the developer. You can turn it off in Settings.")
                     .font(.footnote)
                     .foregroundStyle(Theme.secondary)
                     .fixedSize(horizontal: false, vertical: true)

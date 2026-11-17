@@ -146,10 +146,10 @@ struct WeatherPlacePicker: View {
             switch model.locationAccess {
             case .denied:
                 TextLink("Turn on in the Settings app ↗", action: openSystemSettings)
-                    .accessibilityHint("Opens Decent digest in the Settings app")
+                    .accessibilityHint("Opens Decent in the Settings app")
             case .granted where usingLocation:
                 TextLink("Turn off in the Settings app ↗", action: openSystemSettings)
-                    .accessibilityHint("Opens Decent digest in the Settings app")
+                    .accessibilityHint("Opens Decent in the Settings app")
             default:
                 EmptyView()
             }

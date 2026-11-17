@@ -86,7 +86,7 @@ public final class WeatherModel {
         if !isSample, !isOffline, let report, place == target,
            date.timeIntervalSince(report.fetchedAt) < reuseFor {
             // The page opened with a cached forecast; it still needs the Apple Weather credit.
-            if credit == nil { credit = await provider.credit() }
+            await loadCredit()
             return
         }
         place = target
@@ -97,7 +97,7 @@ public final class WeatherModel {
             isOffline = false
             save(fresh, forKey: Keys.report)
             save(target, forKey: Keys.place)
-            if credit == nil { credit = await provider.credit() }
+            await loadCredit()
         } catch {
             isOffline = Connectivity.isOffline(error) || deviceIsOffline()
             // Keep the last forecast if there is one; it still says roughly the right thing.
@@ -106,6 +106,8 @@ public final class WeatherModel {
                 report = SampleDigest.weather(now: date)
                 isSample = true
             }
+            // A forecast kept from before still shows, so its credit does too.
+            if report != nil, !isSample { await loadCredit() }
         }
     }
 
@@ -145,6 +147,12 @@ public final class WeatherModel {
     }
 
     // MARK: Private
+
+    /// Fetches the Apple Weather credit once, and again while only the fallback is showing.
+    private func loadCredit() async {
+        guard credit == nil || credit?.isFallback == true else { return }
+        if let fetched = await provider.credit() { credit = fetched }
+    }
 
     private func resolvePlace() async -> WeatherPlace? {
         if let typedCity { return typedCity }

@@ -50,15 +50,17 @@ public enum AgendaFormat {
         }
     }
 
-    /// Up to three names, then how many more: "Sam, Maya, Jordan and 2 others".
+    /// Up to three names, then how many more: "Sam, Maya, Jordan, and 2 others".
     public static func people(_ names: [String]) -> String? {
         guard !names.isEmpty else { return nil }
         if names.count <= 3 {
             guard names.count > 1 else { return names[0] }
-            return names.dropLast().joined(separator: ", ") + " and " + names[names.count - 1]
+            // Two names take a plain "and"; three take the Oxford comma.
+            guard names.count > 2 else { return names[0] + " and " + names[1] }
+            return names.dropLast().joined(separator: ", ") + ", and " + names[names.count - 1]
         }
         let others = names.count - 3
-        return names.prefix(3).joined(separator: ", ") + " and \(others) \(others == 1 ? "other" : "others")"
+        return names.prefix(3).joined(separator: ", ") + ", and \(others) \(others == 1 ? "other" : "others")"
     }
 
     /// Hosts of video call links, which are left out of an event's notes.

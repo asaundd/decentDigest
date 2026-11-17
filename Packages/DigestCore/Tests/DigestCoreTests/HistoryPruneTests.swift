@@ -46,5 +46,27 @@ import Testing
         #expect(states.map(\.itemID) == ["undated"])
         #expect(states.first?.status == .ignored)
     }
+
+    @Test func clearingHistoryStartsEachFeedOverFromNow() throws {
+        let container = try DigestStore.makeContainer(inMemory: true)
+        let context = ModelContext(container)
+        let hourAgo = now.addingTimeInterval(-3_600)
+        context.insert(FeedItem(itemID: "read", sourceID: "s", title: "Read", link: nil, summary: nil, author: nil, publishedAt: hourAgo))
+        let state = ItemState(itemID: "read", sourceID: "s", status: .read, firstShownAt: hourAgo)
+        state.openedAt = hourAgo
+        context.insert(state)
+        let fetch = FetchState(sourceID: "s")
+        fetch.backfillCutoff = now.addingTimeInterval(-86_400)
+        context.insert(fetch)
+        try context.save()
+
+        ReadingState.clearHistory(in: context, now: now)
+
+        let check = ModelContext(container)
+        #expect(try check.fetchCount(FetchDescriptor<ItemState>()) == 0)
+        #expect(try check.fetchCount(FetchDescriptor<FeedItem>()) == 0)
+        // The next refresh adds nothing published before the history was cleared.
+        #expect(try check.fetch(FetchDescriptor<FetchState>()).first?.backfillCutoff == now)
+    }
 }
 #endif

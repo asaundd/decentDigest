@@ -30,7 +30,8 @@ public struct WeatherKitSource: WeatherProvider {
     }
 
     public func credit() async -> WeatherCredit? {
-        guard let attribution = try? await WeatherService.shared.attribution else { return nil }
+        // Offline, the credit still shows, in words, beside the cached forecast.
+        guard let attribution = try? await WeatherService.shared.attribution else { return .fallback }
         return WeatherCredit(
             markLight: attribution.combinedMarkLightURL,
             markDark: attribution.combinedMarkDarkURL,
