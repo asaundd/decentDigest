@@ -83,7 +83,7 @@ struct WeatherLines: View {
                         .padding(.top, 8)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.top, 6)
+                .padding(.top, 10)
                 .padding(.bottom, 4)
                 .openCard(true)
                 .padding(.top, 6)

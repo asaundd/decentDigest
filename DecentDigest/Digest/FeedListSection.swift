@@ -132,6 +132,8 @@ struct FeedListSection: View {
             }
             .padding(.top, 4)
             .digestRow()
+            // The footer keeps the app's links color; only the question takes iOS's own.
+            .tint(Theme.accent)
             .alert("Clear news items?", isPresented: clearingBinding, presenting: clearing) { clearing in
                 if clearing.visible.count < clearing.all.count {
                     Button("Clear all visible (\(clearing.visible.count))", role: .destructive) { clear(clearing.visible) }
@@ -141,6 +143,7 @@ struct FeedListSection: View {
             } message: { _ in
                 Text("Cleared items are marked read and will be removed from the list.")
             }
+            .tint(Theme.alertTint)
         }
     }
 
