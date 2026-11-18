@@ -16,7 +16,7 @@ public enum SampleDigest {
         // fit on one screen with the week open.
         let events = [
             CalendarEntry(id: "e1", title: "Run with Alex", start: at(7), end: at(7, 45), calendarName: "Personal", calendarID: "personal", location: "Prospect Park"),
-            CalendarEntry(id: "e2", title: "Lunch with Priya", start: at(12, 30), end: at(13, 30), calendarName: "Personal", calendarID: "personal", location: "Corner café"),
+            CalendarEntry(id: "e2", title: "Coffee with Priya", start: at(9, 30), end: at(10, 15), calendarName: "Personal", calendarID: "personal", location: "Corner café"),
             CalendarEntry(id: "e3", title: "Piano lesson", start: at(16), end: at(16, 45), calendarName: "Family", calendarID: "family", location: "Music school, room 2", notes: "Maya is practicing the Clementi sonatina this week."),
             CalendarEntry(id: "e4", title: "Dentist", start: at(9, dayOffset: 1), end: at(9, 45, dayOffset: 1), calendarName: "Family", calendarID: "family"),
             CalendarEntry(id: "e5", title: "Book club", start: at(19, dayOffset: 1), end: at(20, 30, dayOffset: 1), calendarName: "Personal", calendarID: "personal", attendees: ["Sam Rivera", "Dana Brooks"]),
