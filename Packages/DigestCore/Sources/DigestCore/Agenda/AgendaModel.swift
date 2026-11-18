@@ -33,7 +33,7 @@ public final class AgendaModel {
     /// Counts reloads, so an older read that finishes late doesn't replace a newer one.
     @ObservationIgnored private var generation = 0
 
-    public init(source: any AgendaSource, defaults: UserDefaults = .standard, now: @escaping () -> Date = { .now }) {
+    public init(source: any AgendaSource, defaults: UserDefaults = .standard, now: @escaping () -> Date = { AppClock.now }) {
         self.source = source
         self.now = now
         self.defaults = defaults

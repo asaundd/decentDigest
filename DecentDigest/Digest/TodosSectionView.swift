@@ -29,7 +29,7 @@ struct TodosSectionView: View {
                     .padding(.top, DayHeader.firstTopPadding)
                     .digestRow()
             } else if model.remindersAccess == .granted {
-                list(now: .now)
+                list(now: AppClock.now)
             }
         }
     }

@@ -28,7 +28,7 @@ public enum DigestStore {
     /// An in-memory container filled with sample headlines and episodes, for previews and the
     /// debug-only demo mode used for screenshots.
     @MainActor
-    public static func previewContainer(now: Date = .now) -> ModelContainer {
+    public static func previewContainer(now: Date = AppClock.now) -> ModelContainer {
         do {
             let container = try makeContainer(inMemory: true)
             let context = container.mainContext
@@ -40,7 +40,7 @@ public enum DigestStore {
                 if let existing = sources[entry.sourceName] {
                     source = existing
                 } else {
-                    source = Source(kind: kind, feedURL: "https://example.com/\(sources.count)/feed", title: entry.sourceName)
+                    source = Source(kind: kind, feedURL: sampleFeeds[entry.sourceName] ?? "https://example.com/\(sources.count)/feed", title: entry.sourceName)
                     context.insert(source)
                     sources[entry.sourceName] = source
                 }
@@ -58,7 +58,7 @@ public enum DigestStore {
             if let last = sample.news.last, let source = sources[last.sourceName] {
                 context.insert(ItemState(itemID: last.id, sourceID: source.id, status: .read, firstShownAt: now))
             }
-            context.insert(SavedItem(itemID: "saved-1", sourceID: "", sourceTitle: "Simon Willison's Weblog", title: "Browse tools.simonwillison.net by tag", link: "https://example.com/saved-1", summary: "The home page of a collection of small single-purpose web tools can now be browsed by the libraries and browser features each one uses.", author: nil, publishedAt: now.addingTimeInterval(-3 * 86_400)))
+            context.insert(SavedItem(itemID: "saved-1", sourceID: "", sourceTitle: "Atlas Obscura", title: "Glass Wonders Gallery in Karpacz, Poland", link: "https://example.com/saved-1", summary: "A gallery of glass art in a small town in the Karkonosze mountains.", author: nil, publishedAt: now.addingTimeInterval(-3 * 86_400)))
             return container
         } catch {
             fatalError("Preview container failed: \(error)")
@@ -66,9 +66,23 @@ public enum DigestStore {
     }
 
     private static let sampleAuthors = [
-        "n1": "Jonathan Wosen", "n3": "Claire Vo", "n4": "James O'Donnell", "n5": "Meghana Keshavan", "n7": "James O'Donnell",
+        "n1": "Kate Mothes", "n2": "Yasemin Saplakoglu", "n4": "Nagi", "n6": "Devin Reese",
     ]
 
-    private static let sampleMinutes = ["p1": 17, "p2": 86, "p3": 59]
+    /// Real addresses so setup screens show real sites. Demo mode never fetches them.
+    private static let sampleFeeds = [
+        "Colossal": "https://www.thisiscolossal.com/feed/",
+        "Quanta Magazine": "https://www.quantamagazine.org/feed/",
+        "Runner's World": "https://www.runnersworld.com/rss/all.xml/",
+        "RecipeTin Eats": "https://www.recipetineats.com/feed/",
+        "Smithsonian Magazine": "https://www.smithsonianmag.com/rss/latest_articles/",
+        "Nautilus": "https://nautil.us/feed/",
+        "EarthSky": "https://earthsky.org/feed/",
+        "99% Invisible": "https://feeds.simplecast.com/BqbsxVfO",
+        "The Splendid Table": "https://feeds.publicradio.org/public_feeds/the-splendid-table",
+        "Hidden Brain": "https://feeds.simplecast.com/kwWc0lhf",
+    ]
+
+    private static let sampleMinutes = ["p1": 39, "p2": 50, "p3": 91]
 }
 #endif

@@ -41,7 +41,7 @@ struct WeatherLines: View {
                     .font(.system(size: temperatureSize, weight: .light))
                     .monospacedDigit()
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(WeatherRules.todayPhrase(report, now: .now))
+                    Text(WeatherRules.todayPhrase(report, now: AppClock.now))
                     Text(WeatherRules.highLow(report.today, unit: unit))
                         .font(.subheadline)
                         .foregroundStyle(Theme.secondary)
@@ -70,7 +70,7 @@ struct WeatherLines: View {
             // Offline, the last forecast still shows, and the line with Show week says when it is
             // from: "Weather from 9:40a · Show week".
             let fromNote = (model.isOffline || network?.isOffline == true) && !model.isSample
-                ? WeatherRules.offlineNote(fetchedAt: report.fetchedAt, now: .now) : nil
+                ? WeatherRules.offlineNote(fetchedAt: report.fetchedAt, now: AppClock.now) : nil
             if fromNote != nil || !report.days.isEmpty {
                 toggleLine(note: fromNote, hasWeek: !report.days.isEmpty)
                     .padding(.top, 4)

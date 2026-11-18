@@ -7,7 +7,7 @@ public final class SampleAgendaSource: AgendaSource {
     private var todos: [TodoEntry]
     private let entries: [CalendarEntry]
 
-    public init(access: AccessState = .granted, now: Date = .now) {
+    public init(access: AccessState = .granted, now: Date = AppClock.now) {
         let digest = SampleDigest.make(now: now)
         self.access = access
         self.entries = digest.events

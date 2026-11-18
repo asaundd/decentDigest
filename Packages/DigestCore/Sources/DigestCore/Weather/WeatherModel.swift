@@ -48,7 +48,7 @@ public final class WeatherModel {
 
     /// - Parameter sampleOnFailure: show sample weather when the forecast can't be fetched,
     ///   so the layout can be checked before WeatherKit is set up.
-    public init(provider: any WeatherProvider, places: any PlaceProvider, defaults: UserDefaults = .standard, sampleOnFailure: Bool = false, now: @escaping () -> Date = { .now }) {
+    public init(provider: any WeatherProvider, places: any PlaceProvider, defaults: UserDefaults = .standard, sampleOnFailure: Bool = false, now: @escaping () -> Date = { AppClock.now }) {
         self.provider = provider
         self.places = places
         self.defaults = defaults

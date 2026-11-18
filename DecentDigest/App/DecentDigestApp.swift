@@ -21,6 +21,11 @@ struct DecentDigestApp: App {
         // Edit Scheme › Run › Arguments: -demo fills the page with sample weather, events, to-dos,
         // news and episodes for screenshots. Nothing is read from or saved to the reader's data.
         if ProcessInfo.processInfo.arguments.contains("-demo") {
+            // Tuesday, January 9 at 9:41 AM, to match the status bar in Apple's own screenshots.
+            let morning = DateComponents(year: 2029, month: 1, day: 9, hour: 9, minute: 41)
+            if let date = Calendar.current.date(from: morning) {
+                AppClock.pin(to: date)
+            }
             let defaults = UserDefaults(suiteName: "demo") ?? .standard
             defaults.removePersistentDomain(forName: "demo")
             let preferences = DigestPreferences(defaults: defaults)

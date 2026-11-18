@@ -206,7 +206,7 @@ struct FeedListSection: View {
             .filter { followed[$0.sourceID] != nil }
             .map { NewsRules.Candidate(itemID: $0.itemID, publishedAt: $0.publishedAt) }
         let started = listStartedAt > 0 ? Date(timeIntervalSince1970: listStartedAt) : nil
-        return NewsRules.eligible(candidates, readings: readings, listStartedAt: started, now: .now).compactMap { candidate in
+        return NewsRules.eligible(candidates, readings: readings, listStartedAt: started, now: AppClock.now).compactMap { candidate in
             guard let item = byID[candidate.itemID] else { return nil }
             return Entry(
                 item: item,

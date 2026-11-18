@@ -5,14 +5,14 @@ import SwiftData
 /// Records what the reader does with a headline. Runs on the view's context so the list updates at once.
 public enum ReadingState {
     /// Notes the first time an item is shown, so an item that expires untouched can be marked ignored.
-    public static func markShown(itemID: String, sourceID: String, in context: ModelContext, now: Date = .now) {
+    public static func markShown(itemID: String, sourceID: String, in context: ModelContext, now: Date = AppClock.now) {
         guard state(for: itemID, in: context) == nil else { return }
         context.insert(ItemState(itemID: itemID, sourceID: sourceID, status: .new, firstShownAt: now))
         try? context.save()
     }
 
     /// The reader opened the item: its card, or, `inDepth`, the panel, the site or Podcasts.
-    public static func markOpened(itemID: String, sourceID: String, inDepth: Bool = false, in context: ModelContext, now: Date = .now) {
+    public static func markOpened(itemID: String, sourceID: String, inDepth: Bool = false, in context: ModelContext, now: Date = AppClock.now) {
         let state = stateOrNew(itemID: itemID, sourceID: sourceID, in: context, now: now)
         if state.status.isUnread { state.status = .read }
         state.openedAt = now
@@ -21,7 +21,7 @@ public enum ReadingState {
     }
 
     /// ✓ Read or Clear all: the item leaves its list, or Saved if it was saved.
-    public static func resolve(itemID: String, sourceID: String, as status: ItemStatus, in context: ModelContext, now: Date = .now) {
+    public static func resolve(itemID: String, sourceID: String, as status: ItemStatus, in context: ModelContext, now: Date = AppClock.now) {
         let state = stateOrNew(itemID: itemID, sourceID: sourceID, in: context, now: now)
         state.status = status
         state.resolvedAt = now
@@ -33,7 +33,7 @@ public enum ReadingState {
     }
 
     /// Moves a headline or episode to Saved, where it stays until the reader marks it.
-    public static func save(_ item: FeedItem, sourceTitle: String, kind: SourceKind = .news, in context: ModelContext, now: Date = .now) {
+    public static func save(_ item: FeedItem, sourceTitle: String, kind: SourceKind = .news, in context: ModelContext, now: Date = AppClock.now) {
         let state = stateOrNew(itemID: item.itemID, sourceID: item.sourceID, in: context, now: now)
         state.status = .saved
         let itemID = item.itemID
@@ -61,7 +61,7 @@ public enum ReadingState {
     /// reader already dealt with leave the device's cache too. So that the next refresh doesn't add
     /// them again as new, each feed starts over from now, as when it was first followed: items
     /// published before the history was cleared are never added again.
-    public static func clearHistory(in context: ModelContext, now: Date = .now) {
+    public static func clearHistory(in context: ModelContext, now: Date = AppClock.now) {
         let saved = Set(((try? context.fetch(FetchDescriptor<SavedItem>())) ?? []).map(\.itemID))
         let states = (try? context.fetch(FetchDescriptor<ItemState>())) ?? []
         var dealtWith: Set<String> = []

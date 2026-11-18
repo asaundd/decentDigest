@@ -2,7 +2,7 @@ import Foundation
 
 /// The short age under a headline: "4 min", "2 hr", "Yesterday", "3 days".
 public enum HeadlineAge {
-    public static func text(for date: Date, now: Date = .now, calendar: Calendar = .current) -> String {
+    public static func text(for date: Date, now: Date = AppClock.now, calendar: Calendar = .current) -> String {
         let seconds = max(0, now.timeIntervalSince(date))
         if seconds < 60 { return "Just now" }
         if seconds < 3_600 { return "\(Int(seconds / 60)) min" }

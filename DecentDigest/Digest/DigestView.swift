@@ -52,7 +52,7 @@ struct DigestView: View {
     @State private var scrollPosition = ScrollPosition(idType: String.self)
     /// The date at the top of the page. Set again at midnight and on coming back to the app, so it
     /// changes with the day even while the page stays on screen.
-    @State private var today = Date.now
+    @State private var today = AppClock.now
     /// When the app last went to the background.
     @State private var leftAt: Date?
     /// Bumped to open the page fresh after a long time away: every section starts over, cards closed.
@@ -200,7 +200,7 @@ struct DigestView: View {
                 leftAt = .now
             }
             guard phase == .active else { return }
-            today = .now
+            today = AppClock.now
             Task { await reloadAgenda() }
             Task { await reloadWeather() }
             // Nothing moves on a page the reader is in the middle of: back soon, new items wait for
@@ -218,7 +218,7 @@ struct DigestView: View {
         }
         // A new day, or a time zone change.
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification).receive(on: RunLoop.main)) { _ in
-            today = .now
+            today = AppClock.now
             Task { await reloadAgenda() }
         }
     }

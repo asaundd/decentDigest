@@ -22,7 +22,7 @@ public final class NewsRefresher {
         defer { isRefreshing = false }
 
         let store = await feedStore()
-        let started = Date.now
+        let started = AppClock.now
         let keepsHistory = !UserDefaults.standard.bool(forKey: DigestPreferences.readingHistoryOffKey)
         let outcome = await store.refresh(force: force, only: kind, keepsHistory: keepsHistory)
         // Headlines opened before this refresh leave the News list.

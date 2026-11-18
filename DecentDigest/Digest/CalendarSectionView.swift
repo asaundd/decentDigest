@@ -26,7 +26,7 @@ struct CalendarSectionView: View {
             } else if model.calendarAccess == .granted {
                 // Redrawn each minute, so past and happening-now events change on their own.
                 TimelineView(.everyMinute) { context in
-                    days(now: context.date)
+                    days(now: context.date.addingTimeInterval(AppClock.offset))
                 }
             }
         }
