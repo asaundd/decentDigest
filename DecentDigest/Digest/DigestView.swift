@@ -5,7 +5,7 @@ import SwiftData
 import SwiftUI
 import UIKit
 
-/// The main screen: one calm page with every section the user set up.
+/// The main screen: one quiet page with every section the user set up.
 struct DigestView: View {
     /// Calendar and Reminders, read live.
     var agenda: AgendaModel
