@@ -41,7 +41,7 @@ struct TodosSectionView: View {
         // footer's count says the same thing.
         let showsGroupMore = plan.days.count(where: { $0.hiddenCount > 0 }) + (plan.anytimeHidden > 0 ? 1 : 0) > 1
         // Once enough are checked off that the folded list would show them all, Show less has
-        // nothing to fold: the footer says "No other items" instead.
+        // nothing to fold: the footer is just Reminders ↗.
         let folds = showsAll && TodoRules.plan(model.todos, now: now, expanded: [], anytimeExpanded: false, showAll: false).hiddenCount > 0
         return VStack(alignment: .leading, spacing: 0) {
             if isEmpty(plan, days: days) {
@@ -85,7 +85,6 @@ struct TodosSectionView: View {
             ListFooter(
                 hidden: plan.hiddenCount,
                 phrase: { $0 == 1 ? "more item" : "more items" },
-                empty: isEmpty(plan, days: days) ? nil : "No other items",
                 showsAll: folds,
                 app: ListFooter.Link(title: "Reminders ↗", spoken: "Open Reminders") { openURL(AgendaLinks.reminders) }
             ) {
@@ -129,8 +128,7 @@ struct TodosSectionView: View {
             open: { open(todo) }
         )
         // Rows are full width so a swipe can draw its label at the page's edge.
-        .padding(.leading, Theme.margin + DashColumn.width)
-        .padding(.trailing, Theme.margin)
+        .padding(.horizontal, Theme.margin)
         .id(todo.id)
         // A to-do that leaves is gone at once; one that joins fades in after the slide.
         .transition(HeadlineMotion.transition)
@@ -175,7 +173,7 @@ struct TodosSectionView: View {
     }
 }
 
-/// A to-do: its title, with its time in gray after it when it is due today or later at a set time.
+/// A to-do: a gray dash, then its title, with its time in gray after it when it is due today or later at a set time.
 /// A tap makes the title semibold and opens a card behind it: due day and list, notes, ✓ at the top
 /// right, Open ↗. A tap anywhere on the open row, away from its buttons and links, closes it.
 struct TodoRow: View {
@@ -197,7 +195,13 @@ struct TodoRow: View {
                 guard swipeGuard?.takesTap() != true else { return }
                 onTap()
             } label: {
-                title
+                HStack(alignment: .firstTextBaseline, spacing: 0) {
+                    // The dash marks the to-do; the day's name above has none.
+                    Text("–")
+                        .foregroundStyle(Theme.secondary)
+                        .frame(width: DashColumn.width, alignment: .leading)
+                    title
+                }
                     .font(AgendaMetrics.itemFont.weight(isOpen ? .semibold : .regular))
                     // Regular to semibold is an instant change, never animated.
                     .animation(nil, value: isOpen)
@@ -265,6 +269,8 @@ struct TodoRow: View {
         }
         .font(AgendaMetrics.itemFont)
         .frame(maxWidth: .infinity, alignment: .leading)
+        // Lined up with the to-do's title, past its dash.
+        .padding(.leading, DashColumn.width)
         .padding(.top, 2)
         .padding(.bottom, 10)
     }

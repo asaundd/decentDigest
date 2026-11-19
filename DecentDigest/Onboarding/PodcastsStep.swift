@@ -99,7 +99,7 @@ struct PodcastPicker: View {
             // Search mode starts with the tap, not the first letter: the lists step aside for a
             // short hint, then results.
             if searchFocused && query.isEmpty {
-                quiet("Type a show's name or its host.")
+                quiet("Type a show’s name or its host.")
                     .padding(.top, 6)
             } else if !query.isEmpty {
                 VStack(alignment: .leading, spacing: 0) {
@@ -126,10 +126,10 @@ struct PodcastPicker: View {
                 ListHeading("Following")
                 let failing = inSettings ? FetchState.failing(fetchStates) : []
                 ForEach(shownFollowing) { source in
-                    row(title: source.title, subtitle: failing.contains(source.id) ? "Couldn't load" : nil, feed: .init(kind: .podcast, feedURL: source.feedURL, title: source.title, appleID: source.appleID))
+                    row(title: source.title, subtitle: failing.contains(source.id) ? "Couldn’t load" : nil, feed: .init(kind: .podcast, feedURL: source.feedURL, title: source.title, appleID: source.appleID))
                 }
                 if inSettings && extra.count > 4 {
-                    ListFooter(hidden: extra.count - shownFollowing.count, phrase: { _ in "more" }, empty: nil, showsAll: showsAllFollowed, app: nil) {
+                    ListFooter(hidden: extra.count - shownFollowing.count, phrase: { _ in "more" }, showsAll: showsAllFollowed, app: nil) {
                         showsAllFollowed.toggle()
                     }
                     .padding(.top, 2)
@@ -147,7 +147,7 @@ struct PodcastPicker: View {
                 if top.isEmpty && chartLoading {
                     quiet("Loading…")
                 } else if chart.isEmpty && chartFailed {
-                    quiet("The top 12 couldn't be loaded just now. You can still search for a show above.")
+                    quiet("The top 12 couldn’t be loaded just now. You can still search for a show above.")
                 }
                 ForEach(top) { show in
                     row(title: show.title, subtitle: show.author, feed: .init(kind: .podcast, feedURL: show.feedURL, title: show.title, appleID: show.id))

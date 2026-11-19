@@ -27,7 +27,7 @@ public enum SampleDigest {
             TodoEntry(id: "t2", title: "Send thank-you note to Dana", listName: "Personal", listID: "personal", due: at(17), dueIncludesTime: true),
             TodoEntry(id: "t3", title: "Pay the water bill", listName: "Home", listID: "home", due: day(1)),
             TodoEntry(id: "t4", title: "Pick up dry cleaning", listName: "Personal", listID: "personal", due: day(2)),
-            TodoEntry(id: "t5", title: "Plan dinner for Grandma's visit", listName: "Family", listID: "family", listOrder: 0),
+            TodoEntry(id: "t5", title: "Plan dinner for Grandma’s visit", listName: "Family", listID: "family", listOrder: 0),
             TodoEntry(id: "t6", title: "Find snow boots for Maya", listName: "Family", listID: "family", listOrder: 1),
             TodoEntry(id: "t7", title: "Buy a birthday card for Mom", listName: "Family", listID: "family", listOrder: 2),
         ]
@@ -35,11 +35,11 @@ public enum SampleDigest {
         // Real titles from public feeds (one shortened), picked to stay timely for a while, with short summaries
         // written for the sample.
         let news = [
-            FeedEntry(id: "n1", title: "Practice Mindfulness with Roeselien Raimond's Portraits of Relaxed Winter Foxes", sourceName: "Colossal", published: at(7, 15), summary: "Portraits of wild foxes resting in the winter sun, and a reminder that the cold months hold plenty of life and beauty."),
+            FeedEntry(id: "n1", title: "Practice Mindfulness with Roeselien Raimond’s Portraits of Relaxed Winter Foxes", sourceName: "Colossal", published: at(7, 15), summary: "Portraits of wild foxes resting in the winter sun, and a reminder that the cold months hold plenty of life and beauty."),
             FeedEntry(id: "n2", title: "The Evolving Story of How Chemistry Became Biology", sourceName: "Quanta Magazine", published: at(6, 30), summary: "After decades of arguing over which molecules came first, a new generation of scientists is rethinking what life was, is and could be."),
-            FeedEntry(id: "n3", title: "Procrastinating Your Winter Runs? Here's What Will Actually Get You Out the Door", sourceName: "Runner's World", published: at(5, 45), summary: "A sports psychologist on which strategies work on cold, dark mornings, and which ones backfire."),
-            FeedEntry(id: "n4", title: "Kale Pesto Pasta", sourceName: "RecipeTin Eats", published: at(20, dayOffset: -1), summary: "Garlic, lemon and parmesan make a pesto that's faster than basil and stays bright green for days."),
-            FeedEntry(id: "n5", title: "The Country's Oldest Operating Lighthouse Still Shines on New York Harbor", sourceName: "Smithsonian Magazine", published: at(18, 30, dayOffset: -1), summary: "The Sandy Hook lighthouse in New Jersey predates the American Revolution, and it still lights the way into the harbor."),
+            FeedEntry(id: "n3", title: "Procrastinating Your Winter Runs? Here’s What Will Actually Get You Out the Door", sourceName: "Runner’s World", published: at(5, 45), summary: "A sports psychologist on which strategies work on cold, dark mornings, and which ones backfire."),
+            FeedEntry(id: "n4", title: "Kale Pesto Pasta", sourceName: "RecipeTin Eats", published: at(20, dayOffset: -1), summary: "Garlic, lemon and parmesan make a pesto that’s faster than basil and stays bright green for days."),
+            FeedEntry(id: "n5", title: "The Country’s Oldest Operating Lighthouse Still Shines on New York Harbor", sourceName: "Smithsonian Magazine", published: at(18, 30, dayOffset: -1), summary: "The Sandy Hook lighthouse in New Jersey predates the American Revolution, and it still lights the way into the harbor."),
             FeedEntry(id: "n6", title: "Woodcocks and Snipes: The Quintessential Odd Birds", sourceName: "Nautilus", published: at(15, dayOffset: -1), summary: "Why these long-billed shorebirds are so unusual, and how life on islands may have made them odder still."),
             FeedEntry(id: "n7", title: "Gegenschein is the elusive glow of interplanetary dust", sourceName: "EarthSky", published: at(11, dayOffset: -1), summary: "A faint glow opposite the sun, from sunlight on dust in space, and how to see it."),
         ]

@@ -155,13 +155,13 @@ private func week(_ today: WeatherDay, _ days: [(Double, Sky)]) -> String? {
 @Test func todaySaysWhenRainStarts() {
     let hours = (0..<24).map { WeatherHour(date: at($0), sky: $0 >= 16 ? .rain : .cloudy) }
     let r = report(day(0, 61, 46, .rain), [], hours: hours)
-    #expect(WeatherRules.todayPhrase(r, now: at(9), calendar: utc, locale: us) == "Rain after 4p")
+    #expect(WeatherRules.todayPhrase(r, now: at(9), calendar: utc, locale: us) == "Rain after 4 pm")
 }
 
 @Test func todaySaysWhenRainStops() {
     let hours = (0..<24).map { WeatherHour(date: at($0), sky: $0 < 14 ? .rain : .cloudy) }
     let r = report(day(0, 61, 46, .rain), [], now: .rain, condition: "Rain", hours: hours)
-    #expect(WeatherRules.todayPhrase(r, now: at(9), calendar: utc, locale: us) == "Rain until 2p")
+    #expect(WeatherRules.todayPhrase(r, now: at(9), calendar: utc, locale: us) == "Rain until 2 pm")
 }
 
 @Test func rainAllDay() {

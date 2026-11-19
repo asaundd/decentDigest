@@ -73,7 +73,7 @@ public enum DigestStore {
     private static let sampleFeeds = [
         "Colossal": "https://www.thisiscolossal.com/feed/",
         "Quanta Magazine": "https://www.quantamagazine.org/feed/",
-        "Runner's World": "https://www.runnersworld.com/rss/all.xml/",
+        "Runner’s World": "https://www.runnersworld.com/rss/all.xml/",
         "RecipeTin Eats": "https://www.recipetineats.com/feed/",
         "Smithsonian Magazine": "https://www.smithsonianmag.com/rss/latest_articles/",
         "Nautilus": "https://nautil.us/feed/",

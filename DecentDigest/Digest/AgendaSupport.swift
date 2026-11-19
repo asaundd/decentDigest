@@ -32,7 +32,8 @@ enum AgendaMetrics {
     static let rowPadding: CGFloat = 4
 }
 
-/// A day in the Calendar or To do list: a gray dash, then the day's name in semibold.
+/// A day in the Calendar or To do list: the day's name in semibold, a small label at the margin with
+/// no dash, a step under the section title and a step over the items. The dashes belong to the items.
 /// Days after the first sit a little further from the one above.
 struct DayHeader: View {
     static let firstTopPadding: CGFloat = 5
@@ -41,16 +42,10 @@ struct DayHeader: View {
     var isFirst = false
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 0) {
-            Text("–")
-                .foregroundStyle(Theme.secondary)
-                .frame(width: DashColumn.width, alignment: .leading)
-                .accessibilityHidden(true)
-            Text(title)
-                .fontWeight(.semibold)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding(.top, isFirst ? Self.firstTopPadding : 10)
+        Text(title)
+            .font(.callout.weight(.semibold))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, isFirst ? Self.firstTopPadding : 10)
         .padding(.bottom, 1)
         .accessibilityAddTraits(.isHeader)
     }
@@ -80,10 +75,9 @@ struct MoreLine: View {
     }
 }
 
-/// The gray line at the foot of a list: what waits ("4 more events"), then quiet links for
-/// Show all or Show less and the app the section comes from, joined by dots:
-/// "4 more events · Show all · Calendar ↗". Used by Calendar, To do, News and Podcasts.
-/// News ends it with Refresh, which reads "Refreshing…" in gray while feeds are checked.
+/// The line at the foot of a list: quiet links for Show N more or Show less and the app the section
+/// comes from, joined by dots: "Show 4 more events · Calendar ↗". Used by Calendar, To do, News,
+/// Podcasts and Saved. `text` (a gray lead-in) and `refresh` are still supported but not used.
 struct ListFooter: View {
     struct Link {
         var title: String
@@ -175,16 +169,19 @@ struct ListFooter: View {
 }
 
 extension ListFooter {
-    /// "4 more events · Show all", "Show less", or "No other events" when nothing
-    /// waits, each followed by the app link. `showTitle` replaces "Show all" for a list that opens
-    /// only part of the way ("Show 25").
-    init(hidden: Int, phrase: (Int) -> String, empty: String?, showsAll: Bool, showTitle: String = "Show all", app: Link?, clear: Link? = nil, refresh: Link? = nil, isRefreshing: Bool = false, toggle: @escaping () -> Void) {
+    /// "Show 4 more events" (the count is part of the link) or "Show less", each followed by the
+    /// app link. When nothing waits, only the app link shows: the line doesn't say there's nothing
+    /// more. `reveals` is how many rows Show adds, for a list that opens only part of the way
+    /// (News opens to 25 rows); it defaults to all of them.
+    init(hidden: Int, reveals: Int? = nil, phrase: (Int) -> String, showsAll: Bool, app: Link?, clear: Link? = nil, refresh: Link? = nil, isRefreshing: Bool = false, toggle: @escaping () -> Void) {
         if hidden > 0 {
-            self.init(text: "\(hidden) \(phrase(hidden))", toggle: Link(title: showTitle, action: toggle), app: app, clear: clear, refresh: refresh, isRefreshing: isRefreshing)
+            let count = min(reveals ?? hidden, hidden)
+            let title = "Show \(count) \(phrase(count))"
+            self.init(text: nil, toggle: Link(title: title, action: toggle), app: app, clear: clear, refresh: refresh, isRefreshing: isRefreshing)
         } else if showsAll {
             self.init(text: nil, toggle: Link(title: "Show less", action: toggle), app: app, clear: clear, refresh: refresh, isRefreshing: isRefreshing)
         } else {
-            self.init(text: empty, toggle: nil, app: app, clear: clear, refresh: refresh, isRefreshing: isRefreshing)
+            self.init(text: nil, toggle: nil, app: app, clear: clear, refresh: refresh, isRefreshing: isRefreshing)
         }
     }
 }

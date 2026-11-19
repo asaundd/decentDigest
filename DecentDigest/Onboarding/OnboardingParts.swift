@@ -305,7 +305,8 @@ struct DoneNote: View {
     }
 }
 
-/// Follow (slate), which becomes Unfollow (gray, faint underline): the link says what a tap does.
+/// Follow (gray blue, semibold), which becomes Unfollow (gray): the link says what a tap does. Neither
+/// is underlined: a column of them down a list would read as a web form.
 struct FollowLink: View {
     var title: String
     var isFollowing: Bool
@@ -316,13 +317,14 @@ struct FollowLink: View {
             QuietLink("Unfollow", action: toggle)
                 .accessibilityLabel("Unfollow \(title)")
         } else {
-            TextLink("Follow", action: toggle)
+            FooterLink("Follow", still: true, action: toggle)
                 .accessibilityLabel("Follow \(title)")
         }
     }
 }
 
-/// A link that undoes a choice (Unfollow, Hide): gray, with a faint underline a little below the text.
+/// A link that undoes a choice (Unfollow, Hide): gray and semibold, with no underline, like the
+/// Follow and Show it replaces.
 struct QuietLink: View {
     var title: String
     /// True for a link whose label changes when tapped: it skips the pressed dimming, which
@@ -342,12 +344,6 @@ struct QuietLink: View {
                 .font(Theme.actionFont)
                 .foregroundStyle(Theme.secondary)
                 .fixedSize()
-                .overlay(alignment: .bottom) {
-                    Rectangle()
-                        .fill(Theme.faintUnderline)
-                        .frame(height: 1)
-                        .offset(y: 3)
-                }
                 .padding(.vertical, 4)
                 .contentShape(Rectangle())
         }
@@ -563,19 +559,19 @@ struct DashLine: View {
 enum OfflineMessage {
     static func search(inSetup: Bool) -> String {
         inSetup
-            ? "You're offline. Connect to the internet to search, or skip for now."
-            : "You're offline. Connect to the internet to search."
+            ? "You’re offline. Connect to the internet to search, or skip for now."
+            : "You’re offline. Connect to the internet to search."
     }
 
     /// Everything in Podcasts comes from Apple Podcasts, so offline there is nothing to add.
     static func podcasts(inSetup: Bool) -> String {
         inSetup
-            ? "You're offline. Adding podcasts requires a connection, so skip for now and add them later in Settings."
-            : "You're offline. Adding podcasts requires a connection."
+            ? "You’re offline. Adding podcasts requires a connection, so skip for now and add them later in Settings."
+            : "You’re offline. Adding podcasts requires a connection."
     }
 
     /// News' search still finds sites in the built-in library; only a pasted address needs the web.
-    static let newsSearch = "You're offline. You can still search the sites listed here, but adding a new site by its address requires a connection."
+    static let newsSearch = "You’re offline. You can still search the sites listed here, but adding a new site by its address requires a connection."
 }
 
 /// The gray note shown under a search box while offline, before anything is typed.

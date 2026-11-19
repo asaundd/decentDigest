@@ -71,12 +71,12 @@ struct DigestView: View {
                         .digestRow()
                     ForEach(sectionOrder) { section in
                         if isShown(section) {
-                            SectionRule()
+                            SectionRule(above: Theme.digestRuleAbove, below: Theme.digestRuleBelow)
                                 .digestRow()
                             sectionView(section) { _, bottom in reveal(bottom: bottom) }
                         }
                     }
-                    SectionRule()
+                    SectionRule(above: Theme.digestRuleAbove, below: Theme.digestRuleBelow)
                         .digestRow()
                     footer
                         .padding(.bottom, Theme.margin)
@@ -455,7 +455,7 @@ struct DigestView: View {
 /// happening now. Everything on the page is what was saved; nothing is fetched until it is back.
 struct OfflineBar: View {
     var body: some View {
-        Text("You're offline. Showing only what's saved on this device.")
+        Text("You’re offline. Showing only what’s saved on this device.")
             .font(.subheadline)
             .foregroundStyle(Theme.ink)
             .fixedSize(horizontal: false, vertical: true)

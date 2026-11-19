@@ -99,7 +99,7 @@ struct StorageProblemView: View {
             LogoMark(color: Theme.logoButton)
                 .frame(width: 44)
                 .accessibilityHidden(true)
-            Text("Decent digest couldn't open its saved data.")
+            Text("Decent digest couldn’t open its saved data.")
                 .font(Theme.sectionTitleFont)
                 .foregroundStyle(Theme.ink)
                 .fixedSize(horizontal: false, vertical: true)

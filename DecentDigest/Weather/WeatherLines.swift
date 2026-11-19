@@ -15,8 +15,9 @@ struct WeatherLines: View {
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(NetworkStatus.self) private var network: NetworkStatus?
     @State private var showsWeek = false
-    /// The temperature now, 40pt at the default text size, growing with it.
-    @ScaledMetric(relativeTo: .largeTitle) private var temperatureSize: CGFloat = 40
+    /// The temperature now, in Charter like the date above it, 46pt at the default text size,
+    /// growing with it.
+    @ScaledMetric(relativeTo: .largeTitle) private var temperatureSize: CGFloat = 46
 
     var body: some View {
         // With no location and no city, the date stands alone.
@@ -26,7 +27,7 @@ struct WeatherLines: View {
             forecast(report, place: place, unit: .current())
         } else if model.hasPlaceSource, offline {
             // Weather is on, but no forecast has ever arrived.
-            Text("Weather will show once you're connected.")
+            Text("Weather will show once you’re connected.")
                 .font(.subheadline)
                 .foregroundStyle(Theme.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -38,8 +39,9 @@ struct WeatherLines: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .center, spacing: 14) {
                 Text(unit.degrees(report.temperature))
-                    .font(.system(size: temperatureSize, weight: .light))
-                    .monospacedDigit()
+                    .font(.custom(Theme.serifFamily, fixedSize: temperatureSize))
+                    // The degree sign tucked against the number.
+                    .kerning(-1)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(WeatherRules.todayPhrase(report, now: AppClock.now))
                     Text(WeatherRules.highLow(report.today, unit: unit))
@@ -61,7 +63,7 @@ struct WeatherLines: View {
 
             if model.isSample {
                 // Debug builds only, until WeatherKit is turned on for the app.
-                Text("Sample weather: WeatherKit isn't set up for this build.")
+                Text("Sample weather: WeatherKit isn’t set up for this build.")
                     .font(.footnote)
                     .foregroundStyle(Theme.secondary)
                     .padding(.top, 4)

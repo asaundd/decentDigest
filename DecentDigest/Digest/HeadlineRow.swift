@@ -63,10 +63,26 @@ struct Headline: Identifiable {
         readsHere ? fullText : previewText
     }
 
-    /// The top line of the card: "By Jane Doe", or an episode's length.
+    /// The panel's line under the title: "By Jane Doe", or an episode's length.
     var byline: String? {
         if isEpisode { return episodeLength }
         return author.map { "By \($0)" }
+    }
+
+    /// The gray line under the title. An open row folds the byline into it, so the card starts
+    /// with one line of gray, not two: "Colossal · Kate Mothes · 2 hr", or for an episode
+    /// "99% Invisible · 58 min".
+    func detailLine(expanded: Bool) -> String {
+        guard expanded else { return detail }
+        if isEpisode {
+            guard let episodeLength else { return detail }
+            return detail.isEmpty ? episodeLength : "\(detail) · \(episodeLength)"
+        }
+        guard let author, !author.isEmpty else { return detail }
+        guard let split = detail.range(of: " · ") else {
+            return detail.isEmpty ? author : "\(author) · \(detail)"
+        }
+        return "\(detail[..<split.lowerBound]) · \(author)\(detail[split.lowerBound...])"
     }
 }
 
@@ -90,13 +106,13 @@ struct HeadlineActions {
     var shareTitle = ""
 }
 
-/// One headline or episode: gray dash, title (semibold while unread, regular once opened), then the
-/// feed name and age, or the show's name.
+/// One headline or episode: the title at the margin with no dash (semibold while unread, regular once
+/// opened), then the feed name and age, or the show's name; space alone separates the rows.
 /// Title-only rows end in ↗. A tap opens any row: a lighter card rises behind the title and holds the
 /// byline and up to 320 characters of text over the actions. A tap anywhere on the open row, away from
 /// its buttons and links, closes it.
 struct HeadlineRow: View {
-    static let verticalPadding: CGFloat = 5
+    static let verticalPadding: CGFloat = 7
 
     var headline: Headline
     var isExpanded: Bool
@@ -115,15 +131,13 @@ struct HeadlineRow: View {
                 onTap()
             } label: {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text("–")
-                        .foregroundStyle(Theme.secondary)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(headline.title)
                             .fontWeight(headline.isUnread ? .semibold : .regular)
                             // Bold to regular is an instant change, never animated.
                             .animation(nil, value: headline.isUnread)
                             .foregroundStyle(Theme.ink)
-                        DetailLine(detail: headline.detail)
+                        DetailLine(detail: headline.detailLine(expanded: isExpanded))
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     if let marker = headline.marker {
@@ -175,38 +189,22 @@ struct HeadlineRow: View {
             .foregroundStyle(Theme.secondary)
     }
 
-    /// The card: the byline, then the text, then the way to read it with Save and ✓ Read at the
-    /// bottom right, the same place on every card and in the panel.
+    /// The card: the text (the byline has joined the gray line under the title), then the way to
+    /// read it with Save and ✓ Read at the bottom right, the same place on every card and in the panel.
     private var expandedDetail: some View {
         VStack(alignment: .leading, spacing: 4) {
-            // Link-only rows put their note here; others the byline, when the feed sent one.
-            if headline.expandedText == nil {
+            if let text = headline.expandedText {
+                // Only Read full post, Read excerpt and Read notes open the panel. Press and hold to copy.
+                Text(text)
+                    .font(.callout)
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                // Link-only rows say so where the text would be.
                 noSummary
-                    .padding(.leading, DashColumn.width)
-            } else if let byline = headline.byline {
-                Text(byline)
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.secondary)
-                    .padding(.leading, DashColumn.width)
             }
 
-            Group {
-                if let text = headline.expandedText {
-                    // Only Read full post, Read excerpt and Read notes open the panel. Press and hold to copy.
-                    Text(text)
-                        .font(.callout)
-                        .textSelection(.enabled)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                } else if let byline = headline.byline {
-                    Text(byline)
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.secondary)
-                }
-            }
-            // Line up with the title, past the dash column.
-            .padding(.horizontal, DashColumn.width)
-
-            ActionRibbon(actions: actions, leadingPadding: DashColumn.width, trailingPadding: 0)
+            ActionRibbon(actions: actions, leadingPadding: 0, trailingPadding: 0)
                 .padding(.bottom, 2)
         }
     }
@@ -278,26 +276,30 @@ struct ActionLinks: View {
     }
 }
 
-/// Small square buttons for Save (when offered), then ✓ Read, in the swipe's order.
+/// Save (when offered), then ✓ Read, in the swipe's order. ✓ Read is what clears a row, so it is the
+/// one filled square on the card; Save is a plain gray bookmark beside it.
 struct ActionButtons: View {
     var actions: HeadlineActions
 
     var body: some View {
         HStack(spacing: 0) {
             ForEach(actions.choices, id: \.self) { choice in
-                RibbonButton(systemImage: choice.symbol, label: choice.label) { actions.choose(choice) }
+                RibbonButton(systemImage: choice.symbol, label: choice.label, filled: choice == .read) { actions.choose(choice) }
             }
         }
     }
 }
 
-/// A small square symbol button on the ribbon, a shade darker than the card, with a larger tap target and a spoken label.
+/// A small symbol button on the ribbon, with a larger tap target and a spoken label. The main action
+/// (✓ Read, ✓ on a to-do) sits on a square a shade darker than the card; a secondary one (Save) is
+/// the plain gray symbol.
 struct RibbonButton: View {
     /// Half the space between two squares.
     static let gap: CGFloat = 3
 
     var systemImage: String
     var label: String
+    var filled = true
     var action: () -> Void
 
     @ScaledMetric(relativeTo: .subheadline) private var width: CGFloat = 32
@@ -307,9 +309,9 @@ struct RibbonButton: View {
         Button(action: action) {
             Image(systemName: systemImage)
                 .font(Theme.ribbonIconFont)
-                .foregroundStyle(Theme.ink)
+                .foregroundStyle(filled ? Theme.ink : Theme.secondary)
                 .frame(width: width, height: height)
-                .background(Theme.ribbonButtonFill, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .background(filled ? Theme.ribbonButtonFill : .clear, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
                 .padding(.horizontal, Self.gap)
                 .padding(.vertical, 6)
                 .contentShape(Rectangle())

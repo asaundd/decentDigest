@@ -100,19 +100,17 @@ struct FeedListSection: View {
             }
         }
 
-        // Podcasts always shows its line, for Podcasts ↗; News for Refresh, which is left out while
-        // offline (the bar under the date says why).
-        let offersRefresh = refresh != nil && network?.isOffline != true
+        // Podcasts always shows its line, for Podcasts ↗. News has no Refresh of its own: pull to
+        // refresh and the footer's Refresh all do it.
         let toggles = !showsAll && remaining > 0 || showsAll && staying > limit
         // News' Clear all marks the whole list read at once, after a question.
         let offersClear = !isEpisodes && staying > 0
-        if !waiting && (toggles || isEpisodes || offersRefresh || offersClear) {
+        if !waiting && (toggles || isEpisodes || offersClear) {
             ListFooter(
                 hidden: showsAll ? 0 : remaining,
+                reveals: NewsRules.expandedLimit - limit,
                 phrase: { _ in "more" },
-                empty: nil,
                 showsAll: showsAll && staying > limit,
-                showTitle: NewsRules.showMoreTitle(count: staying),
                 app: isEpisodes ? ListFooter.Link(title: "Podcasts ↗", spoken: "Open Podcasts") { openURL(ApplePodcasts.app) } : nil,
                 clear: offersClear ? ListFooter.Link(title: "Clear all", spoken: "Clear all news items") {
                     let open = eligible.filter { !closing.contains($0.item.itemID) && leaving[$0.item.itemID] == nil }
@@ -122,7 +120,6 @@ struct FeedListSection: View {
                         all: open.map(\.item)
                     )
                 } : nil,
-                refresh: offersRefresh ? refresh.map { action in ListFooter.Link(title: "Refresh", spoken: "Refresh news", action: action) } : nil,
                 isRefreshing: isRefreshing
             ) {
                 let folding = showsAll
@@ -185,7 +182,7 @@ struct FeedListSection: View {
     private var isOffline: Bool { network?.isOffline == true || (isEpisodes ? podcastsOffline : newsOffline) }
 
     private var emptyMessage: String {
-        if isOffline { return isEpisodes ? "New episodes will show once you're connected." : "New items will show once you're connected." }
+        if isOffline { return isEpisodes ? "New episodes will show once you’re connected." : "New items will show once you’re connected." }
         return isEpisodes ? "No new episodes right now." : "Nothing new right now."
     }
 
