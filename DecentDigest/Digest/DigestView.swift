@@ -21,6 +21,7 @@ struct DigestView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(NetworkStatus.self) private var network: NetworkStatus?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
     @Query(sort: \SavedItem.savedAt, order: .reverse) private var saved: [SavedItem]
     @State private var panel: PanelRequest?
     @State private var showsWeatherSettings = false
@@ -37,6 +38,11 @@ struct DigestView: View {
     @State private var listBottom: CGFloat = .infinity
     /// False until the launch animation lets the page show, whole.
     @State private var revealed = false
+    /// The Settings button slides away while the reader scrolls down, and comes back on a scroll up
+    /// or at the top of the page, so it never sits on what's being read.
+    @State private var settingsButtonHidden = false
+    /// Where the page last turned between scrolling up and down.
+    @State private var scrollTurn: CGFloat = 0
     /// How much of the launch logo is drawn, and whether it is still on screen.
     @State private var logoProgress: Double = 0
     @State private var logoOpacity: Double = 1
@@ -96,8 +102,9 @@ struct DigestView: View {
             }
             .onScrollGeometryChange(for: CGFloat.self) { geometry in
                 geometry.contentOffset.y
-            } action: { _, offset in
+            } action: { old, offset in
                 scrollHold.offset = offset
+                followScroll(from: old, to: offset)
             }
             .onScrollGeometryChange(for: CGFloat.self) { geometry in
                 geometry.contentInsets.top
@@ -136,7 +143,10 @@ struct DigestView: View {
             SettingsButton { showsSettings = true }
                 .padding(.trailing, 16)
                 .padding(.top, 4)
-                .opacity(revealed ? 1 : 0)
+                // Away, it slides up behind the status bar (with Reduce Motion, it only fades).
+                .offset(y: settingsButtonHidden && !reduceMotion ? -80 : 0)
+                .opacity(revealed && !settingsButtonHidden ? 1 : 0)
+                .allowsHitTesting(!settingsButtonHidden)
         }
         // The launch logo draws itself at the center, then fades as the page fades in.
         .overlay {
@@ -257,6 +267,34 @@ struct DigestView: View {
     /// scroll it back. Before the change lands, plenty of empty space goes at the foot of the page, in
     /// the same update, so the page can't move; once the row has settled, the space shrinks to just
     /// what keeps the screen where it is, and it goes as the reader scrolls up.
+    /// Hides the Settings button after a deliberate scroll down (about 40pt), and brings it back after
+    /// one up, or at the top of the page, so small adjustments while reading don't make it flicker.
+    /// With VoiceOver on it always stays.
+    private func followScroll(from old: CGFloat, to offset: CGFloat) {
+        let atTop = offset + scrollHold.topInset <= 8
+        let hide: Bool
+        if voiceOver || atTop {
+            hide = false
+            scrollTurn = offset
+        } else {
+            // A change of direction starts a new run.
+            let goingDown = offset > old
+            if goingDown != (offset > scrollTurn) { scrollTurn = old }
+            if offset - scrollTurn > Self.buttonHideRun {
+                hide = true
+            } else if scrollTurn - offset > Self.buttonHideRun {
+                hide = false
+            } else {
+                return
+            }
+        }
+        guard hide != settingsButtonHidden else { return }
+        withAnimation(.easeOut(duration: 0.25)) { settingsButtonHidden = hide }
+    }
+
+    /// How far the page has to move one way before the Settings button follows.
+    private static let buttonHideRun: CGFloat = 40
+
     private func holdPlace() {
         scrollHold.holdsUntil = .now.addingTimeInterval(0.6)
         // Never animated, even when the row's own change is, so the space is there before the row

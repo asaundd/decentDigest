@@ -87,7 +87,7 @@ struct NewsPicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SearchBox(placeholder: "Search, or paste an address", text: $text, isFocused: $searchFocused, keyboard: .webSearch, submitLabel: .search, offersPaste: true) {
+            SearchBox(placeholder: "Search, or paste an address", text: $text, isFocused: $searchFocused, keyboard: .webSearch, submitLabel: .search, offersPaste: true, revealsOnFocus: false) {
                 searchFocused = false
             }
             .onChange(of: text) { old, new in

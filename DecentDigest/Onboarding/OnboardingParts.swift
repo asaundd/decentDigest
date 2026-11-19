@@ -416,6 +416,9 @@ struct SearchBox: View {
     var offersPaste = false
     /// Grayed out and not tappable, for a search that needs a connection while offline.
     var isDisabled = false
+    /// Scrolls the box to the top of the page when tapped, to leave room for results above the
+    /// keyboard. Off where the box already sits near the top (News), so the page stays put.
+    var revealsOnFocus = true
     var onSubmit: () -> Void = {}
 
     @Environment(SearchReveal.self) private var reveal: SearchReveal?
@@ -467,7 +470,7 @@ struct SearchBox: View {
         .animation(.easeOut(duration: 0.2), value: isFocused.wrappedValue || !text.isEmpty)
         .id(Self.scrollID)
         .onChange(of: isFocused.wrappedValue) { _, focused in
-            if focused { reveal?.request() }
+            if focused && revealsOnFocus { reveal?.request() }
         }
     }
 
