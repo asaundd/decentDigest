@@ -69,9 +69,9 @@ enum Theme {
     /// From a section title to the first line of News, Podcasts, Saved, Calendar or To do.
     static let titleToFirstItem: CGFloat = 11
 
-    // Type: Georgia for the date and section titles only; SF Pro everywhere else.
-    static let dateFont = Font.custom("Georgia", size: 30, relativeTo: .largeTitle)
-    static let sectionTitleFont = Font.custom("Georgia", size: 22, relativeTo: .title2)
+    // Type: Charter (built into iOS) for the date, section titles and the panel's title only; SF Pro everywhere else.
+    static let dateFont = Font.custom("Charter", size: 30, relativeTo: .largeTitle)
+    static let sectionTitleFont = Font.custom("Charter", size: 22, relativeTo: .title2)
     static let wordmarkFont = Font.footnote
     /// Links and actions in cards, the panel and Settings: slate, semibold, underlined.
     static let actionFont = Font.subheadline.weight(.semibold)

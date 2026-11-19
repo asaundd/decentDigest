@@ -312,7 +312,7 @@ extension View {
 }
 
 /// The top of every Settings page: ✕ (the main page, or a page opened on its own) or ‹ Settings in a
-/// 44pt row, then the Georgia title and an optional gray subtitle.
+/// 44pt row, then the Charter title and an optional gray subtitle.
 struct SettingsHeader: View {
     var title: String
     var subtitle: String?

@@ -14,7 +14,7 @@ struct SkipQuestion {
     var undo: () -> Void = {}
 }
 
-/// One setup step: ‹ Back and "Step N of 4" at the top, a Georgia title over a gray intro, the
+/// One setup step: ‹ Back and "Step N of 4" at the top, a Charter title over a gray intro, the
 /// step's choices, an optional small gray note, then Continue (dimmed until something is chosen)
 /// with Skip for now under it.
 struct OnboardingStep<Content: View>: View {

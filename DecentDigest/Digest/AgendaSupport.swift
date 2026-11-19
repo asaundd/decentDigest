@@ -189,7 +189,7 @@ extension ListFooter {
     }
 }
 
-/// A section's Georgia title. Title rows carry no links.
+/// A section's Charter title. Title rows carry no links.
 struct SectionHeader: View {
     var title: String
 
