@@ -41,6 +41,9 @@ struct DigestView: View {
     /// The Settings button slides away while the reader scrolls down, and comes back on a scroll up
     /// or at the top of the page, so it never sits on what's being read.
     @State private var settingsButtonHidden = false
+    /// The weekday's height at the top of the page, to center the Settings button on its first line.
+    @State private var weekdayHeight: CGFloat = 52
+    @ScaledMetric(relativeTo: .largeTitle) private var weekdayLineHeight: CGFloat = 52
     /// Where the page last turned between scrolling up and down.
     @State private var scrollTurn: CGFloat = 0
     /// How much of the launch logo is drawn, and whether it is still on screen.
@@ -141,8 +144,10 @@ struct DigestView: View {
         // Settings: the round logo button, pinned at the top right while the page scrolls under it.
         .overlay(alignment: .topTrailing) {
             SettingsButton { showsSettings = true }
-                .padding(.trailing, 16)
-                .padding(.top, 4)
+                .padding(.trailing, Theme.margin)
+                // Centered on the weekday's first line at the top of the page, and floating at that
+                // same height when it comes back further down.
+                .padding(.top, Theme.margin + max(0, min(weekdayHeight, weekdayLineHeight) / 2 - 22))
                 // Away, it slides up behind the status bar (with Reduce Motion, it only fades).
                 .offset(y: settingsButtonHidden && !reduceMotion ? -80 : 0)
                 .opacity(revealed && !settingsButtonHidden ? 1 : 0)
@@ -341,17 +346,27 @@ struct DigestView: View {
         await weather.reload(force: force)
     }
 
+    /// The top of the page: the weekday large, with the Settings button on its line, and the month
+    /// and day under it in gray. No app name: the Dd button carries it.
     private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Decent digest")
-                .font(Theme.wordmarkFont)
-                .foregroundStyle(Theme.secondary)
-            Text(today, format: .dateTime.weekday(.wide).month(.wide).day())
-                .font(Theme.dateFont)
-                .accessibilityAddTraits(.isHeader)
-                // Clear of the Settings button at the top right; a long date wraps instead.
-                .padding(.trailing, 52)
-                .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(today, format: .dateTime.weekday(.wide))
+                    .font(Theme.weekdayFont)
+                    // Clear of the Settings button beside it; at the largest sizes it wraps instead.
+                    .padding(.trailing, 44 + 8)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .onGeometryChange(for: CGFloat.self) { proxy in
+                        proxy.size.height
+                    } action: { height in
+                        weekdayHeight = height
+                    }
+                Text(today, format: .dateTime.month(.wide).day())
+                    .font(Theme.dateLineFont)
+                    .foregroundStyle(Theme.secondary)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isHeader)
             if network?.isOffline == true {
                 OfflineBar()
                     .padding(.top, 8)

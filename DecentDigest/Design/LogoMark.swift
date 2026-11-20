@@ -138,7 +138,9 @@ struct SettingsButton: View {
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .glassEffect(.clear.tint(Theme.page.opacity(0.55)).interactive(), in: .circle)
+        // Flat paper: the page's own color, so it covers what scrolls under it, ringed with an
+        // even hairline. No glass, whose bent edges read heavier at the sides than top and bottom.
+        .background(Circle().fill(Theme.pageTintTop))
         .overlay(Circle().strokeBorder(Theme.rule, lineWidth: 0.5).allowsHitTesting(false))
         .accessibilityLabel("Settings")
     }

@@ -72,10 +72,19 @@ enum Theme {
     /// From a section title to the first line of News, Podcasts, Saved, Calendar or To do.
     static let titleToFirstItem: CGFloat = 11
 
-    // Type: Charter (built into iOS) for the date, the temperature, section titles and the panel's title only; SF Pro everywhere else.
+    // Type: Charter (built into iOS) for the date, the temperature, section titles, page titles in
+    // setup and Settings, and the panel's title and text; SF Pro everywhere else.
     static let serifFamily = "Charter"
+    /// The top of the digest: the weekday large, the month and day under it in gray.
+    static let weekdayFont = Font.custom(serifFamily, size: 44, relativeTo: .largeTitle)
+    static let dateLineFont = Font.custom(serifFamily, size: 20, relativeTo: .title3)
+    /// Page titles in setup and Settings.
     static let dateFont = Font.custom(serifFamily, size: 30, relativeTo: .largeTitle)
-    static let sectionTitleFont = Font.custom(serifFamily, size: 22, relativeTo: .title2)
+    /// A clear step above the 16pt headlines under it, so each section starts plainly.
+    static let sectionTitleFont = Font.custom(serifFamily, size: 27, relativeTo: .title)
+    /// The panel: its title, then the post in Charter, since it's the one place someone reads at length.
+    static let panelTitleFont = Font.custom(serifFamily, size: 24, relativeTo: .title2)
+    static let readingFont = Font.custom(serifFamily, size: 18, relativeTo: .body)
     static let wordmarkFont = Font.footnote
     /// Links and actions in cards, the panel and Settings: slate, semibold, underlined.
     static let actionFont = Font.subheadline.weight(.semibold)

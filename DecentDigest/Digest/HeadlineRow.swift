@@ -133,9 +133,12 @@ struct HeadlineRow: View {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(headline.title)
-                            .fontWeight(headline.isUnread ? .semibold : .regular)
+                            .font(.callout)
+                            // Unread medium, read regular; semibold while open, so the open row leads.
+                            .fontWeight(isExpanded ? .semibold : headline.isUnread ? .medium : .regular)
                             // Bold to regular is an instant change, never animated.
                             .animation(nil, value: headline.isUnread)
+                            .animation(nil, value: isExpanded)
                             .foregroundStyle(Theme.ink)
                         DetailLine(detail: headline.detailLine(expanded: isExpanded))
                     }

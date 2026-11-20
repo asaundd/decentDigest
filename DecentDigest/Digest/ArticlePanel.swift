@@ -34,7 +34,7 @@ struct ArticlePanel: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 10) {
                     Text(headline.title)
-                        .font(Theme.sectionTitleFont)
+                        .font(Theme.panelTitleFont)
                         .accessibilityAddTraits(.isHeader)
                     if let byline = headline.byline {
                         Text(byline)
@@ -43,7 +43,8 @@ struct ArticlePanel: View {
                     }
                     if let text = headline.panelText {
                         Text(text)
-                            .lineSpacing(3)
+                            .font(Theme.readingFont)
+                            .lineSpacing(7)
                             .textSelection(.enabled)
                             .padding(.top, 4)
                     }

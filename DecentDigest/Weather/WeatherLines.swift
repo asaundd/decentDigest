@@ -15,9 +15,9 @@ struct WeatherLines: View {
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(NetworkStatus.self) private var network: NetworkStatus?
     @State private var showsWeek = false
-    /// The temperature now, in Charter like the date above it, 46pt at the default text size,
-    /// growing with it.
-    @ScaledMetric(relativeTo: .largeTitle) private var temperatureSize: CGFloat = 46
+    /// The temperature now, in Charter like the date above it, 38pt at the default text size (a step
+    /// under the 44pt weekday, so the two don't compete), growing with it.
+    @ScaledMetric(relativeTo: .largeTitle) private var temperatureSize: CGFloat = 38
 
     var body: some View {
         // With no location and no city, the date stands alone.
