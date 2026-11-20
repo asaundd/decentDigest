@@ -141,6 +141,10 @@ struct HeadlineRow: View {
                             .animation(nil, value: isExpanded)
                             .foregroundStyle(Theme.ink)
                         DetailLine(detail: headline.detailLine(expanded: isExpanded))
+                            // The byline or length joins at once as the row opens; animated, the
+                            // text slid along the line (News) or faded in (Podcasts).
+                            .contentTransition(.identity)
+                            .animation(nil, value: isExpanded)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     if let marker = headline.marker {

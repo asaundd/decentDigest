@@ -219,6 +219,8 @@ struct EventRow: View {
         }
         .font(AgendaMetrics.itemFont)
         .frame(maxWidth: .infinity, alignment: .leading)
+        // Lined up with the title, past the time column (under the time when they stack).
+        .padding(.leading, stacks ? 0 : timeWidth + Self.timeGap)
         .padding(.top, 2)
         .padding(.bottom, 10)
     }

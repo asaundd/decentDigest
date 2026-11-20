@@ -478,11 +478,14 @@ struct DigestView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// Left out while offline; the bar under the date says why.
-    @ViewBuilder
+    /// Refresh all (left out while offline; the bar under the date says why), then Settings, a
+    /// second way in for a reader at the foot of the page, where the Dd button has slid away.
     private var refreshPart: some View {
-        if network?.isOffline != true {
-            refreshAllLink
+        HStack(spacing: 16) {
+            if network?.isOffline != true {
+                refreshAllLink
+            }
+            FooterLink("Settings", still: true) { showsSettings = true }
         }
     }
 
