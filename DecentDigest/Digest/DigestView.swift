@@ -353,6 +353,9 @@ struct DigestView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(today, format: .dateTime.weekday(.wide))
                     .font(Theme.weekdayFont)
+                    // A hair of extra spacing: in bold, Charter's kerning tucks the u of "Tu" and the
+                    // e of "We" so close under the arm that they nearly touch.
+                    .tracking(0.6)
                     // Clear of the Settings button beside it; at the largest sizes it wraps instead.
                     .padding(.trailing, 44 + 8)
                     .fixedSize(horizontal: false, vertical: true)
