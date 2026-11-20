@@ -81,8 +81,6 @@ struct SettingsView: View {
         } message: {
             Text("This unfollows every site and show, deletes your saved items and reading history, and forgets your city, on this device and in your iCloud, so your other devices clear too. Which sections show and your calendar and list choices stay. This can’t be undone.")
         }
-        #if DEBUG
-        #endif
         .alert("Start setup over?", isPresented: $confirmsStartOver) {
             Button("Keep my choices") { showWelcome() }
             Button("Clear my choices", role: .destructive) { startOver() }
