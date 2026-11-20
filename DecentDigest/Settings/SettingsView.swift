@@ -17,7 +17,6 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \Source.sortOrder) private var sources: [Source]
     @State private var confirmsStartOver = false
-    @State private var showsDesignLab = false
     @State private var confirmsDeleteAll = false
     @State private var deletedAll = false
     /// Set when Send feedback can't open a mail app, so the address shows instead.
@@ -83,7 +82,6 @@ struct SettingsView: View {
             Text("This unfollows every site and show, deletes your saved items and reading history, and forgets your city, on this device and in your iCloud, so your other devices clear too. Which sections show and your calendar and list choices stay. This can’t be undone.")
         }
         #if DEBUG
-        .sheet(isPresented: $showsDesignLab) { DesignLabView() }
         #endif
         .alert("Start setup over?", isPresented: $confirmsStartOver) {
             Button("Keep my choices") { showWelcome() }
@@ -236,12 +234,9 @@ struct SettingsView: View {
             .accessibilityHint("Shows the welcome and setup again")
     }
 
-    /// For trying design options on the phone; not in release builds.
+    /// For testing setup on the phone; not in release builds.
     private var debugLinks: some View {
-        HStack(spacing: 16) {
-            startOverLink
-            FooterLink("Design lab") { showsDesignLab = true }
-        }
+        startOverLink
     }
 
     private var footer: some View {
