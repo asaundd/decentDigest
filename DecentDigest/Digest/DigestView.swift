@@ -77,11 +77,24 @@ struct DigestView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     header
                         .padding(.top, Theme.margin)
+                        .padding(.bottom, topBand == nil ? 0 : Self.bandBelowWeather)
                         .digestRow()
+                        .background(alignment: .bottom) {
+                            if let topBand {
+                                // Reaches up under the status bar and past the top when pulled.
+                                topBand.padding(.top, -1000)
+                            }
+                        }
                     ForEach(sectionOrder) { section in
                         if isShown(section) {
-                            SectionRule(above: Theme.digestRuleAbove, below: Theme.digestRuleBelow)
-                                .digestRow()
+                            if topBand != nil, section == firstShownSection {
+                                // The band ends the masthead, so no rule; a little more space
+                                // than a rule leaves sets the first title apart from it.
+                                Color.clear.frame(height: Self.bandToFirstTitle)
+                            } else {
+                                SectionRule(above: Theme.digestRuleAbove, below: Theme.digestRuleBelow)
+                                    .digestRow()
+                            }
                             sectionView(section) { _, bottom in reveal(bottom: bottom) }
                         }
                     }
@@ -348,6 +361,20 @@ struct DigestView: View {
 
     /// The top of the page: the weekday large, with the Settings button on its line, and the month
     /// and day under it in gray. No app name: the Dd button carries it.
+    /// Design lab's choice for the top of the page (debug builds only; release uses the rule).
+    #if DEBUG
+    @AppStorage(TopStyle.storageKey) private var topStyleChoice = TopStyle.rule.rawValue
+    private var topBand: Color? { (TopStyle(rawValue: topStyleChoice) ?? .rule).band }
+    #else
+    private var topBand: Color? { nil }
+    #endif
+    private static let bandBelowWeather: CGFloat = 26
+    private static let bandToFirstTitle: CGFloat = 34
+
+    private var firstShownSection: DigestSection? {
+        sectionOrder.first { isShown($0) }
+    }
+
     private var header: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 4) {
@@ -369,13 +396,15 @@ struct DigestView: View {
             .accessibilityAddTraits(.isHeader)
             // A short ink rule closes the masthead, so the weather starts fresh below it. Left out
             // when nothing follows before the first section's own rule.
-            if preferences.isShown(.weather) || network?.isOffline == true {
+            if topBand == nil, preferences.isShown(.weather) || network?.isOffline == true {
                 Rectangle()
                     .fill(Theme.ink)
                     .frame(width: 40, height: 1)
                     .padding(.top, 14)
                     .padding(.bottom, 2)
                     .accessibilityHidden(true)
+            } else if topBand != nil {
+                Color.clear.frame(height: 12)
             }
             if network?.isOffline == true {
                 OfflineBar()
