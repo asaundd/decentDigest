@@ -42,8 +42,8 @@ struct DigestView: View {
     /// or at the top of the page, so it never sits on what's being read.
     @State private var settingsButtonHidden = false
     /// The weekday's height at the top of the page, to center the Settings button on its first line.
-    @State private var weekdayHeight: CGFloat = 48
-    @ScaledMetric(relativeTo: .largeTitle) private var weekdayLineHeight: CGFloat = 48
+    @State private var weekdayHeight: CGFloat = 52
+    @ScaledMetric(relativeTo: .largeTitle) private var weekdayLineHeight: CGFloat = 52
     /// Where the page last turned between scrolling up and down.
     @State private var scrollTurn: CGFloat = 0
     /// How much of the launch logo is drawn, and whether it is still on screen.
@@ -350,12 +350,9 @@ struct DigestView: View {
     /// and day under it in gray. No app name: the Dd button carries it.
     private var header: some View {
         VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(today, format: .dateTime.weekday(.wide))
                     .font(Theme.weekdayFont)
-                    // A hair of extra spacing: in bold, Charter's kerning tucks the u of "Tu" and the
-                    // e of "We" so close under the arm that they nearly touch.
-                    .tracking(0.6)
                     // Clear of the Settings button beside it; at the largest sizes it wraps instead.
                     .padding(.trailing, 44 + 8)
                     .fixedSize(horizontal: false, vertical: true)
@@ -370,6 +367,16 @@ struct DigestView: View {
             }
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(.isHeader)
+            // A short ink rule closes the masthead, so the weather starts fresh below it. Left out
+            // when nothing follows before the first section's own rule.
+            if preferences.isShown(.weather) || network?.isOffline == true {
+                Rectangle()
+                    .fill(Theme.ink)
+                    .frame(width: 40, height: 1)
+                    .padding(.top, 14)
+                    .padding(.bottom, 2)
+                    .accessibilityHidden(true)
+            }
             if network?.isOffline == true {
                 OfflineBar()
                     .padding(.top, 8)

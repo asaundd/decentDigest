@@ -75,10 +75,10 @@ enum Theme {
     // Type: Charter (built into iOS) for the date, the temperature, section titles, page titles in
     // setup and Settings, and the panel's title and text; SF Pro everywhere else.
     static let serifFamily = "Charter"
-    /// The top of the digest: the weekday large in Charter Bold (the app's only bold serif), the
-    /// month and day under it in gray.
-    static let weekdayFont = Font.custom("Charter-Bold", size: 40, relativeTo: .largeTitle)
-    static let dateLineFont = Font.custom(serifFamily, size: 20, relativeTo: .title3)
+    /// The top of the digest: the weekday large in Charter, the month and day under it in gray SF as
+    /// its caption, so the weekday is the only serif in the masthead.
+    static let weekdayFont = Font.custom(serifFamily, size: 44, relativeTo: .largeTitle)
+    static let dateLineFont = Font.subheadline
     /// Page titles in setup and Settings.
     static let dateFont = Font.custom(serifFamily, size: 30, relativeTo: .largeTitle)
     /// A clear step above the 16pt headlines under it, so each section starts plainly.
