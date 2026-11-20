@@ -114,6 +114,12 @@ struct DigestView: View {
             } action: { _, inset in
                 scrollHold.topInset = inset
             }
+            // The held space is trimmed only while the page is moving, so it never shifts the page
+            // on its own: at the foot of the page, trimming it while still would snap the page down.
+            .onScrollPhaseChange { _, phase in
+                scrollHold.isScrolling = phase.isScrolling
+                if phase.isScrolling { trimSlack() }
+            }
             .scrollPosition($scrollPosition)
             .environment(\.scrollHold, scrollHold)
             .onAppear {
@@ -305,14 +311,12 @@ struct DigestView: View {
         // Never animated, even when the row's own change is, so the space is there before the row
         // gets shorter.
         setSlack(bottomSlack + 2_000)
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(0.65))
-            trimSlack()
-        }
     }
 
+    /// Cuts the held space down to what shows on screen. Only while the reader scrolls: the cut is
+    /// then below the screen, out of sight, and the space goes as the reader scrolls up.
     private func trimSlack() {
-        guard bottomSlack > 0, Date.now >= scrollHold.holdsUntil else { return }
+        guard bottomSlack > 0, scrollHold.isScrolling, Date.now >= scrollHold.holdsUntil else { return }
         let needed = max(0, (bottomSlack + scrollHold.overhang).rounded(.up))
         // Only when it changes by a point or more, so scrolling through the space doesn't redraw
         // the page on every frame.

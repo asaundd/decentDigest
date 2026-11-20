@@ -68,8 +68,10 @@ struct FeedListSection: View {
         } else if staying == 0 {
             // Shown as the last row starts closing up, in the same update, so the list's height
             // changes once instead of shrinking and then growing again.
-            Text(emptyMessage)
+            // While Clear all's writes run, the same line says so, so nothing moves when they end.
+            Text(isClearing && !isEpisodes ? "Clearing…" : emptyMessage)
                 .foregroundStyle(Theme.secondary)
+                .contentTransition(.identity)
                 .padding(.vertical, HeadlineRow.verticalPadding)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .digestRow()
@@ -112,13 +114,6 @@ struct FeedListSection: View {
         let toggles = !showsAll && remaining > 0 || showsAll && staying > limit
         // News' Clear all marks the whole list read at once, after a question.
         let offersClear = !isEpisodes && staying > 0
-        if isClearing && !isEpisodes && staying == 0 {
-            Text("Clearing…")
-                .font(.subheadline)
-                .foregroundStyle(Theme.secondary)
-                .padding(.top, 4)
-                .digestRow()
-        }
         if !waiting && (toggles || isEpisodes || offersClear) {
             ListFooter(
                 hidden: showsAll ? 0 : remaining,
@@ -323,7 +318,7 @@ struct FeedListSection: View {
 
     /// Clear all: the rows go together at once while the rows below slide up, then every item is
     /// marked read in one batch, after the page has moved, so the screen never waits on the writes.
-    /// "Clearing…" shows in the footer's place until they're done.
+    /// "Clearing…" shows in the empty list's line until they're done.
     private func clear(_ cleared: [FeedItem]) {
         let ids = Set(cleared.map(\.itemID))
         let opened = cleared.filter { expandedIDs.contains($0.itemID) }

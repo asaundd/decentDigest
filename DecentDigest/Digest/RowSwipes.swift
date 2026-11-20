@@ -53,6 +53,8 @@ final class ScrollHold {
     var overhang: CGFloat = 0
     /// While a row closes or leaves, the held space is kept whole.
     var holdsUntil = Date.distantPast
+    /// True while the page is being scrolled, or is gliding or animating to a stop.
+    var isScrolling = false
     /// The page's scroll offset, last seen.
     var offset: CGFloat = 0
     /// The space at the top of the page that the status bar covers, last seen.
