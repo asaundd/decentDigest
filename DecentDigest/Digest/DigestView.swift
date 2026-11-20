@@ -41,6 +41,8 @@ struct DigestView: View {
     /// The Settings button slides away while the reader scrolls down, and comes back on a scroll up
     /// or at the top of the page, so it never sits on what's being read.
     @State private var settingsButtonHidden = false
+    /// The top band's height (Design lab trial), so the Settings button can leave with it.
+    @State private var bandHeight: CGFloat = 0
     /// The weekday's height at the top of the page, to center the Settings button on its first line.
     @State private var weekdayHeight: CGFloat = 52
     @ScaledMetric(relativeTo: .largeTitle) private var weekdayLineHeight: CGFloat = 52
@@ -81,9 +83,19 @@ struct DigestView: View {
                         .digestRow()
                         .background(alignment: .bottom) {
                             if let topBand {
-                                // Reaches up under the status bar and past the top when pulled.
-                                topBand.padding(.top, -1000)
+                                // Reaches up under the status bar and past the top when pulled,
+                                // and ends on a crisp line a step darker than a section rule.
+                                topBand
+                                    .padding(.top, -1000)
+                                    .overlay(alignment: .bottom) {
+                                        Theme.topBandEdge.frame(height: 1)
+                                    }
                             }
+                        }
+                        .onGeometryChange(for: CGFloat.self) { proxy in
+                            proxy.size.height
+                        } action: { height in
+                            bandHeight = height
                         }
                     ForEach(sectionOrder) { section in
                         if isShown(section) {
@@ -291,7 +303,12 @@ struct DigestView: View {
     private func followScroll(from old: CGFloat, to offset: CGFloat) {
         let atTop = offset + scrollHold.topInset <= 8
         let hide: Bool
-        if voiceOver || atTop {
+        if topBand != nil, !voiceOver {
+            // With the band, the button belongs to it: it stays while the band is still behind
+            // it and goes once the band has scrolled up past it.
+            let scrolled = offset + scrollHold.topInset
+            hide = scrolled > bandHeight - Self.bandButtonBottom
+        } else if voiceOver || atTop {
             hide = false
             scrollTurn = offset
         } else {
@@ -312,6 +329,8 @@ struct DigestView: View {
 
     /// How far the page has to move one way before the Settings button follows.
     private static let buttonHideRun: CGFloat = 40
+    /// About where the Settings button's lower edge sits below the top of the page.
+    private static let bandButtonBottom: CGFloat = Theme.margin + 52
 
     private func holdPlace() {
         scrollHold.holdsUntil = .now.addingTimeInterval(0.6)
@@ -396,15 +415,13 @@ struct DigestView: View {
             .accessibilityAddTraits(.isHeader)
             // A short ink rule closes the masthead, so the weather starts fresh below it. Left out
             // when nothing follows before the first section's own rule.
-            if topBand == nil, preferences.isShown(.weather) || network?.isOffline == true {
+            if preferences.isShown(.weather) || network?.isOffline == true {
                 Rectangle()
                     .fill(Theme.ink)
                     .frame(width: 40, height: 1)
                     .padding(.top, 14)
                     .padding(.bottom, 2)
                     .accessibilityHidden(true)
-            } else if topBand != nil {
-                Color.clear.frame(height: 12)
             }
             if network?.isOffline == true {
                 OfflineBar()

@@ -68,6 +68,8 @@ enum Theme {
     static let topBandLighter = Color(light: 0xFFFEFC, dark: 0x1D2120)
     static let topBandFaint = Color(light: 0xF3F1EB, dark: 0x1B1F1E)
     static let topBandStrong = Color(light: 0xEDEAE2, dark: 0x202524)
+    /// The band's lower edge: a step darker than a section rule, so the band ends crisply.
+    static let topBandEdge = Color(light: 0xCDCDC7, dark: 0x3F4542)
 
     // Spacing
     static let margin: CGFloat = 24
@@ -175,10 +177,10 @@ enum TopStyle: String, CaseIterable, Identifiable {
 
     var note: String {
         switch self {
-        case .rule: "What ships: a short ink rule under the date, a full rule before Calendar."
-        case .lighter: "A shade lighter than the page behind the date and weather."
-        case .faint: "A shade darker than the page behind the date and weather."
-        case .strong: "Two shades darker than the page behind the date and weather."
+        case .rule: "What ships: a full rule before Calendar."
+        case .lighter: "A shade lighter than the page behind the date and weather, ending on a crisp line."
+        case .faint: "A shade darker than the page behind the date and weather, ending on a crisp line."
+        case .strong: "Two shades darker than the page behind the date and weather, ending on a crisp line."
         }
     }
 
