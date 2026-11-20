@@ -481,12 +481,16 @@ struct DigestView: View {
     /// Refresh all (left out while offline; the bar under the date says why), then Settings, a
     /// second way in for a reader at the foot of the page, where the Dd button has slid away.
     private var refreshPart: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 6) {
             if network?.isOffline != true {
                 refreshAllLink
+                Text("·")
+                    .foregroundStyle(Theme.secondary)
+                    .accessibilityHidden(true)
             }
             FooterLink("Settings", still: true) { showsSettings = true }
         }
+        .font(.subheadline)
     }
 
     /// Does what pulling down at the top does, for a reader at the foot of the page. Reads
