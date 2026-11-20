@@ -41,8 +41,6 @@ struct DigestView: View {
     /// The Settings button slides away while the reader scrolls down, and comes back on a scroll up
     /// or at the top of the page, so it never sits on what's being read.
     @State private var settingsButtonHidden = false
-    /// The top band's height (Design lab trial), so the Settings button can leave with it.
-    @State private var bandHeight: CGFloat = 0
     /// The weekday's height at the top of the page, to center the Settings button on its first line.
     @State private var weekdayHeight: CGFloat = 52
     @ScaledMetric(relativeTo: .largeTitle) private var weekdayLineHeight: CGFloat = 52
@@ -79,34 +77,11 @@ struct DigestView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     header
                         .padding(.top, Theme.margin)
-                        .padding(.bottom, topBand == nil ? 0 : Self.bandBelowWeather)
                         .digestRow()
-                        .background(alignment: .bottom) {
-                            if let topBand {
-                                // Reaches up under the status bar and past the top when pulled,
-                                // and ends on a crisp line a step darker than a section rule.
-                                topBand
-                                    .padding(.top, -1000)
-                                    .overlay(alignment: .bottom) {
-                                        Theme.topBandEdge.frame(height: 1)
-                                    }
-                            }
-                        }
-                        .onGeometryChange(for: CGFloat.self) { proxy in
-                            proxy.size.height
-                        } action: { height in
-                            bandHeight = height
-                        }
                     ForEach(sectionOrder) { section in
                         if isShown(section) {
-                            if topBand != nil, section == firstShownSection {
-                                // The band ends the masthead, so no rule; a little more space
-                                // than a rule leaves sets the first title apart from it.
-                                Color.clear.frame(height: Self.bandToFirstTitle)
-                            } else {
-                                SectionRule(above: Theme.digestRuleAbove, below: Theme.digestRuleBelow)
-                                    .digestRow()
-                            }
+                            SectionRule(above: Theme.digestRuleAbove, below: Theme.digestRuleBelow)
+                                .digestRow()
                             sectionView(section) { _, bottom in reveal(bottom: bottom) }
                         }
                     }
@@ -303,12 +278,7 @@ struct DigestView: View {
     private func followScroll(from old: CGFloat, to offset: CGFloat) {
         let atTop = offset + scrollHold.topInset <= 8
         let hide: Bool
-        if topBand != nil, !voiceOver {
-            // With the band, the button belongs to it: it stays while the band is still behind
-            // it and goes once the band has scrolled up past it.
-            let scrolled = offset + scrollHold.topInset
-            hide = scrolled > bandHeight - Self.bandButtonBottom
-        } else if voiceOver || atTop {
+        if voiceOver || atTop {
             hide = false
             scrollTurn = offset
         } else {
@@ -329,8 +299,6 @@ struct DigestView: View {
 
     /// How far the page has to move one way before the Settings button follows.
     private static let buttonHideRun: CGFloat = 40
-    /// About where the Settings button's lower edge sits below the top of the page.
-    private static let bandButtonBottom: CGFloat = Theme.margin + 52
 
     private func holdPlace() {
         scrollHold.holdsUntil = .now.addingTimeInterval(0.6)
@@ -380,20 +348,6 @@ struct DigestView: View {
 
     /// The top of the page: the weekday large, with the Settings button on its line, and the month
     /// and day under it in gray. No app name: the Dd button carries it.
-    /// Design lab's choice for the top of the page (debug builds only; release uses the rule).
-    #if DEBUG
-    @AppStorage(TopStyle.storageKey) private var topStyleChoice = TopStyle.rule.rawValue
-    private var topBand: Color? { (TopStyle(rawValue: topStyleChoice) ?? .rule).band }
-    #else
-    private var topBand: Color? { nil }
-    #endif
-    private static let bandBelowWeather: CGFloat = 26
-    private static let bandToFirstTitle: CGFloat = 34
-
-    private var firstShownSection: DigestSection? {
-        sectionOrder.first { isShown($0) }
-    }
-
     private var header: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 4) {

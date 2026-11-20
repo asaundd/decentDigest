@@ -63,14 +63,6 @@ enum Theme {
     /// so the bar doesn't show as a band.
     static let bottomBarFill = pageTintBottom
 
-    /// Design lab trials: a band of shade behind the date and weather in place of the short rule
-    /// and the first section rule. Release builds always use the rule.
-    static let topBandLighter = Color(light: 0xFFFEFC, dark: 0x1D2120)
-    static let topBandFaint = Color(light: 0xF3F1EB, dark: 0x1B1F1E)
-    static let topBandStrong = Color(light: 0xEDEAE2, dark: 0x202524)
-    /// The band's lower edge: a step darker than a section rule, so the band ends crisply.
-    static let topBandEdge = Color(light: 0xCDCDC7, dark: 0x3F4542)
-
     // Spacing
     static let margin: CGFloat = 24
     static let ruleSpacing: CGFloat = 24
@@ -154,43 +146,5 @@ struct PlainRule: View {
             .frame(height: 1)
             .padding(.vertical, spacing)
             .accessibilityHidden(true)
-    }
-}
-
-/// How the top of the digest is set apart from the sections below it. Only the rule ships; the
-/// bands can be tried in Design lab in debug builds.
-enum TopStyle: String, CaseIterable, Identifiable {
-    case rule, lighter, faint, strong
-
-    static let storageKey = "designLab.topStyle"
-
-    var id: String { rawValue }
-
-    var name: String {
-        switch self {
-        case .rule: "Short rule"
-        case .lighter: "Lighter band"
-        case .faint: "Faint band"
-        case .strong: "Stronger band"
-        }
-    }
-
-    var note: String {
-        switch self {
-        case .rule: "What ships: a full rule before Calendar."
-        case .lighter: "A shade lighter than the page behind the date and weather, ending on a crisp line."
-        case .faint: "A shade darker than the page behind the date and weather, ending on a crisp line."
-        case .strong: "Two shades darker than the page behind the date and weather, ending on a crisp line."
-        }
-    }
-
-    /// The band's color, or nil for the rule.
-    var band: Color? {
-        switch self {
-        case .rule: nil
-        case .lighter: Theme.topBandLighter
-        case .faint: Theme.topBandFaint
-        case .strong: Theme.topBandStrong
-        }
     }
 }

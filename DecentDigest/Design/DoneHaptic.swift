@@ -127,12 +127,10 @@ final class SharpClick {
 
 #if DEBUG
 /// Debug only: try each haptic, then pick the one the app plays when a to-do is checked off or a
-/// news item or episode is saved or marked read; and try a shaded band at the top of the digest.
-/// Opened from Settings' footer.
+/// news item or episode is saved or marked read. Opened from Settings' footer.
 struct DesignLabView: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage(DoneHaptic.choiceKey) private var choice = DoneHaptic.standard.rawValue
-    @AppStorage(TopStyle.storageKey) private var topStyle = TopStyle.rule.rawValue
     @State private var tries = 0
     @State private var tried: DoneHaptic = .standard
 
@@ -181,39 +179,6 @@ struct DesignLabView: View {
                                 play(haptic)
                             }
                             .accessibilityLabel("Use \(haptic.name)")
-                        }
-                    }
-                    .padding(.vertical, 8)
-                }
-
-                SectionRule()
-                Text("Top of the digest")
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Theme.ink)
-                Text("How the date and weather are set apart from Calendar. Use one, then close Settings to see it.")
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.secondary)
-                    .padding(.top, 2)
-                    .padding(.bottom, 6)
-                ForEach(TopStyle.allCases) { style in
-                    HStack(alignment: .firstTextBaseline, spacing: 12) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(style.name)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(Theme.ink)
-                            Text(style.note)
-                                .font(.subheadline)
-                                .foregroundStyle(Theme.secondary)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        if topStyle == style.rawValue {
-                            Text("✓ In use")
-                                .font(.subheadline)
-                                .foregroundStyle(Theme.secondary)
-                                .fixedSize()
-                        } else {
-                            TextLink("Use") { topStyle = style.rawValue }
-                                .accessibilityLabel("Use \(style.name)")
                         }
                     }
                     .padding(.vertical, 8)
