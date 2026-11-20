@@ -85,10 +85,12 @@ struct OnboardingFlow: View {
     }
 }
 
-/// The first page: the logo, the name, what the app is, and three promises.
-/// On first launch the logo draws itself at the center as on every launch, then shrinks and glides up
-/// into its place at the top while the words and Get started fade in. With Reduce Motion on, the page
-/// just fades in.
+/// The first page: the logo, what the app is, and three promises. The words sit at the foot of the
+/// page just above Get started, the way Apple's own welcome pages do, and the logo, at the size it
+/// draws at launch, sits centered in the space above them, at the left margin.
+/// On first launch the logo draws itself at the center as on every launch, then glides into its place
+/// at the same size while the words and Get started fade in. With Reduce Motion on, the page just
+/// fades in.
 struct WelcomePage: View {
     var start: () -> Void
 
@@ -100,49 +102,58 @@ struct WelcomePage: View {
         case done
     }
 
-    /// The logo's width at the top of the page.
-    private static let logoWidth: CGFloat = 64
+    /// The logo's width on the page: the size it draws at launch, so the glide only moves it.
+    private static let logoWidth: CGFloat = LaunchLogo.width
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var intro: Intro = LaunchIntro.hasPlayed ? .done : .drawing
     @State private var wordsShown = LaunchIntro.hasPlayed
     @State private var logoProgress: Double = 0
-    /// Where the logo at the top of the page sits on screen.
+    /// Where the logo on the page sits on screen.
     @State private var logoFrame: CGRect = .zero
+    /// The height the page has to fill above Get started.
+    @State private var pageHeight: CGFloat = 0
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
+                // The logo, centered in the space above the words.
+                Spacer(minLength: 32)
                 LogoMark()
                     .frame(width: Self.logoWidth)
                     .opacity(intro == .done && wordsShown ? 1 : 0)
                     .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { logoFrame = $0 }
-                    .padding(.top, 48)
+                Spacer(minLength: 32)
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("Decent digest")
-                        .font(Theme.wordmarkFont)
-                        .foregroundStyle(Theme.secondary)
-                        .padding(.top, 20)
                     Text("A front page for your day.")
                         .font(Theme.dateFont)
                         .accessibilityAddTraits(.isHeader)
                         .fixedSize(horizontal: false, vertical: true)
-                        .padding(.top, 6)
                     Text("Decent digest brings your weather, calendar, reminders, news, and podcasts together on one page, from the Apple apps you already use.")
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.top, 12)
                     SectionRule()
+                    // Supporting lines, a step under the sentence above.
                     VStack(alignment: .leading, spacing: 8) {
                         DashLine("No account, no ads, and no tracking.")
-                        DashLine("What you follow, save, and read stays on your device and in your own iCloud. It's never shared with the developer.")
+                        DashLine("What you follow, save, and read stays on your device and in your own iCloud. It’s never shared with the developer.")
                         DashLine("Each step is optional and can be changed later.")
                     }
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.itemInk)
                 }
                 .opacity(wordsShown ? 1 : 0)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: pageHeight, alignment: .leading)
             .padding(.horizontal, Theme.margin)
             .padding(.bottom, Theme.margin)
+        }
+        // The page fills the screen above Get started, so the words rest just above it; on a small
+        // screen or at large text sizes it simply scrolls.
+        .onScrollGeometryChange(for: CGFloat.self) { geometry in
+            geometry.containerSize.height - geometry.contentInsets.top - geometry.contentInsets.bottom - Theme.margin
+        } action: { _, height in
+            pageHeight = max(height, 0)
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             PrimaryButton(title: "Get started", action: start)
@@ -212,7 +223,7 @@ struct WeatherStep: View {
             canContinue: weather.hasPlaceSource,
             skipQuestion: weather.hasPlaceSource ? SkipQuestion(
                 title: "Skip Weather?",
-                message: "The weather won't show on the digest. You can turn it on later in Settings.",
+                message: "The weather won’t show on the digest. You can turn it on later in Settings.",
                 confirm: "Skip",
                 destructive: false
             ) : nil,
@@ -261,8 +272,8 @@ struct ReadyPage: View {
                     DashLine("Tap an item to see more. Tap it again to close it.")
                     DashLine("Swipe a to-do right, or open it and tap ✓, to mark it done in Reminders.")
                     DashLine("Tap ↗ to open the app or website an item came from.")
-                    DashLine("In News and Podcasts, swipe an item left to mark it read, and it's removed from the list. A short swipe shows Save too, to keep it for later.")
-                    DashLine("Any news or podcast item you don't get to clears after a week to keep the list fresh.")
+                    DashLine("In News and Podcasts, swipe an item left to mark it read, and it’s removed from the list. A short swipe shows Save too, to keep it for later.")
+                    DashLine("Any news or podcast item you don’t get to clears after a week to keep the list fresh.")
                 }
                 Text("Decent digest keeps a private reading history of the news and episodes you open, save, and mark read. It stays on your device and in your own iCloud, and is never shared with the developer. You can turn it off in Settings.")
                     .font(.footnote)

@@ -46,7 +46,6 @@ struct CalendarSectionView: View {
                 Text("Nothing on the calendar today.")
                     .font(AgendaMetrics.itemFont)
                     .foregroundStyle(Theme.secondary)
-                    .padding(.leading, DashColumn.width)
                     .padding(.vertical, AgendaMetrics.rowPadding)
             }
             ForEach(shown) { group in
@@ -64,10 +63,9 @@ struct CalendarSectionView: View {
                         open: { openURL(AgendaLinks.calendar(at: event.entry.start)) },
                         directions: directionsAction(for: event.entry)
                     )
-                    .padding(.leading, DashColumn.width)
                 }
                 if showsDayMore, group.hiddenCount > 0 {
-                    MoreLine(count: group.hiddenCount, noun: "event", leading: DashColumn.width + EventRow.timeWidth) {
+                    MoreLine(count: group.hiddenCount, noun: "event", leading: EventRow.timeWidth + EventRow.timeGap) {
                         expandedDays.insert(group.day)
                     }
                 }
@@ -76,7 +74,6 @@ struct CalendarSectionView: View {
             ListFooter(
                 hidden: DayPlanner.hiddenCount(groups),
                 phrase: { $0 == 1 ? "more event" : "more events" },
-                empty: "No other events",
                 showsAll: showsAll,
                 app: ListFooter.Link(title: "Calendar ↗", spoken: "Open Calendar") { openURL(AgendaLinks.calendar(at: .now)) }
             ) {
@@ -102,11 +99,14 @@ struct CalendarSectionView: View {
     }
 }
 
-/// An event: time in a 60pt gray column, then its name. Past events are gray and struck; the one
+/// An event: time in a 60pt gray column, right-aligned so every time sits the same 10pt from its
+/// title, then its name. Past events are gray and struck; the one
 /// happening now sits on a pale slate tint. A tap makes the row semibold and opens a card behind it with
 /// the details; a tap anywhere on the open row, away from its links, closes it.
 struct EventRow: View {
     static let timeWidth: CGFloat = 60
+    /// From the end of the time to the title.
+    static let timeGap: CGFloat = 10
     /// How far the now tint reaches past the time and title.
     static let tintInset: CGFloat = 6
 
@@ -137,7 +137,8 @@ struct EventRow: View {
                     Text(AgendaFormat.timeColumn(event.label))
                         .monospacedDigit()
                         .foregroundStyle(isPast ? Theme.past : (isOpen ? Theme.itemInk : Theme.secondary))
-                        .frame(width: stacks ? nil : timeWidth, alignment: .leading)
+                        .frame(width: stacks ? nil : timeWidth, alignment: stacks ? .leading : .trailing)
+                        .padding(.trailing, stacks ? 0 : Self.timeGap)
                     Text(event.entry.title)
                         .foregroundStyle(isPast ? Theme.past : Theme.itemInk)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -218,6 +219,8 @@ struct EventRow: View {
         }
         .font(AgendaMetrics.itemFont)
         .frame(maxWidth: .infinity, alignment: .leading)
+        // Lined up with the title, past the time column (under the time when they stack).
+        .padding(.leading, stacks ? 0 : timeWidth + Self.timeGap)
         .padding(.top, 2)
         .padding(.bottom, 10)
     }

@@ -21,6 +21,7 @@ struct DigestView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(NetworkStatus.self) private var network: NetworkStatus?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
     @Query(sort: \SavedItem.savedAt, order: .reverse) private var saved: [SavedItem]
     @State private var panel: PanelRequest?
     @State private var showsWeatherSettings = false
@@ -37,6 +38,14 @@ struct DigestView: View {
     @State private var listBottom: CGFloat = .infinity
     /// False until the launch animation lets the page show, whole.
     @State private var revealed = false
+    /// The Settings button slides away while the reader scrolls down, and comes back on a scroll up
+    /// or at the top of the page, so it never sits on what's being read.
+    @State private var settingsButtonHidden = false
+    /// The weekday's height at the top of the page, to center the Settings button on its first line.
+    @State private var weekdayHeight: CGFloat = 52
+    @ScaledMetric(relativeTo: .largeTitle) private var weekdayLineHeight: CGFloat = 52
+    /// Where the page last turned between scrolling up and down.
+    @State private var scrollTurn: CGFloat = 0
     /// How much of the launch logo is drawn, and whether it is still on screen.
     @State private var logoProgress: Double = 0
     @State private var logoOpacity: Double = 1
@@ -71,12 +80,12 @@ struct DigestView: View {
                         .digestRow()
                     ForEach(sectionOrder) { section in
                         if isShown(section) {
-                            SectionRule()
+                            SectionRule(above: Theme.digestRuleAbove, below: Theme.digestRuleBelow)
                                 .digestRow()
                             sectionView(section) { _, bottom in reveal(bottom: bottom) }
                         }
                     }
-                    SectionRule()
+                    SectionRule(above: Theme.digestRuleAbove, below: Theme.digestRuleBelow)
                         .digestRow()
                     footer
                         .padding(.bottom, Theme.margin)
@@ -96,13 +105,20 @@ struct DigestView: View {
             }
             .onScrollGeometryChange(for: CGFloat.self) { geometry in
                 geometry.contentOffset.y
-            } action: { _, offset in
+            } action: { old, offset in
                 scrollHold.offset = offset
+                followScroll(from: old, to: offset)
             }
             .onScrollGeometryChange(for: CGFloat.self) { geometry in
                 geometry.contentInsets.top
             } action: { _, inset in
                 scrollHold.topInset = inset
+            }
+            // The held space is trimmed only while the page is moving, so it never shifts the page
+            // on its own: at the foot of the page, trimming it while still would snap the page down.
+            .onScrollPhaseChange { _, phase in
+                scrollHold.isScrolling = phase.isScrolling
+                if phase.isScrolling { trimSlack() }
             }
             .scrollPosition($scrollPosition)
             .environment(\.scrollHold, scrollHold)
@@ -134,9 +150,14 @@ struct DigestView: View {
         // Settings: the round logo button, pinned at the top right while the page scrolls under it.
         .overlay(alignment: .topTrailing) {
             SettingsButton { showsSettings = true }
-                .padding(.trailing, 16)
-                .padding(.top, 4)
-                .opacity(revealed ? 1 : 0)
+                .padding(.trailing, Theme.margin)
+                // Centered on the weekday's first line at the top of the page, and floating at that
+                // same height when it comes back further down.
+                .padding(.top, Theme.margin + max(0, min(weekdayHeight, weekdayLineHeight) / 2 - 22))
+                // Away, it slides up behind the status bar (with Reduce Motion, it only fades).
+                .offset(y: settingsButtonHidden && !reduceMotion ? -80 : 0)
+                .opacity(revealed && !settingsButtonHidden ? 1 : 0)
+                .allowsHitTesting(!settingsButtonHidden)
         }
         // The launch logo draws itself at the center, then fades as the page fades in.
         .overlay {
@@ -257,19 +278,45 @@ struct DigestView: View {
     /// scroll it back. Before the change lands, plenty of empty space goes at the foot of the page, in
     /// the same update, so the page can't move; once the row has settled, the space shrinks to just
     /// what keeps the screen where it is, and it goes as the reader scrolls up.
+    /// Hides the Settings button after a deliberate scroll down (about 40pt), and brings it back after
+    /// one up, or at the top of the page, so small adjustments while reading don't make it flicker.
+    /// With VoiceOver on it always stays.
+    private func followScroll(from old: CGFloat, to offset: CGFloat) {
+        let atTop = offset + scrollHold.topInset <= 8
+        let hide: Bool
+        if voiceOver || atTop {
+            hide = false
+            scrollTurn = offset
+        } else {
+            // A change of direction starts a new run.
+            let goingDown = offset > old
+            if goingDown != (offset > scrollTurn) { scrollTurn = old }
+            if offset - scrollTurn > Self.buttonHideRun {
+                hide = true
+            } else if scrollTurn - offset > Self.buttonHideRun {
+                hide = false
+            } else {
+                return
+            }
+        }
+        guard hide != settingsButtonHidden else { return }
+        withAnimation(.easeOut(duration: 0.25)) { settingsButtonHidden = hide }
+    }
+
+    /// How far the page has to move one way before the Settings button follows.
+    private static let buttonHideRun: CGFloat = 40
+
     private func holdPlace() {
         scrollHold.holdsUntil = .now.addingTimeInterval(0.6)
         // Never animated, even when the row's own change is, so the space is there before the row
         // gets shorter.
         setSlack(bottomSlack + 2_000)
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(0.65))
-            trimSlack()
-        }
     }
 
+    /// Cuts the held space down to what shows on screen. Only while the reader scrolls: the cut is
+    /// then below the screen, out of sight, and the space goes as the reader scrolls up.
     private func trimSlack() {
-        guard bottomSlack > 0, Date.now >= scrollHold.holdsUntil else { return }
+        guard bottomSlack > 0, scrollHold.isScrolling, Date.now >= scrollHold.holdsUntil else { return }
         let needed = max(0, (bottomSlack + scrollHold.overhang).rounded(.up))
         // Only when it changes by a point or more, so scrolling through the space doesn't redraw
         // the page on every frame.
@@ -303,17 +350,37 @@ struct DigestView: View {
         await weather.reload(force: force)
     }
 
+    /// The top of the page: the weekday large, with the Settings button on its line, and the month
+    /// and day under it in gray. No app name: the Dd button carries it.
     private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Decent digest")
-                .font(Theme.wordmarkFont)
-                .foregroundStyle(Theme.secondary)
-            Text(today, format: .dateTime.weekday(.wide).month(.wide).day())
-                .font(Theme.dateFont)
-                .accessibilityAddTraits(.isHeader)
-                // Clear of the Settings button at the top right; a long date wraps instead.
-                .padding(.trailing, 52)
-                .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(today, format: .dateTime.weekday(.wide))
+                    .font(Theme.weekdayFont)
+                    // Clear of the Settings button beside it; at the largest sizes it wraps instead.
+                    .padding(.trailing, 44 + 8)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .onGeometryChange(for: CGFloat.self) { proxy in
+                        proxy.size.height
+                    } action: { height in
+                        weekdayHeight = height
+                    }
+                Text(today, format: .dateTime.month(.wide).day())
+                    .font(Theme.dateLineFont)
+                    .foregroundStyle(Theme.secondary)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isHeader)
+            // A short ink rule closes the masthead, so the weather starts fresh below it. Left out
+            // when nothing follows before the first section's own rule.
+            if preferences.isShown(.weather) || network?.isOffline == true {
+                Rectangle()
+                    .fill(Theme.ink)
+                    .frame(width: 40, height: 1)
+                    .padding(.top, 14)
+                    .padding(.bottom, 2)
+                    .accessibilityHidden(true)
+            }
             if network?.isOffline == true {
                 OfflineBar()
                     .padding(.top, 8)
@@ -415,12 +482,19 @@ struct DigestView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// Left out while offline; the bar under the date says why.
-    @ViewBuilder
+    /// Refresh all (left out while offline; the bar under the date says why), then Settings, a
+    /// second way in for a reader at the foot of the page, where the Dd button has slid away.
     private var refreshPart: some View {
-        if network?.isOffline != true {
-            refreshAllLink
+        HStack(spacing: 6) {
+            if network?.isOffline != true {
+                refreshAllLink
+                Text("·")
+                    .foregroundStyle(Theme.secondary)
+                    .accessibilityHidden(true)
+            }
+            FooterLink("Settings", still: true) { showsSettings = true }
         }
+        .font(.subheadline)
     }
 
     /// Does what pulling down at the top does, for a reader at the foot of the page. Reads
@@ -455,7 +529,7 @@ struct DigestView: View {
 /// happening now. Everything on the page is what was saved; nothing is fetched until it is back.
 struct OfflineBar: View {
     var body: some View {
-        Text("You're offline. Showing only what's saved on this device.")
+        Text("You’re offline. Showing only what’s saved on this device.")
             .font(.subheadline)
             .foregroundStyle(Theme.ink)
             .fixedSize(horizontal: false, vertical: true)

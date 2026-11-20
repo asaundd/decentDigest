@@ -39,9 +39,13 @@ struct FeedListSection: View {
     @State private var closing: Set<String> = []
     /// News' Clear all: the rows on screen and every row, as they were when it was tapped.
     @State private var clearing: Clearing?
+    /// Rows cleared but not yet written: they leave the list at once while the writes finish.
+    @State private var clearedIDs: Set<String> = []
+    /// True while Clear all's writes run, so the footer can say so.
+    @State private var isClearing = false
 
     var body: some View {
-        let eligible = eligibleEntries
+        let eligible = clearedIDs.isEmpty ? eligibleEntries : eligibleEntries.filter { !clearedIDs.contains($0.item.itemID) }
         // Bars stand in while the first feeds arrive. Rows already showing stay while feeds are checked.
         let waiting = isRefreshing && eligible.isEmpty
         // Show all opens the list up to 25 rows, never further.
@@ -61,12 +65,17 @@ struct FeedListSection: View {
             // The rows replace the bars as each feed comes in.
             PlaceholderBars()
                 .digestRow()
-        } else if eligible.isEmpty {
-            Text(emptyMessage)
+        } else if staying == 0 {
+            // Shown as the last row starts closing up, in the same update, so the list's height
+            // changes once instead of shrinking and then growing again.
+            // While Clear all's writes run, the same line says so, so nothing moves when they end.
+            Text(isClearing && !isEpisodes ? "Clearing…" : emptyMessage)
                 .foregroundStyle(Theme.secondary)
+                .contentTransition(.identity)
                 .padding(.vertical, HeadlineRow.verticalPadding)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .digestRow()
+                .transition(.identity)
         }
 
         ForEach(shown, id: \.item.itemID) { entry in
@@ -100,19 +109,17 @@ struct FeedListSection: View {
             }
         }
 
-        // Podcasts always shows its line, for Podcasts ↗; News for Refresh, which is left out while
-        // offline (the bar under the date says why).
-        let offersRefresh = refresh != nil && network?.isOffline != true
+        // Podcasts always shows its line, for Podcasts ↗. News has no Refresh of its own: pull to
+        // refresh and the footer's Refresh all do it.
         let toggles = !showsAll && remaining > 0 || showsAll && staying > limit
         // News' Clear all marks the whole list read at once, after a question.
         let offersClear = !isEpisodes && staying > 0
-        if !waiting && (toggles || isEpisodes || offersRefresh || offersClear) {
+        if !waiting && (toggles || isEpisodes || offersClear) {
             ListFooter(
                 hidden: showsAll ? 0 : remaining,
+                reveals: NewsRules.expandedLimit - limit,
                 phrase: { _ in "more" },
-                empty: nil,
                 showsAll: showsAll && staying > limit,
-                showTitle: NewsRules.showMoreTitle(count: staying),
                 app: isEpisodes ? ListFooter.Link(title: "Podcasts ↗", spoken: "Open Podcasts") { openURL(ApplePodcasts.app) } : nil,
                 clear: offersClear ? ListFooter.Link(title: "Clear all", spoken: "Clear all news items") {
                     let open = eligible.filter { !closing.contains($0.item.itemID) && leaving[$0.item.itemID] == nil }
@@ -122,7 +129,6 @@ struct FeedListSection: View {
                         all: open.map(\.item)
                     )
                 } : nil,
-                refresh: offersRefresh ? refresh.map { action in ListFooter.Link(title: "Refresh", spoken: "Refresh news", action: action) } : nil,
                 isRefreshing: isRefreshing
             ) {
                 let folding = showsAll
@@ -185,7 +191,7 @@ struct FeedListSection: View {
     private var isOffline: Bool { network?.isOffline == true || (isEpisodes ? podcastsOffline : newsOffline) }
 
     private var emptyMessage: String {
-        if isOffline { return isEpisodes ? "New episodes will show once you're connected." : "New items will show once you're connected." }
+        if isOffline { return isEpisodes ? "New episodes will show once you’re connected." : "New items will show once you’re connected." }
         return isEpisodes ? "No new episodes right now." : "Nothing new right now."
     }
 
@@ -310,15 +316,30 @@ struct FeedListSection: View {
         EpisodeLink.open(showID: entry.appleID, guid: item.guid, title: item.title, fallback: item.linkURL, with: openURL)
     }
 
-    /// Clear all: marks each item read, and the rows go together while the rows below slide up.
+    /// Clear all: the rows go together at once while the rows below slide up, then every item is
+    /// marked read in one batch, after the page has moved, so the screen never waits on the writes.
+    /// "Clearing…" shows in the empty list's line until they're done.
     private func clear(_ cleared: [FeedItem]) {
+        let ids = Set(cleared.map(\.itemID))
+        let opened = cleared.filter { expandedIDs.contains($0.itemID) }
         scrollHold?.hold()
+        isClearing = true
         withAnimation(HeadlineMotion.close) {
-            for item in cleared {
-                if expandedIDs.remove(item.itemID) != nil {
-                    ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, in: context)
-                }
-                ReadingState.resolve(itemID: item.itemID, sourceID: item.sourceID, as: .read, in: context)
+            clearedIDs.formUnion(ids)
+            expandedIDs.subtract(ids)
+        }
+        Task { @MainActor in
+            // Let the rows' leaving animation start before the writes.
+            try? await Task.sleep(for: .milliseconds(350))
+            for item in opened {
+                ReadingState.markOpened(itemID: item.itemID, sourceID: item.sourceID, in: context)
+            }
+            ReadingState.resolveAll(cleared.map { (itemID: $0.itemID, sourceID: $0.sourceID) }, as: .read, in: context)
+            var still = Transaction()
+            still.disablesAnimations = true
+            withTransaction(still) {
+                clearedIDs.subtract(ids)
+                isClearing = false
             }
         }
     }

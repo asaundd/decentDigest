@@ -20,7 +20,7 @@ struct NewsStep: View {
         OnboardingStep(
             number: 3,
             title: "News",
-            intro: "Decent digest reads RSS feeds, which most news sites and blogs publish. Open a topic to pick sites, or add a site you follow.",
+            intro: "Pick sites by topic, or paste the address of one you read. Decent digest follows their RSS feeds.",
             canContinue: !followed.isEmpty,
             skipQuestion: followed.isEmpty ? nil : SkipQuestion(
                 title: "Skip News?",
@@ -87,7 +87,7 @@ struct NewsPicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SearchBox(placeholder: "Search, or paste an address", text: $text, isFocused: $searchFocused, keyboard: .webSearch, submitLabel: .search, offersPaste: true) {
+            SearchBox(placeholder: "Search, or paste an address", text: $text, isFocused: $searchFocused, keyboard: .webSearch, submitLabel: .search, offersPaste: true, revealsOnFocus: false) {
                 searchFocused = false
             }
             .onChange(of: text) { old, new in
@@ -110,7 +110,7 @@ struct NewsPicker: View {
             // Search mode starts with the tap, not the first letter: the lists step aside for a
             // short hint, then results. (Paste sits beside Cancel in the box's row.)
             if searchFocused && query.isEmpty {
-                quiet("Type a site's name, or paste its address.")
+                quiet("Type a site’s name, or paste its address.")
                     .padding(.top, 6)
             } else if query.isEmpty {
                 if inSettings && !followed.isEmpty {
@@ -141,7 +141,7 @@ struct NewsPicker: View {
         let failing = inSettings ? FetchState.failing(fetchStates) : []
         ForEach(shown) { source in
             let usual = categoryName(source.category) ?? (heading == "Added by you" ? Self.host(source.siteURL ?? source.feedURL) : "Added by you")
-            ChoiceRow(title: source.title, subtitle: failing.contains(source.id) ? "Couldn't load" : usual, emphasized: !inSettings) {
+            ChoiceRow(title: source.title, subtitle: failing.contains(source.id) ? "Couldn’t load" : usual, emphasized: !inSettings) {
                 FollowLink(title: source.title, isFollowing: true) {
                     Following.unfollow(source.feedURL, kind: .news, in: context)
                 }
@@ -149,7 +149,7 @@ struct NewsPicker: View {
         }
         if inSettings && query.isEmpty && followed.count > 4 {
             // The same footer line as the digest's lists.
-            ListFooter(hidden: followed.count - shown.count, phrase: { _ in "more" }, empty: nil, showsAll: showsAllFollowed, app: nil) {
+            ListFooter(hidden: followed.count - shown.count, phrase: { _ in "more" }, showsAll: showsAllFollowed, app: nil) {
                 showsAllFollowed.toggle()
             }
             .padding(.top, 2)
@@ -270,10 +270,10 @@ struct NewsPicker: View {
                 } else if isOffline {
                     quiet("Adding a new site by its address requires a connection.")
                 } else if notFound {
-                    quiet("No feed found at that address. Try the site's feed address instead.")
+                    quiet("No feed found at that address. Try the site’s feed address instead.")
                 }
             } else if matches.isEmpty {
-                quiet("No sites by that name in the library. Paste a site's address to add it.")
+                quiet("No sites by that name in the library. Paste a site’s address to add it.")
             }
         }
         .padding(.top, 6)

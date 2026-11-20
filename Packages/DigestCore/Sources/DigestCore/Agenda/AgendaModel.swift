@@ -115,7 +115,7 @@ public final class AgendaModel {
         do {
             try source.setCompleted(true, todoID: todo.id)
         } catch {
-            problem = "Couldn't check that off in Reminders."
+            problem = "Couldn’t check that off in Reminders."
             return false
         }
         problem = nil
@@ -129,7 +129,7 @@ public final class AgendaModel {
         do {
             try source.setCompleted(false, todoID: todo.id)
         } catch {
-            problem = "Couldn't undo that in Reminders."
+            problem = "Couldn’t undo that in Reminders."
             return
         }
         problem = nil

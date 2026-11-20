@@ -37,7 +37,7 @@ struct DecentDigestApp: App {
             self.refresher = NewsRefresher(container: container)
             self.preferences = preferences
             self.agenda = AgendaModel(source: SampleAgendaSource(), defaults: defaults)
-            self.weather = WeatherModel(provider: SampleWeatherProvider(), places: SamplePlaces(), defaults: defaults)
+            self.weather = WeatherModel(provider: DemoWeatherProvider(), places: SamplePlaces(), defaults: defaults)
             return
         }
         #endif
@@ -99,7 +99,7 @@ struct StorageProblemView: View {
             LogoMark(color: Theme.logoButton)
                 .frame(width: 44)
                 .accessibilityHidden(true)
-            Text("Decent digest couldn't open its saved data.")
+            Text("Decent digest couldn’t open its saved data.")
                 .font(Theme.sectionTitleFont)
                 .foregroundStyle(Theme.ink)
                 .fixedSize(horizontal: false, vertical: true)
@@ -130,3 +130,21 @@ enum AppearanceStyle {
         }
     }
 }
+
+#if DEBUG
+/// Demo mode's weather: the sample forecast, with Apple's real credit in the footer when WeatherKit
+/// is set up (the words "Apple Weather" otherwise), so screenshots show the page as it ships.
+private struct DemoWeatherProvider: WeatherProvider {
+    func report(latitude: Double, longitude: Double, now: Date) async throws -> WeatherReport {
+        SampleDigest.weather(now: now)
+    }
+
+    func credit() async -> WeatherCredit? {
+        #if canImport(WeatherKit)
+        await WeatherKitSource().credit()
+        #else
+        .fallback
+        #endif
+    }
+}
+#endif

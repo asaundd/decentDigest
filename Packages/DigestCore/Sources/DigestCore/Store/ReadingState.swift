@@ -32,6 +32,34 @@ public enum ReadingState {
         try? context.save()
     }
 
+    /// Clear all: resolves many items with one fetch and one save, so hundreds take a moment rather
+    /// than seconds.
+    public static func resolveAll(_ items: [(itemID: String, sourceID: String)], as status: ItemStatus, in context: ModelContext, now: Date = AppClock.now) {
+        guard !items.isEmpty else { return }
+        let ids = Array(Set(items.map(\.itemID)))
+        let existing = (try? context.fetch(FetchDescriptor<ItemState>(predicate: #Predicate { ids.contains($0.itemID) }))) ?? []
+        var byID: [String: ItemState] = [:]
+        for state in existing where byID[state.itemID] == nil {
+            byID[state.itemID] = state
+        }
+        for item in items {
+            let state: ItemState
+            if let found = byID[item.itemID] {
+                state = found
+            } else {
+                state = ItemState(itemID: item.itemID, sourceID: item.sourceID, status: .new, firstShownAt: now)
+                context.insert(state)
+                byID[item.itemID] = state
+            }
+            state.status = status
+            state.resolvedAt = now
+        }
+        for saved in (try? context.fetch(FetchDescriptor<SavedItem>(predicate: #Predicate { ids.contains($0.itemID) }))) ?? [] {
+            context.delete(saved)
+        }
+        try? context.save()
+    }
+
     /// Moves a headline or episode to Saved, where it stays until the reader marks it.
     public static func save(_ item: FeedItem, sourceTitle: String, kind: SourceKind = .news, in context: ModelContext, now: Date = AppClock.now) {
         let state = stateOrNew(itemID: item.itemID, sourceID: item.sourceID, in: context, now: now)

@@ -7,9 +7,11 @@ import SwiftUI
 struct LogoMark: View {
     var color: Color = Theme.slate
     var progress: Double = 1
+    /// The small-size version, for the Settings button and other marks under about 32pt.
+    var small = false
 
     var body: some View {
-        LogoShape(progress: progress)
+        LogoShape(progress: progress, small: small)
             .fill(color)
             .aspectRatio(LogoShape.bounds.width / LogoShape.bounds.height, contentMode: .fit)
             .accessibilityHidden(true)
@@ -19,6 +21,9 @@ struct LogoMark: View {
 /// The logo's strokes as one filled outline, so it can be drawn in by animating `progress`.
 struct LogoShape: Shape {
     var progress: Double
+    /// Five heavier strokes a letter instead of seven: at small sizes the full logo's thin lines and
+    /// narrow gaps blur into stripes. Same D and d shapes, same bounds.
+    var small = false
 
     var animatableData: Double {
         get { progress }
@@ -43,10 +48,29 @@ struct LogoShape: Shape {
         (CGPoint(x: 71.91, y: 74.44), CGPoint(x: 86.13, y: 73.97), 4.89),
     ]
 
+    /// The small-size version: five rows a letter, each about 40% heavier, with the same slight tilts.
+    private static let smallStrokes: [(CGPoint, CGPoint, CGFloat)] = [
+        (CGPoint(x: 15.1, y: 26.0), CGPoint(x: 31.8, y: 25.5), 6.6),
+        (CGPoint(x: 76.9, y: 26.0), CGPoint(x: 83.6, y: 25.6), 6.4),
+        (CGPoint(x: 14.6, y: 38.2), CGPoint(x: 40.9, y: 38.6), 6.5),
+        (CGPoint(x: 70.6, y: 38.2), CGPoint(x: 84.3, y: 37.7), 6.4),
+        (CGPoint(x: 15.9, y: 50.0), CGPoint(x: 44.0, y: 49.6), 6.7),
+        (CGPoint(x: 59.7, y: 50.0), CGPoint(x: 85.3, y: 49.9), 6.5),
+        (CGPoint(x: 15.4, y: 61.9), CGPoint(x: 41.6, y: 62.1), 6.4),
+        (CGPoint(x: 59.0, y: 61.9), CGPoint(x: 84.4, y: 62.0), 6.6),
+        (CGPoint(x: 16.4, y: 74.0), CGPoint(x: 32.9, y: 73.9), 6.5),
+        (CGPoint(x: 71.6, y: 74.0), CGPoint(x: 86.1, y: 73.6), 6.7),
+    ]
+
     /// The part of the grid the strokes cover, with room for their round ends.
     static let bounds = CGRect(x: 12, y: 22, width: 77, height: 56)
 
-    private static let totalLength: CGFloat = strokes.reduce(0) { $0 + hypot($1.1.x - $1.0.x, $1.1.y - $1.0.y) }
+    private static func length(of strokes: [(CGPoint, CGPoint, CGFloat)]) -> CGFloat {
+        strokes.reduce(0) { $0 + hypot($1.1.x - $1.0.x, $1.1.y - $1.0.y) }
+    }
+
+    private static let totalLength = length(of: strokes)
+    private static let smallTotalLength = length(of: smallStrokes)
 
     func path(in rect: CGRect) -> Path {
         let scale = min(rect.width / Self.bounds.width, rect.height / Self.bounds.height)
@@ -57,9 +81,10 @@ struct LogoShape: Shape {
         func place(_ point: CGPoint) -> CGPoint {
             CGPoint(x: offset.x + (point.x - Self.bounds.minX) * scale, y: offset.y + (point.y - Self.bounds.minY) * scale)
         }
-        var remaining = Self.totalLength * CGFloat(min(max(progress, 0), 1))
+        let strokes = small ? Self.smallStrokes : Self.strokes
+        var remaining = (small ? Self.smallTotalLength : Self.totalLength) * CGFloat(min(max(progress, 0), 1))
         var outline = Path()
-        for (start, end, width) in Self.strokes where remaining > 0 {
+        for (start, end, width) in strokes where remaining > 0 {
             let length = hypot(end.x - start.x, end.y - start.y)
             let drawn = min(length, remaining)
             remaining -= drawn
@@ -100,19 +125,22 @@ enum LaunchIntro {
 
 /// The Dd logo in a round glass button pinned at the top right of the digest: clear glass tinted
 /// with the page color, so it doesn't lift lighter than the paper, ringed with an even hairline so
-/// the edge reads the same all the way round. Opens Settings.
+/// the edge reads the same all the way round. The small-size logo in the secondary gray, so it reads
+/// as Dd at 22pt. Opens Settings. The digest slides it away while the reader scrolls down.
 struct SettingsButton: View {
     var action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            LogoMark(color: Theme.logoButton)
+            LogoMark(color: Theme.secondary, small: true)
                 .frame(width: 22)
                 .frame(width: 44, height: 44)
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .glassEffect(.clear.tint(Theme.page.opacity(0.55)).interactive(), in: .circle)
+        // Flat paper: the page's own color, so it covers what scrolls under it, ringed with an
+        // even hairline. No glass, whose bent edges read heavier at the sides than top and bottom.
+        .background(Circle().fill(Theme.pageTintTop))
         .overlay(Circle().strokeBorder(Theme.rule, lineWidth: 0.5).allowsHitTesting(false))
         .accessibilityLabel("Settings")
     }
@@ -128,7 +156,7 @@ enum InlineLogo {
                 .fill(Theme.ribbonButtonFill)
             Circle()
                 .strokeBorder(Theme.rule, lineWidth: 0.5)
-            LogoMark(color: Theme.logoButton)
+            LogoMark(color: Theme.secondary, small: true)
                 .frame(width: size * 0.52)
         }
         .frame(width: size, height: size)

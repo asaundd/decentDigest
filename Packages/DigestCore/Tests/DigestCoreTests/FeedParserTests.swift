@@ -104,6 +104,9 @@ private func data(_ string: String) -> Data { Data(string.utf8) }
     #expect(HTMLText.plain("<p>One&nbsp;<a href='x'>two</a></p>\n<p>three</p>") == "One two three")
     #expect(HTMLText.plain("<script>var x = 1;</script>Hello") == "Hello")
     #expect(HTMLText.plain("&lt;b&gt;bold&lt;/b&gt; &amp; plain") == "bold & plain")
+    // Entities encoded twice, as some newsletters send them, still become characters.
+    #expect(HTMLText.plain("Who grades the graders?&amp;#160;&amp;#160;&amp;#160;") == "Who grades the graders?")
+    #expect(HTMLText.paragraphs("<p>One&amp;#160;&amp;#160;two&amp;rsquo;s</p>") == "One two’s")
     let long = String(repeating: "word ", count: 300)
     let cut = HTMLText.plain(long, limit: FeedParser.summaryLimit)
     #expect(cut.count <= FeedParser.summaryLimit + 1)

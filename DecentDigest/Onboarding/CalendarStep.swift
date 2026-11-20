@@ -19,7 +19,7 @@ struct CalendarStep: View {
             canContinue: agenda.calendarAccess == .granted || agenda.remindersAccess == .granted,
             skipQuestion: agenda.calendarAccess == .granted || agenda.remindersAccess == .granted ? SkipQuestion(
                 title: "Skip Calendar and To do?",
-                message: "Your events and to-dos won't show on the digest. You can turn them on later in Settings.",
+                message: "Your events and to-dos won’t show on the digest. You can turn them on later in Settings.",
                 confirm: "Skip",
                 destructive: false
             ) : nil,
@@ -31,7 +31,7 @@ struct CalendarStep: View {
                 AppAccessRow(
                     appName: "Calendar",
                     waiting: "Events from your calendars",
-                    allowed: "Hide any you don't want to see.",
+                    allowed: "Hide any you don’t want to see.",
                     access: agenda.calendarAccess,
                     request: { await agenda.requestCalendarAccess() }
                 )
@@ -45,7 +45,7 @@ struct CalendarStep: View {
                 AppAccessRow(
                     appName: "Reminders",
                     waiting: "To-dos from your lists",
-                    allowed: "Hide any lists you don't want to see.",
+                    allowed: "Hide any lists you don’t want to see.",
                     access: agenda.remindersAccess,
                     request: { await agenda.requestRemindersAccess() }
                 )
@@ -181,7 +181,7 @@ struct AgendaListPicker: View {
                         .accessibilityLabel("Hide \(list.title)")
                         .accessibilityHint("Leaves this \(noun) off your digest")
                 } else {
-                    TextLink("Show") { setIncluded(list.id, true) }
+                    FooterLink("Show", still: true) { setIncluded(list.id, true) }
                         .accessibilityLabel("Show \(list.title)")
                         .accessibilityHint("Puts this \(noun) back on your digest")
                 }

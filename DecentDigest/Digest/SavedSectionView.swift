@@ -69,10 +69,9 @@ struct SavedSectionView: View {
         if saved.count > limit {
             ListFooter(
                 hidden: showsAll ? 0 : saved.count - shown.count,
+                reveals: NewsRules.expandedLimit - shown.count,
                 phrase: { _ in "more" },
-                empty: nil,
                 showsAll: showsAll,
-                showTitle: NewsRules.showMoreTitle(count: saved.count),
                 app: nil
             ) {
                 let folding = showsAll

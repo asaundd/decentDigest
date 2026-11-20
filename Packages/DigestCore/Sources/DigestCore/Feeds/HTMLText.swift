@@ -12,7 +12,7 @@ public enum HTMLText {
         text = text.replacingOccurrences(of: "</(p|div|h[1-6]|blockquote|pre|ul|ol)>", with: "\n\n", options: [.regularExpression, .caseInsensitive])
         text = text.replacingOccurrences(of: "<li[^>]*>", with: "\n– ", options: [.regularExpression, .caseInsensitive])
         text = text.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
-        text = removeInvisible(decodeEntities(text))
+        text = removeInvisible(decodeTwice(text))
         let lines = text.components(separatedBy: "\n").map {
             $0.replacingOccurrences(of: "[ \\t\u{00A0}]+", with: " ", options: .regularExpression)
                 .trimmingCharacters(in: .whitespaces)
@@ -33,7 +33,7 @@ public enum HTMLText {
             text = text.replacingOccurrences(of: "<\(tag)[^>]*>[\\s\\S]*?</\(tag)>", with: " ", options: [.regularExpression, .caseInsensitive])
         }
         text = text.replacingOccurrences(of: "<[^>]+>", with: " ", options: .regularExpression)
-        text = removeInvisible(decodeEntities(text))
+        text = removeInvisible(decodeTwice(text))
         // A second pass catches tags that were entity-encoded (e.g. &lt;p&gt;).
         text = text.replacingOccurrences(of: "<[^>]+>", with: " ", options: .regularExpression)
         text = text.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
@@ -78,6 +78,13 @@ public enum HTMLText {
         "iacute": "í", "oacute": "ó", "uacute": "ú", "ntilde": "ñ", "uuml": "ü",
         "ouml": "ö", "auml": "ä", "ccedil": "ç",
     ]
+
+    /// Some feeds encode their entities twice ("&amp;#160;"), which one pass would leave showing as
+    /// "&#160;". A second pass turns those into the characters too.
+    static func decodeTwice(_ string: String) -> String {
+        let once = decodeEntities(string)
+        return once.contains("&") ? decodeEntities(once) : once
+    }
 
     static func decodeEntities(_ string: String) -> String {
         guard string.contains("&") else { return string }

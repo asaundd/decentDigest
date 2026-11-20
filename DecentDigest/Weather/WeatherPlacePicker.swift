@@ -42,7 +42,7 @@ struct WeatherPlacePicker: View {
                 PlainRule(spacing: 20)
             }
 
-            ChoiceRow(title: "Don't use my location", subtitle: cityNote, emphasized: true) {
+            ChoiceRow(title: "Don’t use my location", subtitle: cityNote, emphasized: true) {
                 if let city = model.typedCity {
                     // "✓ In use" over the city's name.
                     VStack(alignment: .trailing, spacing: 1) {

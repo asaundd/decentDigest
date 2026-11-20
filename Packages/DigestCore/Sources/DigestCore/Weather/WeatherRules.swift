@@ -19,7 +19,7 @@ public enum WeatherRules {
 
     // MARK: Today
 
-    /// Today in a few words: "Rain after 4p", "Rain until 2p", "Rain all day", or the condition now.
+    /// Today in a few words: "Rain after 4 pm", "Rain until 2 pm", "Rain all day", or the condition now.
     public static func todayPhrase(_ report: WeatherReport, now: Date, calendar: Calendar = .current, locale: Locale = .current) -> String {
         let thisHour = calendar.dateInterval(of: .hour, for: now)?.start ?? now
         let rest = report.hours.filter { hour in
@@ -321,10 +321,14 @@ public enum WeatherRules {
         }
     }
 
-    /// "4p", or "16:00" on a 24-hour clock.
+    /// A time in a sentence, written out: "4 pm", "9:30 am", or "16:00" on a 24-hour clock.
+    /// (The Calendar's time column keeps the short "4:00p".)
     static func hour(_ date: Date, calendar: Calendar, locale: Locale) -> String {
         let time = AgendaFormat.shortTime(date, calendar: calendar, locale: locale)
-        return time.replacingOccurrences(of: ":00a", with: "a").replacingOccurrences(of: ":00p", with: "p")
+        guard let last = time.last, last == "a" || last == "p" else { return time }
+        var clock = String(time.dropLast())
+        if clock.hasSuffix(":00") { clock.removeLast(3) }
+        return "\(clock) \(last == "a" ? "am" : "pm")"
     }
 
     /// Weather services write conditions in title case ("Partly Cloudy"); the digest uses sentence case.

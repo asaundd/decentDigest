@@ -17,7 +17,6 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \Source.sortOrder) private var sources: [Source]
     @State private var confirmsStartOver = false
-    @State private var showsDesignLab = false
     @State private var confirmsDeleteAll = false
     @State private var deletedAll = false
     /// Set when Send feedback can't open a mail app, so the address shows instead.
@@ -60,8 +59,9 @@ struct SettingsView: View {
                     SettingsRow(title: "Cloud sync", value: ICloudStatus.isSignedIn ? "On" : "Off", page: .sync)
                     SettingsDivider()
                     SettingsRow(title: "Reading history", value: preferences.keepsReadingHistory ? "On" : "Off", page: .history)
-                    SettingsDivider()
+                    // Set apart from the rows above, in iOS red, so it never reads as one more page.
                     deleteAllRow
+                        .padding(.top, 20)
 
                     SectionRule()
                     footer
@@ -79,11 +79,8 @@ struct SettingsView: View {
             Button("Delete", role: .destructive) { deleteAll() }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This unfollows every site and show, deletes your saved items and reading history, and forgets your city, on this device and in your iCloud, so your other devices clear too. Which sections show and your calendar and list choices stay. This can't be undone.")
+            Text("This unfollows every site and show, deletes your saved items and reading history, and forgets your city, on this device and in your iCloud, so your other devices clear too. Which sections show and your calendar and list choices stay. This can’t be undone.")
         }
-        #if DEBUG
-        .sheet(isPresented: $showsDesignLab) { DesignLabView() }
-        #endif
         .alert("Start setup over?", isPresented: $confirmsStartOver) {
             Button("Keep my choices") { showWelcome() }
             Button("Clear my choices", role: .destructive) { startOver() }
@@ -114,7 +111,7 @@ struct SettingsView: View {
                 confirmsDeleteAll = true
             } label: {
                 Text("Delete all my data")
-                    .foregroundStyle(Theme.ink)
+                    .foregroundStyle(Theme.destructive)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 11)
                     .contentShape(Rectangle())
@@ -154,17 +151,18 @@ struct SettingsView: View {
 
     private var calendarValue: String {
         guard preferences.isShown(.calendar), agenda.calendarAccess == .granted else { return "Off" }
-        return names(agenda.calendars, excluding: agenda.excludedCalendarIDs)
+        return count(agenda.calendars, excluding: agenda.excludedCalendarIDs, one: "calendar", many: "calendars")
     }
 
     private var todoValue: String {
         guard preferences.isShown(.todos), agenda.remindersAccess == .granted else { return "Off" }
-        return names(agenda.reminderLists, excluding: agenda.excludedListIDs)
+        return count(agenda.reminderLists, excluding: agenda.excludedListIDs, one: "list", many: "lists")
     }
 
-    private func names(_ lists: [AgendaList], excluding excluded: Set<String>) -> String {
-        let shown = lists.filter { !excluded.contains($0.id) }.map(\.title)
-        return shown.isEmpty ? "None" : shown.joined(separator: ", ")
+    /// "3 calendars", like News' "4 sites": names would run long and get cut off.
+    private func count(_ lists: [AgendaList], excluding excluded: Set<String>, one: String, many: String) -> String {
+        let shown = lists.count(where: { !excluded.contains($0.id) })
+        return shown == 0 ? "None" : "\(shown) \(shown == 1 ? one : many)"
     }
 
     private func count(of kind: SourceKind, shown: Bool, one: String, many: String) -> String {
@@ -216,10 +214,10 @@ struct SettingsView: View {
     @ViewBuilder
     private var footerLinks: some View {
         if let privacy = AppLinks.privacy {
-            TextLink("Privacy") { openURL(privacy) }
+            FooterLink("Privacy") { openURL(privacy) }
         }
         if let feedback = AppLinks.feedback {
-            TextLink("Send feedback") {
+            FooterLink("Send feedback") {
                 // Without a mail app set up, nothing would open: the address shows instead.
                 openURL(feedback) { accepted in
                     if !accepted { showsFeedbackAddress = true }
@@ -230,16 +228,13 @@ struct SettingsView: View {
 
     /// For testing setup again; not in release builds, where every choice can be changed in Settings.
     private var startOverLink: some View {
-        TextLink("Start setup over") { confirmsStartOver = true }
+        FooterLink("Start setup over") { confirmsStartOver = true }
             .accessibilityHint("Shows the welcome and setup again")
     }
 
-    /// For trying design options on the phone; not in release builds.
+    /// For testing setup on the phone; not in release builds.
     private var debugLinks: some View {
-        HStack(spacing: 16) {
-            startOverLink
-            TextLink("Design lab") { showsDesignLab = true }
-        }
+        startOverLink
     }
 
     private var footer: some View {
@@ -312,7 +307,7 @@ extension View {
 }
 
 /// The top of every Settings page: ✕ (the main page, or a page opened on its own) or ‹ Settings in a
-/// 44pt row, then the Georgia title and an optional gray subtitle.
+/// 44pt row, then the Charter title and an optional gray subtitle.
 struct SettingsHeader: View {
     var title: String
     var subtitle: String?
@@ -561,8 +556,8 @@ struct AgendaSettingsPage: View {
 /// Settings › Cloud sync (iCloud): whether it's on, how to change that, and what it covers.
 struct ICloudSyncPage: View {
     var body: some View {
-        SettingsPage(title: "Cloud sync", subtitle: "Decent digest keeps what you follow, save, and read in your own iCloud, so it's the same on each device you use and comes back on a new one.") {
-            ChoiceRow(title: "Sync", subtitle: "On when you're signed in to iCloud.") {
+        SettingsPage(title: "Cloud sync", subtitle: "Decent digest keeps what you follow, save, and read in your own iCloud, so it’s the same on each device you use and comes back on a new one.") {
+            ChoiceRow(title: "Sync", subtitle: "On when you’re signed in to iCloud.") {
                 Text(ICloudStatus.isSignedIn ? "On" : "Off")
                     .foregroundStyle(Theme.secondary)
             }
@@ -604,7 +599,7 @@ struct ReadingHistoryPage: View {
             PlainRule(spacing: 20)
             VStack(alignment: .leading, spacing: 8) {
                 DashLine("It stays on your device and in your own iCloud, and is never shared with the developer.")
-                DashLine("Today it keeps your lists tidy, so news and episodes you've already opened, saved, or marked don't come back.")
+                DashLine("Today it keeps your lists tidy, so news and episodes you’ve already opened, saved, or marked don’t come back.")
                 DashLine("When turned off, reading history is still briefly saved until the item expires a week after it came out, so your digest matches across multiple devices. Saved items still stay saved until you remove them.")
             }
             PlainRule(spacing: 20)
@@ -614,7 +609,7 @@ struct ReadingHistoryPage: View {
             } else {
                 TextLink("Clear reading history") { confirming = true }
             }
-            Text("Your saved items stay. This can't be undone.")
+            Text("Your saved items stay. This can’t be undone.")
                 .font(.footnote)
                 .foregroundStyle(Theme.secondary)
                 .padding(.top, 4)
@@ -627,7 +622,7 @@ struct ReadingHistoryPage: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Your saved items stay. This can't be undone.")
+            Text("Your saved items stay. This can’t be undone.")
         }
         .tint(Theme.alertTint)
     }
