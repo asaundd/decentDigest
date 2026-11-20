@@ -42,8 +42,8 @@ struct DigestView: View {
     /// or at the top of the page, so it never sits on what's being read.
     @State private var settingsButtonHidden = false
     /// The weekday's height at the top of the page, to center the Settings button on its first line.
-    @State private var weekdayHeight: CGFloat = 52
-    @ScaledMetric(relativeTo: .largeTitle) private var weekdayLineHeight: CGFloat = 52
+    @State private var weekdayHeight: CGFloat = 48
+    @ScaledMetric(relativeTo: .largeTitle) private var weekdayLineHeight: CGFloat = 48
     /// Where the page last turned between scrolling up and down.
     @State private var scrollTurn: CGFloat = 0
     /// How much of the launch logo is drawn, and whether it is still on screen.
