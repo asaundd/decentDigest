@@ -140,6 +140,17 @@ private func week(_ today: WeatherDay, _ days: [(Double, Sky)]) -> String? {
     #expect(line == nil)
 }
 
+@Test func weekLineSaysTheDryGapBeforeRainComesBack() {
+    // Rain tomorrow and Wednesday is the change line's; then a clear day before it comes back.
+    let line = week(day(0, 60, 46, .cloudy), [(60, .rain), (60, .rain), (60, .clear), (60, .rain), (60, .rain), (60, .rain)])
+    #expect(line == "Clear Thursday, then rain again starting Friday.")
+}
+
+@Test func weekLineSaysAGapOfTwoDryDays() {
+    let line = week(day(0, 60, 46, .cloudy), [(60, .rain), (60, .rain), (60, .cloudy), (60, .clear), (60, .snow), (60, .cloudy)])
+    #expect(line == "Dry Thursday and Friday, then snow Saturday.")
+}
+
 @Test func weekLineNamesATurnInTemperature() {
     let line = week(day(0, 60, 46, .cloudy), [(61, .cloudy), (62, .cloudy), (70, .cloudy), (70, .cloudy), (62, .cloudy), (62, .cloudy)])
     #expect(line == "Warmer starting Thursday.")

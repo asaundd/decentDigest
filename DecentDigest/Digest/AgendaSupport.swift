@@ -30,10 +30,12 @@ enum AgendaMetrics {
     static let itemFont = Font.subheadline
     /// Space above and below each event or to-do, which its tap area reaches into.
     static let rowPadding: CGFloat = 4
+    /// Space above an open event's or to-do's card, so it doesn't sit against the row or day above.
+    static let openCardGap: CGFloat = 6
 }
 
 /// A day in the Calendar or To do list: the day's name in semibold, a small label at the margin with
-/// no dash, a step under the section title and a step over the items. The dashes belong to the items.
+/// no dash, a step under the section title and a step over the items.
 /// Days after the first sit a little further from the one above.
 struct DayHeader: View {
     static let firstTopPadding: CGFloat = 5
@@ -108,8 +110,19 @@ struct ListFooter: View {
                 HStack(spacing: 6) { links }
             }
         }
+        // When a link comes or goes ("Show 1 more · Clear all" becoming "Clear all"), the line
+        // changes at once: nothing fades out or slides along it. The line itself still moves with
+        // the rows above it.
+        .animation(nil, value: signature)
         .font(.subheadline)
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// What the line says, so a change to it is never animated.
+    private var signature: String {
+        [text, toggle?.title, app?.title, clear?.title, refresh?.title, isRefreshing ? "Refreshing…" : nil]
+            .map { $0 ?? "" }
+            .joined(separator: "|")
     }
 
     @ViewBuilder
@@ -156,6 +169,8 @@ struct ListFooter: View {
         Text("·")
             .foregroundStyle(Theme.secondary)
             .accessibilityHidden(true)
+            // A dot that goes with its link is gone at once, never faded.
+            .transition(.identity)
     }
 
     private func link(_ link: Link) -> some View {

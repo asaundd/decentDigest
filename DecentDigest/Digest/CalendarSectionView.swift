@@ -107,8 +107,9 @@ struct EventRow: View {
     static let timeWidth: CGFloat = 60
     /// From the end of the time to the title.
     static let timeGap: CGFloat = 10
-    /// How far the now tint reaches past the time and title.
-    static let tintInset: CGFloat = 6
+    /// How far the now tint reaches past the time and title: as far as an open card, so the
+    /// tint and the card it sits on when opened are the same width.
+    static let tintInset: CGFloat = OpenCard.inset
 
     var event: AgendaEvent
     var timing: EventTiming
@@ -178,6 +179,8 @@ struct EventRow: View {
         .onTapGesture {
             if isOpen { onTap() }
         }
+        // Room around the open card, so it doesn't sit against the row above or below.
+        .padding(.top, isOpen ? AgendaMetrics.openCardGap : 0)
         .padding(.bottom, isOpen ? 6 : 0)
     }
 
