@@ -156,6 +156,8 @@ struct EventRow: View {
                             .fill(Theme.nowTint)
                             .padding(.horizontal, -Self.tintInset)
                             .accessibilityHidden(true)
+                            // Swapped for the open tint at once, never faded.
+                            .transition(.identity)
                     }
                 }
                 // The tap area reaches into the space between rows.
@@ -169,8 +171,11 @@ struct EventRow: View {
                             .padding(.horizontal, -OpenCard.inset)
                             .padding(.top, -OpenCard.rise)
                             .accessibilityHidden(true)
+                            .transition(.identity)
                     }
                 }
+                // The tint changes shape at once as the row opens or closes: no fade or pulse.
+                .animation(nil, value: isOpen)
                 .contentShape(Rectangle())
             }
             .buttonStyle(StillButtonStyle())
