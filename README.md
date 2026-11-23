@@ -16,7 +16,7 @@ Website: [decentdigest.com](https://decentdigest.com)
 - Nothing leaves your phone except through your own iCloud.
 - No backend and no paid services, so it costs almost nothing to run.
 
-## Run it yourself
+## Getting started
 
 You need Xcode 26 and an iPhone or simulator on iOS 26.
 
