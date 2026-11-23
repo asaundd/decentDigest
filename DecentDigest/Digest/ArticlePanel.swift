@@ -16,9 +16,6 @@ struct ArticlePanel: View {
     var onClose: () -> Void
 
     @State private var dragOffset: CGFloat = 0
-    /// True from a press held still for a moment until the finger lifts: the reader is selecting
-    /// text, so a drag then moves the selection and never the panel.
-    @GestureState private var isHolding = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -33,6 +30,8 @@ struct ArticlePanel: View {
             }
             .padding(.horizontal, Theme.margin - 4)
             .padding(.top, 8)
+            .contentShape(Rectangle())
+            .simultaneousGesture(closeSwipe)
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 10) {
@@ -58,6 +57,8 @@ struct ArticlePanel: View {
             }
 
             ActionRibbon(actions: panelActions, leadingPadding: Theme.margin, trailingPadding: Theme.margin)
+                .contentShape(Rectangle())
+                .simultaneousGesture(closeSwipe)
         }
         .foregroundStyle(Theme.ink)
         .background(Theme.panelFill)
@@ -68,35 +69,26 @@ struct ArticlePanel: View {
         )
         .shadow(color: Theme.panelShadow, radius: 24, x: 0, y: 8)
         .offset(x: dragOffset)
-        // Press and hold starts selecting text; the swipe below then stands aside until the finger lifts.
-        .simultaneousGesture(
-            LongPressGesture(minimumDuration: 0.25)
-                .sequenced(before: DragGesture(minimumDistance: 0))
-                .updating($isHolding) { value, holding, _ in
-                    if case .second(true, _) = value { holding = true }
-                }
-        )
-        // Swipe right to close.
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 20)
-                .onChanged { value in
-                    guard !isHolding else {
-                        dragOffset = 0
-                        return
-                    }
-                    guard abs(value.translation.width) > abs(value.translation.height) else { return }
-                    dragOffset = max(0, value.translation.width)
-                }
-                .onEnded { value in
-                    if !isHolding, dragOffset > 0, value.translation.width > 90, abs(value.translation.width) > abs(value.translation.height) {
-                        onClose()
-                    } else {
-                        withAnimation(.easeOut(duration: 0.2)) { dragOffset = 0 }
-                    }
-                }
-        )
         .accessibilityAddTraits(.isModal)
         .accessibilityAction(.escape, onClose)
+    }
+
+    /// Swipe right to close, on the header and the ribbon only. The text itself is left alone, so
+    /// dragging to select it, or a selection handle, never moves or closes the panel.
+    private var closeSwipe: some Gesture {
+        // Measured on the screen, since the panel moves under the finger.
+        DragGesture(minimumDistance: 20, coordinateSpace: .global)
+            .onChanged { value in
+                guard abs(value.translation.width) > abs(value.translation.height) else { return }
+                dragOffset = max(0, value.translation.width)
+            }
+            .onEnded { value in
+                if value.translation.width > 90, abs(value.translation.width) > abs(value.translation.height) {
+                    onClose()
+                } else {
+                    withAnimation(.easeOut(duration: 0.2)) { dragOffset = 0 }
+                }
+            }
     }
 
     /// The row's actions, each closing the panel first. Reading on the site is the first action here.

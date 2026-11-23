@@ -62,7 +62,7 @@ struct TodosSectionView: View {
                     row(todo, now: now)
                 }
                 if showsGroupMore, group.hiddenCount > 0 {
-                    MoreLine(count: group.hiddenCount, noun: "item", leading: EventRow.timeWidth + EventRow.timeGap) {
+                    MoreLine(count: group.hiddenCount, noun: "item", leading: DashColumn.width) {
                         expandedDays.insert(group.day)
                     }
                     .digestRow()
@@ -75,7 +75,7 @@ struct TodosSectionView: View {
                     row(todo, now: now)
                 }
                 if showsGroupMore, plan.anytimeHidden > 0 {
-                    MoreLine(count: plan.anytimeHidden, noun: "item", leading: EventRow.timeWidth + EventRow.timeGap) {
+                    MoreLine(count: plan.anytimeHidden, noun: "item", leading: DashColumn.width) {
                         anytimeExpanded = true
                     }
                     .digestRow()
@@ -173,8 +173,8 @@ struct TodosSectionView: View {
     }
 }
 
-/// A to-do, laid out like an event so the two lists read as one: its time in the same 60pt gray column
-/// when it is due today or later at a set time (the column is empty otherwise), then its title. No dash.
+/// A to-do: its title, set in a little (as far as a dash would take it, with no dash), with its time in
+/// gray after it when it is due today or later at a set time.
 /// A tap makes the title semibold and opens a card behind it: due day and list, notes, ✓ at the top
 /// right, Open ↗. A tap anywhere on the open row, away from its buttons and links, closes it.
 struct TodoRow: View {
@@ -188,15 +188,6 @@ struct TodoRow: View {
     var open: () -> Void
 
     @Environment(\.swipeGuard) private var swipeGuard
-    @ScaledMetric(relativeTo: .subheadline) private var timeWidth: CGFloat = EventRow.timeWidth
-    @Environment(\.dynamicTypeSize) private var typeSize
-
-    /// At the largest text sizes there is no time column: the time follows the title, as an event's
-    /// time sits above its title there.
-    private var stacks: Bool { typeSize.isAccessibilitySize }
-
-    /// Where the title starts, past the time column, so to-dos line up with events' titles.
-    private var titleIndent: CGFloat { stacks ? 0 : timeWidth + EventRow.timeGap }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -205,17 +196,9 @@ struct TodoRow: View {
                 guard swipeGuard?.takesTap() != true else { return }
                 onTap()
             } label: {
-                HStack(alignment: .firstTextBaseline, spacing: 0) {
-                    if !stacks {
-                        Text(note ?? "")
-                            .monospacedDigit()
-                            .foregroundStyle(isOpen ? Theme.itemInk : Theme.secondary)
-                            .frame(width: timeWidth, alignment: .trailing)
-                            .padding(.trailing, EventRow.timeGap)
-                    }
-                    title
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
+                title
+                    // Set in a little under the day's name, with no dash.
+                    .padding(.leading, DashColumn.width)
                     .font(AgendaMetrics.itemFont.weight(isOpen ? .semibold : .regular))
                     // Regular to semibold is an instant change, never animated.
                     .animation(nil, value: isOpen)
@@ -251,7 +234,7 @@ struct TodoRow: View {
 
     private var title: some View {
         var text = Text(todo.title)
-        if stacks, let note {
+        if let note {
             let noteText = Text("  \(note)").foregroundStyle(Theme.secondary)
             text = Text("\(text)\(noteText)")
         }
@@ -285,8 +268,8 @@ struct TodoRow: View {
         }
         .font(AgendaMetrics.itemFont)
         .frame(maxWidth: .infinity, alignment: .leading)
-        // Lined up with the to-do's title, past the time column.
-        .padding(.leading, titleIndent)
+        // Lined up with the to-do's title.
+        .padding(.leading, DashColumn.width)
         .padding(.top, 2)
         .padding(.bottom, 10)
     }

@@ -30,7 +30,7 @@ enum AgendaMetrics {
     static let itemFont = Font.subheadline
     /// Space above and below each event or to-do, which its tap area reaches into.
     static let rowPadding: CGFloat = 4
-    /// Space above an open event's or to-do's card, so it doesn't sit against the row or day above.
+    /// Space above an open to-do's card, so it doesn't sit against the row or day above.
     static let openCardGap: CGFloat = 6
 }
 

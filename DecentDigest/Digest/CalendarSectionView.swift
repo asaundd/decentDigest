@@ -151,7 +151,7 @@ struct EventRow: View {
                 .padding(.vertical, 2)
                 // The event happening now sits on a pale slate tint behind its time and title.
                 .background {
-                    if timing == .now {
+                    if timing == .now, !isOpen {
                         RoundedRectangle(cornerRadius: 6, style: .continuous)
                             .fill(Theme.nowTint)
                             .padding(.horizontal, -Self.tintInset)
@@ -160,6 +160,17 @@ struct EventRow: View {
                 }
                 // The tap area reaches into the space between rows.
                 .padding(.vertical, AgendaMetrics.rowPadding - 2)
+                // Opened, the tint fills the card's whole top row, up to its top edge and corners,
+                // so no strip of card shows above it. The row itself doesn't move.
+                .background {
+                    if timing == .now, isOpen {
+                        UnevenRoundedRectangle(topLeadingRadius: OpenCard.cornerRadius, topTrailingRadius: OpenCard.cornerRadius, style: .continuous)
+                            .fill(Theme.nowTint)
+                            .padding(.horizontal, -OpenCard.inset)
+                            .padding(.top, -OpenCard.rise)
+                            .accessibilityHidden(true)
+                    }
+                }
                 .contentShape(Rectangle())
             }
             .buttonStyle(StillButtonStyle())
@@ -179,8 +190,6 @@ struct EventRow: View {
         .onTapGesture {
             if isOpen { onTap() }
         }
-        // Room around the open card, so it doesn't sit against the row above or below.
-        .padding(.top, isOpen ? AgendaMetrics.openCardGap : 0)
         .padding(.bottom, isOpen ? 6 : 0)
     }
 

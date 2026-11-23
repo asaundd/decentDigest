@@ -383,6 +383,7 @@ enum DashColumn {
 /// moves when a row opens.
 enum OpenCard {
     static let inset: CGFloat = 12
+    static let cornerRadius: CGFloat = 8
     /// How far the card rises above the row's first line.
     static let rise: CGFloat = 2
 }
@@ -391,11 +392,11 @@ extension View {
     func openCard(_ isOpen: Bool) -> some View {
         background {
             if isOpen {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                RoundedRectangle(cornerRadius: OpenCard.cornerRadius, style: .continuous)
                     .fill(Theme.expandedFill)
                     .shadow(color: Theme.expandedShadow, radius: 4, x: 0, y: 2)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        RoundedRectangle(cornerRadius: OpenCard.cornerRadius, style: .continuous)
                             .strokeBorder(Theme.expandedRing, lineWidth: 1)
                     )
                     .padding(.horizontal, -OpenCard.inset)
