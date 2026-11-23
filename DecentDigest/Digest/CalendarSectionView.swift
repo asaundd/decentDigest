@@ -107,8 +107,9 @@ struct EventRow: View {
     static let timeWidth: CGFloat = 60
     /// From the end of the time to the title.
     static let timeGap: CGFloat = 10
-    /// How far the now tint reaches past the time and title.
-    static let tintInset: CGFloat = 6
+    /// How far the now tint reaches past the time and title: as far as an open card, so the
+    /// tint and the card it sits on when opened are the same width.
+    static let tintInset: CGFloat = OpenCard.inset
 
     var event: AgendaEvent
     var timing: EventTiming
@@ -150,15 +151,31 @@ struct EventRow: View {
                 .padding(.vertical, 2)
                 // The event happening now sits on a pale slate tint behind its time and title.
                 .background {
-                    if timing == .now {
+                    if timing == .now, !isOpen {
                         RoundedRectangle(cornerRadius: 6, style: .continuous)
                             .fill(Theme.nowTint)
                             .padding(.horizontal, -Self.tintInset)
                             .accessibilityHidden(true)
+                            // Swapped for the open tint at once, never faded.
+                            .transition(.identity)
                     }
                 }
                 // The tap area reaches into the space between rows.
                 .padding(.vertical, AgendaMetrics.rowPadding - 2)
+                // Opened, the tint fills the card's whole top row, up to its top edge and corners,
+                // so no strip of card shows above it. The row itself doesn't move.
+                .background {
+                    if timing == .now, isOpen {
+                        UnevenRoundedRectangle(topLeadingRadius: OpenCard.cornerRadius, topTrailingRadius: OpenCard.cornerRadius, style: .continuous)
+                            .fill(Theme.nowTint)
+                            .padding(.horizontal, -OpenCard.inset)
+                            .padding(.top, -OpenCard.rise)
+                            .accessibilityHidden(true)
+                            .transition(.identity)
+                    }
+                }
+                // The tint changes shape at once as the row opens or closes: no fade or pulse.
+                .animation(nil, value: isOpen)
                 .contentShape(Rectangle())
             }
             .buttonStyle(StillButtonStyle())

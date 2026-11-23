@@ -114,7 +114,8 @@ public enum WeatherRules {
     // MARK: The rest of the week
 
     /// One short sentence (two at most) on anything notable later in the week, after the two days
-    /// the change line covers. In order: storms, rain or snow starting, heat, a freeze or a turn
+    /// the change line covers. In order: storms, rain or snow starting (after a dry day or two when the
+    /// change line ends wet: "Clear Tuesday, then rain again starting Wednesday."), heat, a freeze or a turn
     /// warmer or colder, then the weekend ("Cold and sunny this weekend."). Storms can share the
     /// line with one other sentence. Nil when nothing stands out.
     public static func weekLine(_ report: WeatherReport, unit: TemperatureUnit, calendar: Calendar = .current, locale: Locale = .current) -> String? {
@@ -138,6 +139,14 @@ public enum WeatherRules {
                 let kind = later[wet].sky == .snow ? "Snow" : "Rain"
                 let run = later[wet...].prefix { $0.sky.isWet && $0.sky != .storm }
                 precipitation = "\(kind) \(daysPhrase(run.map(name)))."
+                // The change line ends wet and a day or two stay dry before it comes back: say the
+                // gap, so the line reads "Clear Tuesday, then rain again starting Wednesday."
+                let gap = later[..<wet]
+                if days[1].sky.isWet, (1...2).contains(gap.count), gap.allSatisfy({ !$0.sky.isWet }) {
+                    let dry = gap.allSatisfy { $0.sky == .clear } ? "Clear" : "Dry"
+                    let again = word(for: days[1].sky) == kind ? " again" : ""
+                    precipitation = "\(dry) \(daysPhrase(gap.map(name))), then \(kind.lowercased())\(again) \(daysPhrase(run.map(name)))."
+                }
             }
         }
 

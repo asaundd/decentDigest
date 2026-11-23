@@ -173,7 +173,8 @@ struct TodosSectionView: View {
     }
 }
 
-/// A to-do: a gray dash, then its title, with its time in gray after it when it is due today or later at a set time.
+/// A to-do: its title, set in a little (as far as a dash would take it, with no dash), with its time in
+/// gray after it when it is due today or later at a set time.
 /// A tap makes the title semibold and opens a card behind it: due day and list, notes, ✓ at the top
 /// right, Open ↗. A tap anywhere on the open row, away from its buttons and links, closes it.
 struct TodoRow: View {
@@ -195,13 +196,9 @@ struct TodoRow: View {
                 guard swipeGuard?.takesTap() != true else { return }
                 onTap()
             } label: {
-                HStack(alignment: .firstTextBaseline, spacing: 0) {
-                    // The dash marks the to-do; the day's name above has none.
-                    Text("–")
-                        .foregroundStyle(Theme.secondary)
-                        .frame(width: DashColumn.width, alignment: .leading)
-                    title
-                }
+                title
+                    // Set in a little under the day's name, with no dash.
+                    .padding(.leading, DashColumn.width)
                     .font(AgendaMetrics.itemFont.weight(isOpen ? .semibold : .regular))
                     // Regular to semibold is an instant change, never animated.
                     .animation(nil, value: isOpen)
@@ -230,6 +227,8 @@ struct TodoRow: View {
             guard isOpen, swipeGuard?.takesTap() != true else { return }
             onTap()
         }
+        // Room around the open card, so it doesn't sit against the row above or below.
+        .padding(.top, isOpen ? AgendaMetrics.openCardGap : 0)
         .padding(.bottom, isOpen ? 6 : 0)
     }
 
@@ -269,7 +268,7 @@ struct TodoRow: View {
         }
         .font(AgendaMetrics.itemFont)
         .frame(maxWidth: .infinity, alignment: .leading)
-        // Lined up with the to-do's title, past its dash.
+        // Lined up with the to-do's title.
         .padding(.leading, DashColumn.width)
         .padding(.top, 2)
         .padding(.bottom, 10)

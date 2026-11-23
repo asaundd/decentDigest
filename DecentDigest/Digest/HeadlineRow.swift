@@ -106,8 +106,8 @@ struct HeadlineActions {
     var shareTitle = ""
 }
 
-/// One headline or episode: the title at the margin with no dash (semibold while unread, regular once
-/// opened), then the feed name and age, or the show's name; space alone separates the rows.
+/// One headline or episode: the title at the margin with no dash (medium while unread, regular once
+/// read; opening the row leaves it as it is), then the feed name and age, or the show's name; space alone separates the rows.
 /// Title-only rows end in ↗. A tap opens any row: a lighter card rises behind the title and holds the
 /// byline and up to 320 characters of text over the actions. A tap anywhere on the open row, away from
 /// its buttons and links, closes it.
@@ -134,11 +134,11 @@ struct HeadlineRow: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(headline.title)
                             .font(.callout)
-                            // Unread medium, read regular; semibold while open, so the open row leads.
-                            .fontWeight(isExpanded ? .semibold : headline.isUnread ? .medium : .regular)
-                            // Bold to regular is an instant change, never animated.
+                            // Unread medium, read regular. Opening a row doesn't change it: the
+                            // weight changes only once the item counts as read.
+                            .fontWeight(headline.isUnread ? .medium : .regular)
+                            // Medium to regular is an instant change, never animated.
                             .animation(nil, value: headline.isUnread)
-                            .animation(nil, value: isExpanded)
                             .foregroundStyle(Theme.ink)
                         DetailLine(detail: headline.detailLine(expanded: isExpanded))
                             // The byline or length joins at once as the row opens; animated, the
@@ -383,6 +383,7 @@ enum DashColumn {
 /// moves when a row opens.
 enum OpenCard {
     static let inset: CGFloat = 12
+    static let cornerRadius: CGFloat = 8
     /// How far the card rises above the row's first line.
     static let rise: CGFloat = 2
 }
@@ -391,11 +392,11 @@ extension View {
     func openCard(_ isOpen: Bool) -> some View {
         background {
             if isOpen {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                RoundedRectangle(cornerRadius: OpenCard.cornerRadius, style: .continuous)
                     .fill(Theme.expandedFill)
                     .shadow(color: Theme.expandedShadow, radius: 4, x: 0, y: 2)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        RoundedRectangle(cornerRadius: OpenCard.cornerRadius, style: .continuous)
                             .strokeBorder(Theme.expandedRing, lineWidth: 1)
                     )
                     .padding(.horizontal, -OpenCard.inset)
